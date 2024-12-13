@@ -8,7 +8,7 @@ import type { Event } from './Calendar';
 import { DateSelectArg, EventContentArg } from '@fullcalendar/core';
 import { User, Crosshair } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { useState } from 'react';
+import { useRef } from 'react';
 
 interface CalendarViewProps {
   date: Date | undefined;
@@ -52,6 +52,8 @@ export function CalendarView({
   onEventClick,
   onTooltipChange,
 }: CalendarViewProps) {
+  const calendarRef = useRef<any>(null);
+
   const calendarEvents = events.map((event) => ({
     id: String(event.id),
     start: event.date,
@@ -157,6 +159,7 @@ export function CalendarView({
   return (
     <div className='w-full h-full'>
       <FullCalendar
+        ref={calendarRef}
         locale='ja'
         locales={[jaLocale]}
         plugins={[dayGridPlugin, interactionPlugin]}
@@ -179,23 +182,19 @@ export function CalendarView({
         customButtons={{
           prev: {
             text: '＜',
-            click: function (ev, element) {
-              const calendar = element
-                .closest('.fc')
-                ?.querySelector('.fc-prev-button');
-              if (calendar) {
-                (calendar as HTMLElement).click();
+            click: () => {
+              const calendarApi = calendarRef.current?.getApi();
+              if (calendarApi) {
+                calendarApi.prev();
               }
             },
           },
           next: {
             text: '＞',
-            click: function (ev, element) {
-              const calendar = element
-                .closest('.fc')
-                ?.querySelector('.fc-next-button');
-              if (calendar) {
-                (calendar as HTMLElement).click();
+            click: () => {
+              const calendarApi = calendarRef.current?.getApi();
+              if (calendarApi) {
+                calendarApi.next();
               }
             },
           },

@@ -10,7 +10,8 @@ import { Button } from './ui/custom-button';
 import {
   CalendarIcon,
   CrosshairIcon,
-  GamepadIcon,
+  DicesIcon,
+  Gamepad2Icon,
   UserIcon,
   UsersIcon,
 } from 'lucide-react';
@@ -120,8 +121,8 @@ export default function Calendar() {
   return (
     <div className='space-y-6 py-6'>
       <div className='flex justify-between items-center'>
-        <h2 className='text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-blue-500'>
-          <GamepadIcon className='inline-block mr-2 h-8 w-8' />
+        <h2 className='text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-blue-500 flex items-center'>
+          <Gamepad2Icon className='mr-2 h-8 w-8 text-green-400' />
           ゲームスケジュール
         </h2>
         <div>
