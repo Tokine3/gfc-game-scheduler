@@ -1,0 +1,59 @@
+.fc {
+  --fc-border-color: theme('colors.gray.800');
+  --fc-button-bg-color: theme('colors.gray.800');
+  --fc-button-border-color: theme('colors.gray.700');
+  --fc-button-hover-bg-color: theme('colors.gray.700');
+  --fc-button-hover-border-color: theme('colors.gray.600');
+  --fc-button-active-bg-color: theme('colors.gray.600');
+  --fc-button-active-border-color: theme('colors.gray.500');
+  --fc-today-bg-color: theme('colors.gray.800 / 30%');
+  --fc-neutral-bg-color: transparent;
+  --fc-page-bg-color: transparent;
+}
+
+.fc-theme-standard td,
+.fc-theme-standard th,
+.fc-theme-standard .fc-scrollgrid {
+  border-color: var(--fc-border-color);
+}
+
+.fc-day-today {
+  background: var(--fc-today-bg-color) !important;
+}
+
+.fc-button {
+  @apply text-gray-200 !important;
+}
+
+.fc-button:disabled {
+  @apply opacity-50 cursor-not-allowed !important;
+}
+
+.fc-toolbar-title {
+  @apply text-gray-200 !important;
+}
+
+.fc-daygrid-day-number {
+  @apply text-gray-200 !important;
+  padding: 4px;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.fc-col-header-cell {
+  @apply text-gray-400 !important;
+}
+
+.fc .fc-col-header-cell-cushion {
+  padding: 8px 4px;
+}
+
+.fc-day-sat .fc-daygrid-day-number,
+.fc-col-header-cell.fc-day-sat {
+  color: #60a5fa !important; /* blue-400 */
+}
+
+.fc-day-sun .fc-daygrid-day-number,
+.fc-col-header-cell.fc-day-sun {
+  color: #f87171 !important; /* red-400 */
+}
