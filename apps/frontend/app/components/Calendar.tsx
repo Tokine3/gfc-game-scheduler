@@ -45,6 +45,7 @@ export default function Calendar() {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
 
+  // ダミーデータを作成
   useEffect(() => {
     const baseDate = dayjs().startOf('day');
 
