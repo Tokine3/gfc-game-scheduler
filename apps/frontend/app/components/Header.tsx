@@ -1,21 +1,19 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import { MoonIcon, SunIcon } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { Button } from './ui/custom-button';
 
 export default function Header() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  // マウント後にのみレンダリングを行う
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // マウントされるまでは何も表示しない
   if (!mounted) {
     return (
       <header className='border-b border-gray-800'>
@@ -32,7 +30,7 @@ export default function Header() {
             </h1>
           </div>
           <div className='flex items-center space-x-4'>
-            <div className='w-10 h-10' /> {/* プレースホルダー */}
+            <div className='w-10 h-10' />
             <Button
               variant='default'
               className='bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600'

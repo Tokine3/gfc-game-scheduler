@@ -19,7 +19,7 @@ export default function RootLayout({
     <html lang='en' suppressHydrationWarning>
       <body className={`${inter.className} bg-[#0f0f0f]`}>
         <ThemeProvider attribute='class' defaultTheme='dark' enableSystem>
-          {children}
+          <div className='contents'>{children}</div>
         </ThemeProvider>
       </body>
     </html>

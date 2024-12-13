@@ -1,31 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { CalendarIcon, PlusIcon, Crosshair, Users, User } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import dynamic from 'next/dynamic';
 import EventCreation from './EventCreation';
 import PersonalEventCreation from './PersonalEventCreation';
 import EventDetail from './EventDetail';
 import dayjs from 'dayjs';
 import CalendarView from './CalendarView';
-
-// // CalendarViewをダイナミックインポート
-// const CalendarView = dynamic(
-//   () => import('./CalendarView').then((mod) => mod.default),
-//   {
-//     ssr: false,
-//     loading: () => (
-//       <div className='h-[400px] flex items-center justify-center bg-[#0B1120]'>
-//         <div className='flex flex-col items-center gap-2'>
-//           <div className='animate-spin rounded-full h-8 w-8 border-2 border-gray-400 border-t-transparent' />
-//           <span className='text-sm text-gray-400'>読み込み中...</span>
-//         </div>
-//       </div>
-//     ),
-//   }
-// );
+import { CalendarIcon, Crosshair, User, Users } from 'lucide-react';
+import { Button } from './ui/custom-button';
 
 export interface Event {
   id: number;
@@ -110,7 +92,7 @@ export default function Calendar() {
           </Button>
         </div>
       </div>
-      <div className='grid gap-6 md:grid-cols-2'>
+      <div className='grid gap-6 md:grid-cols-[2fr_1fr]'>
         <div className='bg-[#0B1120] rounded-lg border border-gray-800/50'>
           <div className='flex items-center justify-center border-b border-gray-800/50 p-4'>
             <h3 className='text-xl font-semibold text-gray-100 flex items-center'>
@@ -149,21 +131,25 @@ export default function Calendar() {
                 }`}
                 onClick={() => handleEventClick(event)}
               >
-                {event.isPersonal ? (
-                  <User className='mr-2 h-4 w-4 text-purple-400' />
-                ) : (
-                  <Crosshair className='mr-2 h-4 w-4 text-cyan-400' />
-                )}
-                <div>
-                  <div className='font-medium text-gray-100'>{event.title}</div>
-                  <div className='text-sm text-gray-400'>
-                    {dayjs(event.date).format('YYYY年MM月DD日')}
-                    {!event.isPersonal && (
-                      <>
-                        - <Users className='inline h-3 w-3' />{' '}
-                        {event.participants}/{event.quota}
-                      </>
-                    )}
+                <div className='flex items-center w-full'>
+                  {event.isPersonal ? (
+                    <User className='mr-2 h-4 w-4 text-purple-400' />
+                  ) : (
+                    <Crosshair className='mr-2 h-4 w-4 text-cyan-400' />
+                  )}
+                  <div className='flex-1'>
+                    <div className='font-medium text-gray-100'>
+                      {event.title}
+                    </div>
+                    <div className='text-sm text-gray-400'>
+                      {dayjs(event.date).format('YYYY年MM月DD日')}
+                      {!event.isPersonal && (
+                        <>
+                          - <Users className='inline h-3 w-3' />{' '}
+                          {event.participants}/{event.quota}
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </Button>

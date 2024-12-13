@@ -15,6 +15,28 @@ interface CalendarViewProps {
   onDateSelect: (date: Date | undefined) => void;
 }
 
+// カスタムボタンコンポーネントを作成
+const CalendarButton = ({
+  children,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) => {
+  return (
+    <button
+      type='button'
+      className={cn(
+        'inline-flex items-center justify-center rounded-md text-sm font-medium',
+        'transition-colors focus-visible:outline-none focus-visible:ring-1',
+        'disabled:pointer-events-none disabled:opacity-50',
+        'border border-gray-700 bg-gray-800 text-gray-200',
+        'hover:bg-gray-700 hover:text-gray-100'
+      )}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+};
+
 export function CalendarView({
   date,
   events,
@@ -78,6 +100,30 @@ export function CalendarView({
           month: '月',
           prev: '＜',
           next: '＞',
+        }}
+        customButtons={{
+          prev: {
+            text: '＜',
+            click: function (ev, element) {
+              const calendar = element
+                .closest('.fc')
+                ?.querySelector('.fc-prev-button');
+              if (calendar) {
+                (calendar as HTMLElement).click();
+              }
+            },
+          },
+          next: {
+            text: '＞',
+            click: function (ev, element) {
+              const calendar = element
+                .closest('.fc')
+                ?.querySelector('.fc-next-button');
+              if (calendar) {
+                (calendar as HTMLElement).click();
+              }
+            },
+          },
         }}
         height='auto'
         dayMaxEvents={4}
