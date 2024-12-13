@@ -6,8 +6,8 @@ import PersonalEventCreation from './PersonalEventCreation';
 import EventDetail from './EventDetail';
 import dayjs from 'dayjs';
 import CalendarView from './CalendarView';
-import * as Icons from 'lucide-react';
 import { Button } from './ui/custom-button';
+import { CalendarIcon, CrosshairIcon, UserIcon, UsersIcon } from 'lucide-react';
 
 export interface Event {
   id: number;
@@ -74,7 +74,7 @@ export default function Calendar() {
     <div className='space-y-6 py-6'>
       <div className='flex justify-between items-center'>
         <h2 className='text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-blue-500'>
-          <Icons.CalendarIcon className='inline-block mr-2 h-8 w-8' />
+          <CalendarIcon className='inline-block mr-2 h-8 w-8' />
           ゲームスケジュール
         </h2>
         <div>
@@ -82,13 +82,13 @@ export default function Calendar() {
             onClick={() => setShowEventCreation(true)}
             className='bg-gradient-to-r from-pink-500 to-yellow-500 hover:from-pink-600 hover:to-yellow-600 mr-2'
           >
-            <Icons.CrosshairIcon className='mr-2 h-4 w-4' /> イベント作成
+            <CrosshairIcon className='mr-2 h-4 w-4' /> イベント作成
           </Button>
           <Button
             onClick={() => setShowPersonalEventCreation(true)}
             className='bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600'
           >
-            <Icons.UserIcon className='mr-2 h-4 w-4' /> 個人予定作成
+            <UserIcon className='mr-2 h-4 w-4' /> 個人予定作成
           </Button>
         </div>
       </div>
@@ -96,7 +96,7 @@ export default function Calendar() {
         <div className='bg-[#0B1120] rounded-lg border border-gray-800/50'>
           <div className='flex items-center justify-center border-b border-gray-800/50 p-4'>
             <h3 className='text-xl font-semibold text-gray-100 flex items-center'>
-              <Icons.CalendarIcon className='mr-2 h-6 w-6' />
+              <CalendarIcon className='mr-2 h-6 w-6' />
               カレンダー
             </h3>
           </div>
@@ -111,7 +111,7 @@ export default function Calendar() {
         <div className='bg-[#0B1120] rounded-lg border border-gray-800/50'>
           <div className='flex items-center border-b border-gray-800/50 p-4'>
             <h3 className='text-xl font-semibold text-gray-100 flex items-center'>
-              <Icons.CrosshairIcon className='mr-2 h-6 w-6' />
+              <CrosshairIcon className='mr-2 h-6 w-6' />
               今後のイベント
             </h3>
           </div>
@@ -133,9 +133,9 @@ export default function Calendar() {
               >
                 <div className='flex items-center w-full'>
                   {event.isPersonal ? (
-                    <Icons.UserIcon className='mr-2 h-4 w-4 text-purple-400' />
+                    <UserIcon className='mr-2 h-4 w-4 text-purple-400' />
                   ) : (
-                    <Icons.CrosshairIcon className='mr-2 h-4 w-4 text-cyan-400' />
+                    <CrosshairIcon className='mr-2 h-4 w-4 text-cyan-400' />
                   )}
                   <div className='flex-1'>
                     <div className='font-medium text-gray-100'>
@@ -145,7 +145,7 @@ export default function Calendar() {
                       {dayjs(event.date).format('YYYY年MM月DD日')}
                       {!event.isPersonal && (
                         <>
-                          - <Icons.UsersIcon className='inline h-3 w-3' />{' '}
+                          - <UsersIcon className='inline h-3 w-3' />{' '}
                           {event.participants}/{event.quota}
                         </>
                       )}

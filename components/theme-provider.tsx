@@ -1,7 +1,5 @@
 'use client';
 
-import React from 'react';
-
 interface ThemeProviderProps {
   children: React.ReactNode;
   attribute: string;
