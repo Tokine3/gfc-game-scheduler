@@ -1,7 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ['@repo/ui'],
+  transpilePackages: ['lucide-react'],
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'lucide-react': require.resolve('lucide-react'),
+    };
+    return config;
+  },
 };
 
 module.exports = nextConfig;

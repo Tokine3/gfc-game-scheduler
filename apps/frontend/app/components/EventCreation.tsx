@@ -1,19 +1,16 @@
 'use client';
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Crosshair, Users, CalendarIcon, FileText } from 'lucide-react';
+import { Label } from './ui/custom-label';
 import { Textarea } from '@/components/ui/textarea';
+import { Button } from './ui/custom-button';
+import {
+  CrosshairIcon,
+  CalendarIcon,
+  UsersIcon,
+  FileTextIcon,
+} from 'lucide-react';
 
 interface EventCreationProps {
   onClose: () => void;
@@ -24,33 +21,54 @@ export default function EventCreation({ onClose, date }: EventCreationProps) {
   const [title, setTitle] = useState('');
   const [quota, setQuota] = useState('');
   const [notes, setNotes] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    // ESCキーでモーダルを閉じる
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // ここでバックエンドにデータを送信します
     console.log({ title, date, quota, notes });
     onClose();
   };
 
+  if (!mounted) return null;
+
   return (
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className='sm:max-w-[425px] bg-gray-900 text-gray-100 border-gray-800'>
-        <DialogHeader>
-          <DialogTitle className='text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600 flex items-center'>
-            <Crosshair className='mr-2 h-6 w-6' />
+    <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
+      <div className='relative bg-gray-900 text-gray-100 border border-gray-800 rounded-lg w-full max-w-[425px] p-6'>
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className='absolute top-4 right-4 text-gray-400 hover:text-gray-200'
+        >
+          ✕
+        </button>
+
+        {/* Header */}
+        <div className='mb-6'>
+          <h2 className='text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600 flex items-center'>
+            <CrosshairIcon className='mr-2 h-6 w-6' />
             新規イベント作成
-          </DialogTitle>
-          <DialogDescription className='text-gray-400'>
-            イベントの詳細を入力してください
-          </DialogDescription>
-        </DialogHeader>
+          </h2>
+          <p className='text-gray-400'>イベントの詳細を入力してください</p>
+        </div>
+
+        {/* Form */}
         <form onSubmit={handleSubmit} className='space-y-4'>
           <div className='space-y-2'>
             <Label htmlFor='title' className='text-gray-300'>
               タイトル
             </Label>
             <div className='relative'>
-              <Crosshair className='absolute left-2 top-2.5 h-4 w-4 text-gray-500' />
+              <CrosshairIcon className='absolute left-2 top-2.5 h-4 w-4 text-gray-500' />
               <Input
                 id='title'
                 value={title}
@@ -60,6 +78,7 @@ export default function EventCreation({ onClose, date }: EventCreationProps) {
               />
             </div>
           </div>
+
           <div className='space-y-2'>
             <Label htmlFor='date' className='text-gray-300'>
               日付
@@ -75,12 +94,13 @@ export default function EventCreation({ onClose, date }: EventCreationProps) {
               />
             </div>
           </div>
+
           <div className='space-y-2'>
             <Label htmlFor='quota' className='text-gray-300'>
               参加人数上限
             </Label>
             <div className='relative'>
-              <Users className='absolute left-2 top-2.5 h-4 w-4 text-gray-500' />
+              <UsersIcon className='absolute left-2 top-2.5 h-4 w-4 text-gray-500' />
               <Input
                 id='quota'
                 type='number'
@@ -91,12 +111,13 @@ export default function EventCreation({ onClose, date }: EventCreationProps) {
               />
             </div>
           </div>
+
           <div className='space-y-2'>
             <Label htmlFor='notes' className='text-gray-300'>
               メモ
             </Label>
             <div className='relative'>
-              <FileText className='absolute left-2 top-2.5 h-4 w-4 text-gray-500' />
+              <FileTextIcon className='absolute left-2 top-2.5 h-4 w-4 text-gray-500' />
               <Textarea
                 id='notes'
                 value={notes}
@@ -105,16 +126,18 @@ export default function EventCreation({ onClose, date }: EventCreationProps) {
               />
             </div>
           </div>
-          <DialogFooter>
+
+          {/* Footer */}
+          <div className='flex justify-end pt-4'>
             <Button
               type='submit'
               className='bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600'
             >
               イベント作成
             </Button>
-          </DialogFooter>
+          </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }
