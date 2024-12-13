@@ -40,6 +40,9 @@
   background-clip: text;
   color: transparent !important;
   letter-spacing: -0.025em;
+  text-align: center;
+  flex: 1;
+  margin: 0 1rem;
 }
 
 .fc-daygrid-day-number {
@@ -108,13 +111,14 @@
 
 /* カスタムツールチップのスタイル */
 .calendar-tooltip {
-  @apply px-3 py-2 text-sm rounded-lg shadow-lg;
+  @apply absolute px-3 py-2 text-sm rounded-lg shadow-lg;
   background: rgba(17, 24, 39, 0.95);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   max-width: 300px;
+  transform: translate(16px, -120%);
   pointer-events: none;
-  z-index: 9999999;
+  z-index: 100000 !important;
 }
 
 .calendar-tooltip::after {
@@ -140,8 +144,10 @@
 
 /* カレンダーのボタンやヘッダーのz-indexも調整 */
 .fc .fc-toolbar {
-  z-index: 1 !important;
-  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem !important;
 }
 
 /* イベントのz-indexも調整 */

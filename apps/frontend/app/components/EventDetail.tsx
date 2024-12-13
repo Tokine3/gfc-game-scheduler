@@ -52,14 +52,14 @@ export default function EventDetail({ event, onClose }: EventDetailProps) {
             )}
             {event.title}
           </DialogTitle>
-          <DialogDescription className='text-gray-400'>
+          <DialogDescription className='text-gray-400 flex items-center justify-center'>
             {event.isPersonal ? '個人予定の詳細' : 'イベントの詳細'}
           </DialogDescription>
         </DialogHeader>
         <div className='space-y-4'>
           <div className='flex items-center space-x-2 text-gray-300'>
             <CalendarIcon className='h-4 w-4' />
-            <p>日付: {event.date.toLocaleDateString('ja-JP')}</p>
+            <p>日付：{event.date.toLocaleDateString('ja-JP')}</p>
           </div>
           {!event.isPersonal &&
             event.participants !== undefined &&
@@ -68,7 +68,7 @@ export default function EventDetail({ event, onClose }: EventDetailProps) {
                 <div className='flex items-center space-x-2 text-gray-300'>
                   <Users className='h-4 w-4' />
                   <p>
-                    参加者: {event.participants}/{event.quota}
+                    参加人数：{event.participants} / {event.quota}
                   </p>
                 </div>
                 <Progress

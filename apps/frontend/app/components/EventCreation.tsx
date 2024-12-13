@@ -55,11 +55,13 @@ export default function EventCreation({ onClose, date }: EventCreationProps) {
 
         {/* Header */}
         <div className='mb-6'>
-          <h2 className='text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600 flex items-center'>
+          <h2 className='text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600 flex items-center justify-center'>
             <CrosshairIcon className='mr-2 h-6 w-6' />
             新規イベント作成
           </h2>
-          <p className='text-gray-400'>イベントの詳細を入力してください</p>
+          <p className='text-gray-400 flex items-center justify-center'>
+            イベントの詳細を入力してください
+          </p>
         </div>
 
         {/* Form */}
