@@ -17,7 +17,17 @@ export default function RootLayout({
 }) {
   return (
     <html lang='en' suppressHydrationWarning>
-      <body className={`${inter.className} bg-[#0f0f0f]`}>
+      <body
+        className={`${inter.className} min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/40 to-pink-900/30`}
+        style={{
+          backgroundImage: `
+            radial-gradient(circle at top left, rgba(76, 29, 149, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at top right, rgba(219, 39, 119, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at bottom left, rgba(88, 28, 135, 0.3) 0%, transparent 50%),
+            linear-gradient(to bottom right, rgb(3, 7, 18), rgb(10, 10, 10))
+          `,
+        }}
+      >
         <ThemeProvider attribute='class' defaultTheme='dark' enableSystem>
           <div className='contents'>{children}</div>
         </ThemeProvider>

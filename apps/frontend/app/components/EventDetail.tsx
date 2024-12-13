@@ -1,15 +1,5 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
 import {
   CheckIcon,
   XIcon,
@@ -19,6 +9,16 @@ import {
   User,
   Crosshair,
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
+import { Progress } from './ui/progress';
+import { Button } from './ui/button';
 
 interface Event {
   id: number;
@@ -44,7 +44,7 @@ export default function EventDetail({ event, onClose }: EventDetailProps) {
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className='sm:max-w-[425px] bg-gray-900 text-gray-100 border-gray-800'>
         <DialogHeader>
-          <DialogTitle className='text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600 flex items-center'>
+          <DialogTitle className='text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600 flex items-center justify-center'>
             {event.isPersonal ? (
               <User className='mr-2 h-6 w-6' />
             ) : (
@@ -73,7 +73,14 @@ export default function EventDetail({ event, onClose }: EventDetailProps) {
                 </div>
                 <Progress
                   value={(event.participants / event.quota) * 100}
-                  className='w-full h-2 bg-gray-700'
+                  className='w-full h-2 rounded-full overflow-hidden bg-gray-800/30'
+                  style={{
+                    background: 'transparent',
+                  }}
+                  indicatorStyle={{
+                    background: 'linear-gradient(to right, #22C55E, #4ADE80)',
+                    boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.1)',
+                  }}
                 />
                 <div className='flex justify-between'>
                   <Button

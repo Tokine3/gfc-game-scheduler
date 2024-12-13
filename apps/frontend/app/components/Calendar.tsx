@@ -7,7 +7,13 @@ import EventDetail from './EventDetail';
 import dayjs from 'dayjs';
 import CalendarView from './CalendarView';
 import { Button } from './ui/custom-button';
-import { CalendarIcon, CrosshairIcon, UserIcon, UsersIcon } from 'lucide-react';
+import {
+  CalendarIcon,
+  CrosshairIcon,
+  GamepadIcon,
+  UserIcon,
+  UsersIcon,
+} from 'lucide-react';
 
 export interface Event {
   id: number;
@@ -26,6 +32,17 @@ export default function Calendar() {
   const [showEventDetail, setShowEventDetail] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
+  const [tooltip, setTooltip] = useState<{
+    show: boolean;
+    x: number;
+    y: number;
+    content: React.ReactNode;
+  }>({
+    show: false,
+    x: 0,
+    y: 0,
+    content: null,
+  });
 
   // ダミーデータを作成
   useEffect(() => {
@@ -45,13 +62,43 @@ export default function Calendar() {
         title: 'コンペティティブ',
         date: baseDate.add(1, 'day').toDate(),
         participants: 2,
-        quota: 10,
+        quota: 5,
         isPersonal: false,
       },
       {
         id: 3,
         title: '個人練習',
         date: baseDate.add(2, 'day').toDate(),
+        isPersonal: true,
+      },
+      {
+        id: 4,
+        title: 'デスマッチ',
+        date: baseDate.add(2, 'day').toDate(),
+        participants: 4,
+        quota: 10,
+        isPersonal: false,
+      },
+      {
+        id: 5,
+        title: '朝からコンペ',
+        date: baseDate.add(5, 'day').toDate(),
+        participants: 1,
+        quota: 5,
+        isPersonal: false,
+      },
+      {
+        id: 6,
+        title: 'コンペ',
+        date: baseDate.add(7, 'day').toDate(),
+        participants: 5,
+        quota: 5,
+        isPersonal: false,
+      },
+      {
+        id: 7,
+        title: 'bot撃ち',
+        date: baseDate.subtract(7, 'day').toDate(),
         isPersonal: true,
       },
     ]);
@@ -74,7 +121,7 @@ export default function Calendar() {
     <div className='space-y-6 py-6'>
       <div className='flex justify-between items-center'>
         <h2 className='text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-blue-500'>
-          <CalendarIcon className='inline-block mr-2 h-8 w-8' />
+          <GamepadIcon className='inline-block mr-2 h-8 w-8' />
           ゲームスケジュール
         </h2>
         <div>
@@ -93,7 +140,7 @@ export default function Calendar() {
         </div>
       </div>
       <div className='grid gap-6 md:grid-cols-[2fr_1fr]'>
-        <div className='bg-[#0B1120] rounded-lg border border-gray-800/50'>
+        <div className='bg-gray-900/50 backdrop-blur-sm rounded-lg border border-gray-800/50'>
           <div className='flex items-center justify-center border-b border-gray-800/50 p-4'>
             <h3 className='text-xl font-semibold text-gray-100 flex items-center'>
               <CalendarIcon className='mr-2 h-6 w-6' />
@@ -105,11 +152,13 @@ export default function Calendar() {
               date={date}
               events={events}
               onDateSelect={handleDateClick}
+              onEventClick={handleEventClick}
+              onTooltipChange={setTooltip}
             />
           </div>
         </div>
-        <div className='bg-[#0B1120] rounded-lg border border-gray-800/50'>
-          <div className='flex items-center border-b border-gray-800/50 p-4'>
+        <div className='bg-gray-900/50 backdrop-blur-sm rounded-lg border border-gray-800/50'>
+          <div className='flex items-center justify-center border-b border-gray-800/50 p-4'>
             <h3 className='text-xl font-semibold text-gray-100 flex items-center'>
               <CrosshairIcon className='mr-2 h-6 w-6' />
               今後のイベント
@@ -174,6 +223,17 @@ export default function Calendar() {
           event={selectedEvent as Event}
           onClose={() => setShowEventDetail(false)}
         />
+      )}
+      {tooltip.show && (
+        <div
+          className='calendar-tooltip fixed'
+          style={{
+            left: `${tooltip.x + 16}px`,
+            top: `${tooltip.y - 16}px`,
+          }}
+        >
+          {tooltip.content}
+        </div>
       )}
     </div>
   );

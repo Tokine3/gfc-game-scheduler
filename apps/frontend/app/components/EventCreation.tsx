@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
+import { Input } from './ui/input';
 import { Label } from './ui/custom-label';
-import { Textarea } from '@/components/ui/textarea';
+import { Textarea } from './ui/textarea';
 import { Button } from './ui/custom-button';
 import {
   CrosshairIcon,
@@ -11,6 +11,7 @@ import {
   UsersIcon,
   FileTextIcon,
 } from 'lucide-react';
+import dayjs from 'dayjs';
 
 interface EventCreationProps {
   onClose: () => void;
@@ -88,7 +89,7 @@ export default function EventCreation({ onClose, date }: EventCreationProps) {
               <Input
                 id='date'
                 type='date'
-                value={date?.toISOString().split('T')[0]}
+                value={dayjs(date).format('YYYY-MM-DD')}
                 readOnly
                 className='pl-8 bg-gray-800 border-gray-700 text-gray-100'
               />

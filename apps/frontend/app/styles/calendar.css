@@ -1,14 +1,16 @@
 .fc {
-  --fc-border-color: theme('colors.gray.800');
-  --fc-button-bg-color: theme('colors.gray.800');
-  --fc-button-border-color: theme('colors.gray.700');
-  --fc-button-hover-bg-color: theme('colors.gray.700');
-  --fc-button-hover-border-color: theme('colors.gray.600');
-  --fc-button-active-bg-color: theme('colors.gray.600');
-  --fc-button-active-border-color: theme('colors.gray.500');
-  --fc-today-bg-color: theme('colors.gray.800 / 30%');
+  --fc-border-color: theme('colors.gray.800 / 50%');
+  --fc-button-bg-color: theme('colors.gray.800 / 50%');
+  --fc-button-border-color: theme('colors.gray.700 / 50%');
+  --fc-button-hover-bg-color: theme('colors.gray.700 / 70%');
+  --fc-button-hover-border-color: theme('colors.gray.600 / 70%');
+  --fc-button-active-bg-color: theme('colors.gray.600 / 70%');
+  --fc-button-active-border-color: theme('colors.gray.500 / 70%');
+  --fc-today-bg-color: theme('colors.gray.800 / 20%');
   --fc-neutral-bg-color: transparent;
   --fc-page-bg-color: transparent;
+  position: relative;
+  z-index: 0;
 }
 
 .fc-theme-standard td,
@@ -30,7 +32,14 @@
 }
 
 .fc-toolbar-title {
-  @apply text-gray-200 !important;
+  @apply text-gray-200 font-bold tracking-tight !important;
+  font-size: 1.875rem !important;
+  line-height: 2.25rem !important;
+  background: linear-gradient(to right, #c084fc, #e879f9);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+  letter-spacing: -0.025em;
 }
 
 .fc-daygrid-day-number {
@@ -56,4 +65,87 @@
 .fc-day-sun .fc-daygrid-day-number,
 .fc-col-header-cell.fc-day-sun {
   color: #f87171 !important; /* red-400 */
+}
+
+/* イベントのスタイリング */
+.fc-event {
+  border: none !important;
+  background: none !important;
+  padding: 1px 0 !important;
+}
+
+.fc-event-main {
+  padding: 0 !important;
+}
+
+.fc-event-title {
+  padding: 0 !important;
+}
+
+/* イベントの配置調整 */
+.fc-daygrid-event-harness {
+  margin-top: 2px !important;
+}
+
+/* イベントが複数ある場合の「+more」のスタイリング */
+.fc-more-link {
+  @apply text-gray-400 hover:text-gray-200 text-xs !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  padding: 2px 4px !important;
+  border-radius: 4px !important;
+  margin-top: 2px !important;
+}
+
+/* カレンダーセルのホバー効果 */
+.fc-day:not(.fc-day-other) {
+  cursor: pointer !important;
+  transition: background-color 0.2s ease;
+}
+
+.fc-day:not(.fc-day-other):hover {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* カスタムツールチップのスタイル */
+.calendar-tooltip {
+  @apply px-3 py-2 text-sm rounded-lg shadow-lg;
+  background: rgba(17, 24, 39, 0.95);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  max-width: 300px;
+  pointer-events: none;
+  z-index: 9999999;
+}
+
+.calendar-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 8px;
+  transform: translateX(0);
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid rgba(17, 24, 39, 0.95);
+}
+
+/* イベントのホバー効果 */
+.fc-event {
+  cursor: pointer !important;
+}
+
+/* モーダルやポップオーバーのz-indexを調整 */
+.fc-popover {
+  z-index: 100 !important;
+}
+
+/* カレンダーのボタンやヘッダーのz-indexも調整 */
+.fc .fc-toolbar {
+  z-index: 1 !important;
+  position: relative;
+}
+
+/* イベントのz-indexも調整 */
+.fc-event {
+  z-index: 1 !important;
+  position: relative;
 }
