@@ -26,7 +26,7 @@ export default function Header() {
               height={32}
             />
             <h1 className='text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600'>
-              FPS Game Scheduler
+              GFC Scheduler
             </h1>
           </div>
           <div className='flex items-center space-x-4'>
@@ -54,7 +54,7 @@ export default function Header() {
             height={32}
           />
           <h1 className='text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600'>
-            FPS Game Scheduler
+            GFC Scheduler
           </h1>
         </div>
         <div className='flex items-center space-x-4'>
