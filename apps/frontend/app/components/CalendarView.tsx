@@ -8,13 +8,14 @@ import type { Event, Participant } from './Calendar';
 import { DateSelectArg, EventContentArg } from '@fullcalendar/core';
 import { User, Crosshair } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { useRef } from 'react';
+import { useRef, useMemo, useCallback } from 'react';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from './ui/tooltip';
+import holidays from '@holiday-jp/holiday_jp';
 
 interface CalendarViewProps {
   date: Date | undefined;
@@ -32,6 +33,11 @@ interface CalendarViewProps {
   }[];
   onDateSelect: (date: Date | undefined) => void;
   onEventClick: (event: Event) => void;
+}
+
+interface Holiday {
+  date: Date;
+  name: string;
 }
 
 export function CalendarView({
@@ -147,6 +153,23 @@ export function CalendarView({
     }
   };
 
+  const holidayList = useMemo(() => {
+    const start = new Date(new Date().getFullYear(), 0, 1);
+    const end = new Date(new Date().getFullYear(), 11, 31);
+    return holidays.between(start, end);
+  }, []);
+
+  const dayCellClassNames = useCallback(
+    (arg: { date: Date }) => {
+      const isHoliday = holidayList.some(
+        (holiday: Holiday) =>
+          holiday.date.toDateString() === arg.date.toDateString()
+      );
+      return cn('min-h-[120px]', isHoliday && 'holiday');
+    },
+    [holidayList]
+  );
+
   return (
     <div className='w-full h-full'>
       <FullCalendar
@@ -200,7 +223,7 @@ export function CalendarView({
         displayEventTime={false}
         nowIndicator={true}
         initialDate={date}
-        dayCellClassNames='min-h-[120px]'
+        dayCellClassNames={dayCellClassNames}
         dayHeaderClassNames='!cursor-default hover:!bg-transparent'
         eventClick={handleEventClick}
       />

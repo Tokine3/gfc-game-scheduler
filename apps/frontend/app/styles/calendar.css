@@ -342,3 +342,14 @@
 .fc-day-sun.fc-col-header-cell {
   color: #f87171 !important; /* red-400 */
 }
+
+/* 祝日の日付番号を赤色に */
+.holiday .fc-daygrid-day-number {
+  color: #f87171 !important; /* red-400 */
+}
+
+/* 祝日のヘッダーセルを赤色に */
+.fc-day-sun.fc-col-header-cell,
+.holiday.fc-col-header-cell {
+  color: #f87171 !important; /* red-400 */
+}
