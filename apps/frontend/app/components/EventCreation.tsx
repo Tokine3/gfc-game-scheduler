@@ -73,7 +73,7 @@ export default function EventCreation({ onClose, date }: EventCreationProps) {
                 <Input
                   id='date'
                   type='date'
-                  value={date?.toISOString().split('T')[0]}
+                  value={dayjs(date).format('YYYY-MM-DD')}
                   readOnly
                   className='pl-8'
                 />

@@ -19,6 +19,7 @@ import {
 } from './ui/dialog';
 import { Progress } from './ui/progress';
 import { Button } from './ui/button';
+import dayjs from 'dayjs';
 
 interface Event {
   id: number;
@@ -59,7 +60,7 @@ export default function EventDetail({ event, onClose }: EventDetailProps) {
         <div className='space-y-4'>
           <div className='flex items-center space-x-2 text-gray-300'>
             <CalendarIcon className='h-4 w-4' />
-            <p>日付：{event.date.toLocaleDateString('ja-JP')}</p>
+            <p>日付：{dayjs(event.date).format('YYYY/MM/DD')}</p>
           </div>
 
           {!event.isPersonal &&
