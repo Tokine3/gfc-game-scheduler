@@ -52,6 +52,10 @@ export function CalendarView({
     onDateSelect(selectInfo.start);
   };
 
+  const handleDateClick = (arg: { date: Date }) => {
+    onDateSelect(arg.date);
+  };
+
   const renderEventContent = (eventContent: EventContentArg) => {
     const { isPersonal, participants, quota } =
       eventContent.event.extendedProps;
@@ -181,6 +185,7 @@ export function CalendarView({
         initialView='dayGridMonth'
         selectable={true}
         select={handleDateSelect}
+        dateClick={handleDateClick}
         events={events}
         eventContent={renderEventContent}
         headerToolbar={{

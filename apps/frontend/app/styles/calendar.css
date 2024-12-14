@@ -353,3 +353,19 @@
 .holiday.fc-col-header-cell {
   color: #f87171 !important; /* red-400 */
 }
+
+/* タッチデバイスでの選択をより確実にするための調整 */
+@media (max-width: 640px) {
+  .fc-day {
+    touch-action: manipulation;
+  }
+
+  .fc-daygrid-day-frame {
+    min-height: 80px; /* タップ領域を確保 */
+  }
+
+  /* タップ時のフィードバック */
+  .fc-day:active {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+  }
+}

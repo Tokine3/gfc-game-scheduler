@@ -22,6 +22,7 @@ import {
   TooltipTrigger,
 } from './ui/tooltip';
 import { cn } from '../../lib/utils';
+import EventTypeSelector from './EventTypeSelector';
 
 export interface Participant {
   id: number;
@@ -52,6 +53,7 @@ export default function Calendar() {
   const [showEventDetail, setShowEventDetail] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
+  const [showTypeSelector, setShowTypeSelector] = useState(false);
 
   // ダミーデータを作成
   useEffect(() => {
@@ -183,7 +185,7 @@ export default function Calendar() {
   const handleDateClick = (date: Date | undefined) => {
     if (date) {
       setDate(date);
-      setShowEventCreation(true);
+      setShowTypeSelector(true);
     }
   };
 
@@ -416,6 +418,20 @@ export default function Calendar() {
           </div>
         </div>
       </div>
+
+      {showTypeSelector && (
+        <EventTypeSelector
+          onClose={() => setShowTypeSelector(false)}
+          onSelectEvent={() => {
+            setShowTypeSelector(false);
+            setShowEventCreation(true);
+          }}
+          onSelectPersonal={() => {
+            setShowTypeSelector(false);
+            setShowPersonalEventCreation(true);
+          }}
+        />
+      )}
 
       {showEventCreation && (
         <EventCreation
