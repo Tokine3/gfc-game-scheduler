@@ -69,6 +69,22 @@ export default function EventDetail({ event, onClose }: EventDetailProps) {
           <DialogDescription className='text-center text-sm sm:text-base'>
             {event.isPersonal ? '個人予定の詳細' : 'イベントの詳細'}
           </DialogDescription>
+          <div className='flex items-center justify-center gap-2 mt-2'>
+            {event.creator.avatarUrl ? (
+              <img
+                src={event.creator.avatarUrl}
+                alt={event.creator.name}
+                className='w-6 h-6 rounded-full border border-gray-700'
+              />
+            ) : (
+              <div className='w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center'>
+                <User className='w-3 h-3 text-gray-400' />
+              </div>
+            )}
+            <span className='text-sm text-gray-400'>
+              作成者: {event.creator.name}
+            </span>
+          </div>
         </DialogHeader>
 
         <div className='space-y-6'>

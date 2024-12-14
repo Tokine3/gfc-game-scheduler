@@ -13,6 +13,7 @@ import {
   Gamepad2Icon,
   UserIcon,
   UsersIcon,
+  User,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -36,6 +37,11 @@ export interface Event {
   participants?: Participant[];
   quota?: number;
   isPersonal: boolean;
+  creator: {
+    id: number;
+    name: string;
+    avatarUrl?: string;
+  };
 }
 
 export default function Calendar() {
@@ -58,9 +64,9 @@ export default function Calendar() {
         participants: [
           {
             id: 1,
-            name: 'ユーザー1',
+            name: 'ときね',
             status: 'join',
-            avatarUrl: 'https://github.com/shadcn.png',
+            avatarUrl: 'https://github.com/Tokine3.png',
           },
           { id: 2, name: 'ユーザー2', status: 'join' },
           { id: 3, name: 'ユーザー3', status: 'maybe' },
@@ -69,6 +75,12 @@ export default function Calendar() {
         ],
         quota: 5,
         isPersonal: false,
+        creator: {
+          id: 1,
+          name: 'うなす太郎',
+          avatarUrl:
+            'https://pbs.twimg.com/profile_images/1727132144026427392/hr4uinlf_400x400.jpg',
+        },
       },
       {
         id: 2,
@@ -80,12 +92,24 @@ export default function Calendar() {
         ],
         quota: 5,
         isPersonal: false,
+        creator: {
+          id: 2,
+          name: 'まる',
+          avatarUrl:
+            'https://pbs.twimg.com/profile_images/686859461386846209/y-4uA3cH_400x400.jpg',
+        },
       },
       {
         id: 3,
         title: '個人練習',
         date: baseDate.add(2, 'day').toDate(),
         isPersonal: true,
+        creator: {
+          id: 3,
+          name: 'うなす太郎',
+          avatarUrl:
+            'https://pbs.twimg.com/profile_images/1727132144026427392/hr4uinlf_400x400.jpg',
+        },
       },
       {
         id: 4,
@@ -99,6 +123,12 @@ export default function Calendar() {
         ],
         quota: 10,
         isPersonal: false,
+        creator: {
+          id: 4,
+          name: 'ときね',
+          avatarUrl:
+            'https://pbs.twimg.com/profile_images/824190388785348608/vW09xZDi_400x400.jpg',
+        },
       },
       {
         id: 5,
@@ -107,10 +137,16 @@ export default function Calendar() {
         participants: [{ id: 12, name: 'ユーザー12', status: 'join' }],
         quota: 5,
         isPersonal: false,
+        creator: {
+          id: 5,
+          name: 'まる',
+          avatarUrl:
+            'https://pbs.twimg.com/profile_images/686859461386846209/y-4uA3cH_400x400.jpg',
+        },
       },
       {
         id: 6,
-        title: 'コンペ',
+        title: 'うなす太郎',
         date: baseDate.add(7, 'day').toDate(),
         participants: [
           { id: 13, name: 'ユーザー13', status: 'join' },
@@ -121,12 +157,24 @@ export default function Calendar() {
         ],
         quota: 5,
         isPersonal: false,
+        creator: {
+          id: 6,
+          name: 'ときね',
+          avatarUrl:
+            'https://pbs.twimg.com/profile_images/1727132144026427392/hr4uinlf_400x400.jpg',
+        },
       },
       {
         id: 7,
         title: 'bot撃ち',
         date: baseDate.subtract(7, 'day').toDate(),
         isPersonal: true,
+        creator: {
+          id: 7,
+          name: 'ときね',
+          avatarUrl:
+            'https://pbs.twimg.com/profile_images/824190388785348608/vW09xZDi_400x400.jpg',
+        },
       },
     ]);
     setDate(baseDate.toDate());
@@ -283,6 +331,17 @@ export default function Calendar() {
                           )}
                         </div>
                       </div>
+                      {event.creator.avatarUrl ? (
+                        <img
+                          src={event.creator.avatarUrl}
+                          alt={event.creator.name}
+                          className='w-6 h-6 rounded-full ml-2 border border-gray-700'
+                        />
+                      ) : (
+                        <div className='w-6 h-6 rounded-full ml-2 bg-gray-700 flex items-center justify-center'>
+                          <User className='w-3 h-3 text-gray-400' />
+                        </div>
+                      )}
                     </div>
                   </Button>
                 );
@@ -338,6 +397,17 @@ export default function Calendar() {
                             )}
                           </div>
                         </div>
+                        {event.creator.avatarUrl ? (
+                          <img
+                            src={event.creator.avatarUrl}
+                            alt={event.creator.name}
+                            className='w-6 h-6 rounded-full ml-2 border border-gray-700'
+                          />
+                        ) : (
+                          <div className='w-6 h-6 rounded-full ml-2 bg-gray-700 flex items-center justify-center'>
+                            <User className='w-3 h-3 text-gray-400' />
+                          </div>
+                        )}
                       </div>
                     </Button>
                   ))}
