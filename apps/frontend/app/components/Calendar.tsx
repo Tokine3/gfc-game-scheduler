@@ -155,7 +155,7 @@ export default function Calendar() {
         </div>
       </div>
 
-      <div className='grid gap-6 md:grid-cols-[2fr_1fr] lg:grid-cols-[3fr_1fr]'>
+      <div className='grid grid-cols-1 md:grid-cols-[2fr_1fr] lg:grid-cols-[3fr_1fr] gap-6'>
         <div className='bg-gray-900/50 backdrop-blur-sm rounded-lg border border-gray-800/50'>
           <div className='flex items-center justify-center border-b border-gray-800/50 p-4'>
             <h3 className='text-xl font-semibold text-gray-100 flex items-center'>
@@ -173,14 +173,14 @@ export default function Calendar() {
           </div>
         </div>
 
-        <div className='bg-gray-900/50 backdrop-blur-sm rounded-lg border border-gray-800/50'>
-          <div className='flex items-center justify-center border-b border-gray-800/50 p-4'>
-            <h3 className='text-xl font-semibold text-gray-100 flex items-center'>
-              <CrosshairIcon className='mr-2 h-6 w-6' />
+        <div className='bg-gray-900/50 backdrop-blur-sm rounded-lg border border-gray-800/50 md:max-h-full'>
+          <div className='sticky top-0 z-10 flex items-center justify-center border-b border-gray-800/50 p-4 bg-gray-900/95 backdrop-blur-sm'>
+            <h3 className='text-lg sm:text-xl font-semibold text-gray-100 flex items-center'>
+              <CrosshairIcon className='mr-2 h-5 w-5 sm:h-6 sm:w-6' />
               今後のイベント
             </h3>
           </div>
-          <div className='p-4 space-y-4'>
+          <div className='p-4 space-y-4 max-h-[40vh] md:max-h-[calc(100vh-20rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent'>
             {events.map((event) => (
               <Button
                 key={event.id}

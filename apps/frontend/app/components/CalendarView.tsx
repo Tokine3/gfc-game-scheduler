@@ -58,9 +58,10 @@ export function CalendarView({
           <TooltipTrigger asChild>
             <div
               className={cn(
-                'flex items-center gap-1.5 px-2 py-1 rounded-full',
-                'text-xs font-medium shadow-sm backdrop-blur-sm',
+                'flex items-center gap-1.5 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md sm:rounded-full',
+                'text-[10px] sm:text-xs font-medium shadow-sm backdrop-blur-sm',
                 'transition-all duration-200 hover:scale-105',
+                'min-w-0 max-w-full',
                 isPersonal
                   ? 'bg-purple-500/20 text-purple-200 border border-purple-500/30'
                   : isFull
@@ -68,20 +69,24 @@ export function CalendarView({
                     : 'bg-blue-500/20 text-blue-200 border border-blue-500/30'
               )}
             >
-              {isPersonal ? (
-                <User className='h-3 w-3 flex-shrink-0' />
-              ) : (
-                <Crosshair className='h-3 w-3 flex-shrink-0' />
-              )}
-              <span className='truncate'>{eventContent.event.title}</span>
-              {!isPersonal && (
-                <span className='flex-shrink-0 text-[10px] opacity-80'>
-                  {participants}/{quota}
-                </span>
-              )}
+              <div className='flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-1.5 min-w-0'>
+                <div className='flex items-center gap-1 flex-shrink-0'>
+                  {isPersonal ? (
+                    <User className='h-3 w-3' />
+                  ) : (
+                    <Crosshair className='h-3 w-3' />
+                  )}
+                  {!isPersonal && (
+                    <span className='text-[9px] sm:text-[10px] opacity-80'>
+                      {participants}/{quota}
+                    </span>
+                  )}
+                </div>
+                <span className='truncate'>{eventContent.event.title}</span>
+              </div>
             </div>
           </TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent side='bottom'>
             <div className='space-y-1'>
               <div className='font-medium'>{eventContent.event.title}</div>
               {!isPersonal && (

@@ -50,32 +50,34 @@ export default function EventCreation({ onClose, date }: EventCreationProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className='space-y-4'>
-          <div className='space-y-2'>
-            <Label htmlFor='title'>タイトル</Label>
-            <div className='relative'>
-              <CrosshairIcon className='absolute left-2 top-2.5 h-4 w-4 text-gray-500' />
-              <Input
-                id='title'
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                className='pl-8'
-              />
+        <form onSubmit={handleSubmit} className='space-y-6'>
+          <div className='grid gap-6 sm:grid-cols-2'>
+            <div className='space-y-2'>
+              <Label htmlFor='title'>タイトル</Label>
+              <div className='relative'>
+                <CrosshairIcon className='absolute left-2 top-2.5 h-4 w-4 text-gray-500' />
+                <Input
+                  id='title'
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                  className='pl-8'
+                />
+              </div>
             </div>
-          </div>
 
-          <div className='space-y-2'>
-            <Label htmlFor='date'>日付</Label>
-            <div className='relative'>
-              <CalendarIcon className='absolute left-2 top-2.5 h-4 w-4 text-gray-500' />
-              <Input
-                id='date'
-                type='date'
-                value={dayjs(date).format('YYYY-MM-DD')}
-                readOnly
-                className='pl-8'
-              />
+            <div className='space-y-2'>
+              <Label htmlFor='date'>日付</Label>
+              <div className='relative'>
+                <CalendarIcon className='absolute left-2 top-2.5 h-4 w-4 text-gray-500' />
+                <Input
+                  id='date'
+                  type='date'
+                  value={date?.toISOString().split('T')[0]}
+                  readOnly
+                  className='pl-8'
+                />
+              </div>
             </div>
           </div>
 
@@ -102,7 +104,7 @@ export default function EventCreation({ onClose, date }: EventCreationProps) {
                 id='notes'
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className='pl-8'
+                className='pl-8 min-h-[100px]'
               />
             </div>
           </div>
@@ -110,7 +112,7 @@ export default function EventCreation({ onClose, date }: EventCreationProps) {
           <DialogFooter>
             <Button
               type='submit'
-              className='bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600'
+              className='w-full sm:w-auto bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600'
             >
               イベント作成
             </Button>

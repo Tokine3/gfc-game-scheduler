@@ -46,32 +46,34 @@ export default function PersonalEventCreation({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className='space-y-4'>
-          <div className='space-y-2'>
-            <Label htmlFor='title'>タイトル</Label>
-            <div className='relative'>
-              <User className='absolute left-2 top-2.5 h-4 w-4 text-gray-500' />
-              <Input
-                id='title'
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                className='pl-8'
-              />
+        <form onSubmit={handleSubmit} className='space-y-6'>
+          <div className='grid gap-6 sm:grid-cols-2'>
+            <div className='space-y-2'>
+              <Label htmlFor='title'>タイトル</Label>
+              <div className='relative'>
+                <User className='absolute left-2 top-2.5 h-4 w-4 text-gray-500' />
+                <Input
+                  id='title'
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                  className='pl-8'
+                />
+              </div>
             </div>
-          </div>
 
-          <div className='space-y-2'>
-            <Label htmlFor='date'>日付</Label>
-            <div className='relative'>
-              <CalendarIcon className='absolute left-2 top-2.5 h-4 w-4 text-gray-500' />
-              <Input
-                id='date'
-                type='date'
-                value={date?.toISOString().split('T')[0]}
-                readOnly
-                className='pl-8'
-              />
+            <div className='space-y-2'>
+              <Label htmlFor='date'>日付</Label>
+              <div className='relative'>
+                <CalendarIcon className='absolute left-2 top-2.5 h-4 w-4 text-gray-500' />
+                <Input
+                  id='date'
+                  type='date'
+                  value={date?.toISOString().split('T')[0]}
+                  readOnly
+                  className='pl-8'
+                />
+              </div>
             </div>
           </div>
 
@@ -83,7 +85,7 @@ export default function PersonalEventCreation({
                 id='notes'
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className='pl-8'
+                className='pl-8 min-h-[100px]'
               />
             </div>
           </div>
@@ -91,7 +93,7 @@ export default function PersonalEventCreation({
           <DialogFooter>
             <Button
               type='submit'
-              className='bg-gradient-to-r from-purple-400 to-pink-600 hover:from-purple-500 hover:to-pink-700'
+              className='w-full sm:w-auto bg-gradient-to-r from-purple-400 to-pink-600 hover:from-purple-500 hover:to-pink-700'
             >
               個人予定作成
             </Button>

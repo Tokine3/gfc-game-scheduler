@@ -235,3 +235,78 @@
   outline: 2px solid rgb(59, 130, 246);
   outline-offset: -2px;
 }
+
+/* イベントのスタイリング改善 */
+.fc-event {
+  margin: 1px 0 !important;
+}
+
+/* スマートフォンでのイベント表示を改善 */
+@media (max-width: 640px) {
+  .fc-daygrid-event-harness {
+    margin: 1px 0 !important;
+  }
+
+  .fc-event {
+    margin: 0 !important;
+  }
+
+  /* イベントの最大表示数を調整 */
+  .fc-dayGridMonth-view .fc-daygrid-day-events {
+    max-height: 80px;
+    overflow-y: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+
+  .fc-dayGridMonth-view .fc-daygrid-day-events::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+
+  /* +moreリンクのスタイル改善 */
+  .fc-daygrid-more-link {
+    margin: 0 !important;
+    padding: 1px 3px !important;
+    font-size: 0.65rem !important;
+    background: rgba(59, 130, 246, 0.1) !important;
+    border-radius: 4px;
+  }
+}
+
+/* ポップオーバーのスタイル改善 */
+.fc-popover {
+  @apply bg-gray-900/95 border border-gray-800 backdrop-blur-sm !important;
+}
+
+.fc-popover-header {
+  @apply bg-gray-800/50 text-gray-200 !important;
+}
+
+.fc-popover-body {
+  @apply p-2 !important;
+}
+
+/* イベントホバー時のエフェクト */
+.fc-event:hover {
+  z-index: 5 !important;
+}
+
+/* スクロールバーのカスタマイズ */
+.fc-scroller {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
+}
+
+.fc-scroller::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.fc-scroller::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.fc-scroller::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.3);
+  border-radius: 3px;
+}
