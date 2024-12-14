@@ -91,12 +91,21 @@ export default function PersonalEventCreation({
           </div>
 
           <DialogFooter>
-            <Button
-              type='submit'
-              className='w-full sm:w-auto bg-gradient-to-r from-purple-400 to-pink-600 hover:from-purple-500 hover:to-pink-700'
-            >
-              個人予定作成
-            </Button>
+            <div className='flex w-full flex-col-reverse sm:flex-row sm:justify-end gap-2'>
+              <Button
+                variant='outline'
+                onClick={onClose}
+                className='w-full sm:w-auto border-gray-700 hover:bg-gray-800'
+              >
+                キャンセル
+              </Button>
+              <Button
+                type='submit'
+                className='w-full sm:w-auto bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600'
+              >
+                予定作成
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

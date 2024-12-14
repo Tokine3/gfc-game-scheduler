@@ -4,7 +4,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import jaLocale from '@fullcalendar/core/locales/ja';
-import type { Event } from './Calendar';
+import type { Event, Participant } from './Calendar';
 import { DateSelectArg, EventContentArg } from '@fullcalendar/core';
 import { User, Crosshair } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -18,7 +18,18 @@ import {
 
 interface CalendarViewProps {
   date: Date | undefined;
-  events: Event[];
+  events: {
+    id: string;
+    start: Date;
+    end: Date;
+    title: string;
+    extendedProps: {
+      isPersonal: boolean;
+      participants: Participant[] | undefined;
+      quota: number | undefined;
+      originalEvent: Event;
+    };
+  }[];
   onDateSelect: (date: Date | undefined) => void;
   onEventClick: (event: Event) => void;
 }
@@ -31,26 +42,18 @@ export function CalendarView({
 }: CalendarViewProps) {
   const calendarRef = useRef<any>(null);
 
-  const calendarEvents = events.map((event) => ({
-    id: String(event.id),
-    start: event.date,
-    end: event.date,
-    title: event.title,
-    extendedProps: {
-      isPersonal: event.isPersonal,
-      isFull: event.participants === event.quota,
-      participants: event.participants,
-      quota: event.quota,
-    },
-  }));
-
   const handleDateSelect = (selectInfo: DateSelectArg) => {
     onDateSelect(selectInfo.start);
   };
 
   const renderEventContent = (eventContent: EventContentArg) => {
-    const { isPersonal, isFull, participants, quota } =
+    const { isPersonal, participants, quota } =
       eventContent.event.extendedProps;
+    const isFull =
+      participants &&
+      quota &&
+      participants.filter((p: Participant) => p.status === 'join').length >=
+        quota;
 
     return (
       <TooltipProvider>
@@ -76,9 +79,9 @@ export function CalendarView({
                   ) : (
                     <Crosshair className='h-3 w-3' />
                   )}
-                  {!isPersonal && (
+                  {!isPersonal && participants && (
                     <span className='text-[9px] sm:text-[10px] opacity-80'>
-                      {participants}/{quota}
+                      {participants.length}/{quota}
                     </span>
                   )}
                 </div>
@@ -86,16 +89,46 @@ export function CalendarView({
               </div>
             </div>
           </TooltipTrigger>
-          <TooltipContent side='bottom'>
-            <div className='space-y-1'>
+          <TooltipContent side='bottom' className='max-w-xs'>
+            <div className='space-y-2'>
               <div className='font-medium'>{eventContent.event.title}</div>
-              {!isPersonal && (
-                <div className='text-gray-400 flex items-center gap-1'>
-                  <User className='h-3 w-3' />
-                  <span>
-                    {participants}/{quota}
-                  </span>
-                </div>
+              {!isPersonal && participants && quota && (
+                <>
+                  <div className='text-gray-400 flex items-center gap-1'>
+                    <User className='h-3 w-3' />
+                    <span>
+                      {participants.length}/{quota}
+                    </span>
+                  </div>
+                  <div className='space-y-1'>
+                    {participants.filter(
+                      (p: Participant) => p.status === 'join'
+                    ).length > 0 && (
+                      <div className='text-xs'>
+                        <span className='text-green-400 font-medium'>
+                          参加者:{' '}
+                        </span>
+                        {participants
+                          .filter((p: Participant) => p.status === 'join')
+                          .map((p: Participant) => p.name)
+                          .join(', ')}
+                      </div>
+                    )}
+                    {participants.filter(
+                      (p: Participant) => p.status === 'maybe'
+                    ).length > 0 && (
+                      <div className='text-xs'>
+                        <span className='text-yellow-400 font-medium'>
+                          未定:{' '}
+                        </span>
+                        {participants
+                          .filter((p: Participant) => p.status === 'maybe')
+                          .map((p: Participant) => p.name)
+                          .join(', ')}
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           </TooltipContent>
@@ -106,9 +139,11 @@ export function CalendarView({
 
   const handleEventClick = (clickInfo: any) => {
     const eventId = parseInt(clickInfo.event.id);
-    const event = events.find((e) => e.id === eventId);
-    if (event) {
-      onEventClick(event);
+    const originalEvent = events.find(
+      (e) => e.extendedProps.originalEvent.id === eventId
+    );
+    if (originalEvent?.extendedProps.originalEvent) {
+      onEventClick(originalEvent.extendedProps.originalEvent);
     }
   };
 
@@ -122,7 +157,7 @@ export function CalendarView({
         initialView='dayGridMonth'
         selectable={true}
         select={handleDateSelect}
-        events={calendarEvents}
+        events={events}
         eventContent={renderEventContent}
         headerToolbar={{
           start: 'title',
@@ -166,6 +201,7 @@ export function CalendarView({
         nowIndicator={true}
         initialDate={date}
         dayCellClassNames='min-h-[120px]'
+        dayHeaderClassNames='!cursor-default hover:!bg-transparent'
         eventClick={handleEventClick}
       />
     </div>

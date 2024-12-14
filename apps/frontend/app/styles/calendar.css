@@ -310,3 +310,35 @@
   background-color: rgba(156, 163, 175, 0.3);
   border-radius: 3px;
 }
+
+/* 曜日ヘッダーのスタイル固定 */
+.fc .fc-col-header-cell {
+  background: transparent !important;
+  transition: none !important;
+}
+
+.fc .fc-col-header-cell:hover {
+  background: transparent !important;
+}
+
+.fc .fc-col-header-cell-cushion {
+  padding: 8px;
+  font-weight: 500;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* 平日 */
+.fc-col-header-cell {
+  color: #9ca3af !important; /* text-gray-400 */
+}
+
+/* 土曜日 */
+.fc-day-sat.fc-col-header-cell {
+  color: #60a5fa !important; /* blue-400 */
+}
+
+/* 日曜日 */
+.fc-day-sun.fc-col-header-cell {
+  color: #f87171 !important; /* red-400 */
+}

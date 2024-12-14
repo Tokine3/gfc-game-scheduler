@@ -20,12 +20,20 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from './ui/tooltip';
+import { cn } from '../../lib/utils';
+
+export interface Participant {
+  id: number;
+  name: string;
+  status: 'join' | 'maybe' | 'decline';
+  avatarUrl?: string;
+}
 
 export interface Event {
   id: number;
   title: string;
   date: Date;
-  participants?: number;
+  participants?: Participant[];
   quota?: number;
   isPersonal: boolean;
 }
@@ -47,7 +55,18 @@ export default function Calendar() {
         id: 1,
         title: 'チームデスマッチ',
         date: baseDate.toDate(),
-        participants: 5,
+        participants: [
+          {
+            id: 1,
+            name: 'ユーザー1',
+            status: 'join',
+            avatarUrl: 'https://github.com/shadcn.png',
+          },
+          { id: 2, name: 'ユーザー2', status: 'join' },
+          { id: 3, name: 'ユーザー3', status: 'maybe' },
+          { id: 4, name: 'ユーザー4', status: 'join' },
+          { id: 5, name: 'ユーザー5', status: 'join' },
+        ],
         quota: 5,
         isPersonal: false,
       },
@@ -55,7 +74,10 @@ export default function Calendar() {
         id: 2,
         title: 'コンペティティブ',
         date: baseDate.add(1, 'day').toDate(),
-        participants: 2,
+        participants: [
+          { id: 6, name: 'ユーザー6', status: 'join' },
+          { id: 7, name: 'ユーザー7', status: 'maybe' },
+        ],
         quota: 5,
         isPersonal: false,
       },
@@ -69,7 +91,12 @@ export default function Calendar() {
         id: 4,
         title: 'デスマッチ',
         date: baseDate.add(2, 'day').toDate(),
-        participants: 4,
+        participants: [
+          { id: 8, name: 'ユーザー8', status: 'join' },
+          { id: 9, name: 'ユーザー9', status: 'join' },
+          { id: 10, name: 'ユーザー10', status: 'join' },
+          { id: 11, name: 'ユーザー11', status: 'decline' },
+        ],
         quota: 10,
         isPersonal: false,
       },
@@ -77,7 +104,7 @@ export default function Calendar() {
         id: 5,
         title: '朝からコンペ',
         date: baseDate.add(5, 'day').toDate(),
-        participants: 1,
+        participants: [{ id: 12, name: 'ユーザー12', status: 'join' }],
         quota: 5,
         isPersonal: false,
       },
@@ -85,7 +112,13 @@ export default function Calendar() {
         id: 6,
         title: 'コンペ',
         date: baseDate.add(7, 'day').toDate(),
-        participants: 5,
+        participants: [
+          { id: 13, name: 'ユーザー13', status: 'join' },
+          { id: 14, name: 'ユーザー14', status: 'join' },
+          { id: 15, name: 'ユーザー15', status: 'join' },
+          { id: 16, name: 'ユーザー16', status: 'join' },
+          { id: 17, name: 'ユーザー17', status: 'join' },
+        ],
         quota: 5,
         isPersonal: false,
       },
@@ -110,6 +143,19 @@ export default function Calendar() {
     setSelectedEvent(event);
     setShowEventDetail(true);
   };
+
+  const calendarEvents = events.map((event) => ({
+    id: String(event.id),
+    start: event.date,
+    end: event.date,
+    title: event.title,
+    extendedProps: {
+      isPersonal: event.isPersonal,
+      participants: event.participants,
+      quota: event.quota,
+      originalEvent: event,
+    },
+  }));
 
   return (
     <div className='space-y-6 py-6'>
@@ -166,7 +212,7 @@ export default function Calendar() {
           <div className='p-4'>
             <CalendarView
               date={date}
-              events={events}
+              events={calendarEvents}
               onDateSelect={handleDateClick}
               onEventClick={handleEventClick}
             />
@@ -181,44 +227,122 @@ export default function Calendar() {
             </h3>
           </div>
           <div className='p-4 space-y-4 max-h-[40vh] md:max-h-[calc(100vh-20rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent'>
-            {events.map((event) => (
-              <Button
-                key={event.id}
-                variant='outline'
-                className={`w-full justify-start text-left border-gray-700 hover:bg-gray-800 ${
-                  event.isPersonal
-                    ? 'bg-purple-900/50'
-                    : event.participants === event.quota
-                      ? 'bg-green-900/50'
-                      : event.date < new Date()
-                        ? 'bg-red-900/50'
-                        : ''
-                }`}
-                onClick={() => handleEventClick(event)}
-              >
-                <div className='flex items-center w-full'>
-                  {event.isPersonal ? (
-                    <UserIcon className='mr-2 h-4 w-4 text-purple-400' />
-                  ) : (
-                    <CrosshairIcon className='mr-2 h-4 w-4 text-cyan-400' />
-                  )}
-                  <div className='flex-1'>
-                    <div className='font-medium text-gray-100'>
-                      {event.title}
-                    </div>
-                    <div className='text-sm text-gray-400'>
-                      {dayjs(event.date).format('YYYY年MM月DD日')}
-                      {!event.isPersonal && (
-                        <>
-                          - <UsersIcon className='inline h-3 w-3' />{' '}
-                          {event.participants}/{event.quota}
-                        </>
+            {/* 未来のイベント */}
+            {events
+              .filter((event) => event.date >= new Date())
+              .sort((a, b) => a.date.getTime() - b.date.getTime())
+              .map((event) => {
+                const joinCount =
+                  event.participants?.filter((p) => p.status === 'join')
+                    .length || 0;
+                const isAlmostFull =
+                  !event.isPersonal &&
+                  event.quota &&
+                  joinCount === event.quota - 1;
+                const isFull =
+                  !event.isPersonal && event.quota && joinCount >= event.quota;
+
+                return (
+                  <Button
+                    key={event.id}
+                    variant='outline'
+                    className={cn(
+                      'w-full justify-start text-left border-gray-700 hover:bg-gray-800',
+                      event.isPersonal
+                        ? 'bg-purple-900/50'
+                        : isFull
+                          ? 'bg-green-900/50'
+                          : isAlmostFull
+                            ? 'bg-yellow-900/50'
+                            : event.date < new Date()
+                              ? 'bg-red-900/50'
+                              : ''
+                    )}
+                    onClick={() => handleEventClick(event)}
+                  >
+                    <div className='flex items-center w-full'>
+                      {event.isPersonal ? (
+                        <UserIcon className='mr-2 h-4 w-4 text-purple-400' />
+                      ) : (
+                        <CrosshairIcon className='mr-2 h-4 w-4 text-cyan-400' />
                       )}
+                      <div className='flex-1'>
+                        <div className='font-medium text-gray-100'>
+                          {event.title}
+                        </div>
+                        <div className='text-sm text-gray-400'>
+                          {dayjs(event.date).format('YYYY年MM月DD日')}
+                          {!event.isPersonal && (
+                            <>
+                              - <UsersIcon className='inline h-3 w-3' />{' '}
+                              {event.participants?.filter(
+                                (p) => p.status === 'join'
+                              ).length || 0}
+                              /{event.quota}
+                            </>
+                          )}
+                        </div>
+                      </div>
                     </div>
+                  </Button>
+                );
+              })}
+
+            {/* 過去のイベントがある場合のみ表示 */}
+            {events.some((event) => event.date < new Date()) && (
+              <>
+                <div className='relative my-6'>
+                  <div className='absolute inset-0 flex items-center'>
+                    <span className='w-full border-t border-gray-700' />
+                  </div>
+                  <div className='relative flex justify-center text-xs uppercase'>
+                    <span className='bg-gray-900 px-2 text-gray-500'>
+                      過去のイベント
+                    </span>
                   </div>
                 </div>
-              </Button>
-            ))}
+
+                {events
+                  .filter((event) => event.date < new Date())
+                  .sort((a, b) => b.date.getTime() - a.date.getTime())
+                  .map((event) => (
+                    <Button
+                      key={event.id}
+                      variant='outline'
+                      className={cn(
+                        'w-full justify-start text-left border-gray-800 hover:bg-gray-800/50',
+                        'opacity-75 bg-gray-800/30'
+                      )}
+                      onClick={() => handleEventClick(event)}
+                    >
+                      <div className='flex items-center w-full'>
+                        {event.isPersonal ? (
+                          <UserIcon className='mr-2 h-4 w-4 text-gray-500' />
+                        ) : (
+                          <CrosshairIcon className='mr-2 h-4 w-4 text-gray-500' />
+                        )}
+                        <div className='flex-1'>
+                          <div className='font-medium text-gray-400'>
+                            {event.title}
+                          </div>
+                          <div className='text-sm text-gray-500'>
+                            {dayjs(event.date).format('YYYY年MM月DD日')}
+                            {!event.isPersonal && (
+                              <>
+                                - <UsersIcon className='inline h-3 w-3' />{' '}
+                                {event.participants?.filter(
+                                  (p) => p.status === 'join'
+                                ).length || 0}
+                                /{event.quota}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </Button>
+                  ))}
+              </>
+            )}
           </div>
         </div>
       </div>

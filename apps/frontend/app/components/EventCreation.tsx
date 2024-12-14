@@ -110,12 +110,21 @@ export default function EventCreation({ onClose, date }: EventCreationProps) {
           </div>
 
           <DialogFooter>
-            <Button
-              type='submit'
-              className='w-full sm:w-auto bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600'
-            >
-              イベント作成
-            </Button>
+            <div className='flex w-full flex-col-reverse sm:flex-row sm:justify-end gap-2'>
+              <Button
+                variant='outline'
+                onClick={onClose}
+                className='w-full sm:w-auto border-gray-700 hover:bg-gray-800'
+              >
+                キャンセル
+              </Button>
+              <Button
+                type='submit'
+                className='w-full sm:w-auto bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600'
+              >
+                イベント作成
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>
