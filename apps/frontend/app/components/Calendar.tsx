@@ -146,7 +146,7 @@ export default function Calendar() {
       },
       {
         id: 6,
-        title: 'うなす太郎',
+        title: 'コンペティティブ',
         date: baseDate.add(7, 'day').toDate(),
         participants: [
           { id: 13, name: 'ユーザー13', status: 'join' },
@@ -159,7 +159,7 @@ export default function Calendar() {
         isPersonal: false,
         creator: {
           id: 6,
-          name: 'ときね',
+          name: 'うなす太郎',
           avatarUrl:
             'https://pbs.twimg.com/profile_images/1727132144026427392/hr4uinlf_400x400.jpg',
         },
