@@ -379,3 +379,87 @@
     user-select: none;
   }
 }
+
+/* 日付セルのスタイル */
+.fc-daygrid-day {
+  min-height: 100px !important;
+}
+
+/* 日付セルの内部レイアウト */
+.fc-daygrid-day-frame {
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* 日付表示のスタイル */
+.fc-daygrid-day-top {
+  display: flex !important;
+  justify-content: flex-end !important;
+  padding: 4px !important;
+}
+
+/* 空き予定人数の表示スタイル */
+.fc-daygrid-day-content {
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0.5rem !important;
+}
+
+/* モバイル対応 */
+@media (max-width: 640px) {
+  .fc-daygrid-day {
+    min-height: 80px !important;
+  }
+
+  .fc-daygrid-day-number {
+    font-size: 0.75rem !important;
+  }
+
+  .fc-daygrid-day-content {
+    padding: 0.25rem !important;
+    text-align: center !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+
+  .fc-daygrid-day-content .text-green-200 {
+    font-size: 0.75rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.25rem !important;
+  }
+
+  .fc-daygrid-day-content svg {
+    width: 0.75rem !important;
+    height: 0.75rem !important;
+  }
+}
+
+.fc-daygrid-day-number {
+  padding: 2px 4px !important;
+  white-space: nowrap !important; /* 改行を防止 */
+}
+
+/* モバイル対応 */
+@media (max-width: 640px) {
+  .fc-daygrid-day {
+    min-height: 80px !important;
+  }
+
+  .fc-daygrid-day-number {
+    font-size: 0.75rem !important;
+  }
+
+  .fc-daygrid-day-content {
+    padding: 0.25rem !important;
+  }
+
+  .fc-daygrid-day-content svg {
+    width: 0.75rem !important;
+    height: 0.75rem !important;
+  }
+}
