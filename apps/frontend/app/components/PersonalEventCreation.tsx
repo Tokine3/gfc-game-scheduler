@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from './ui/dialog';
 import { User, CalendarIcon, FileText } from 'lucide-react';
+import dayjs from 'dayjs';
 
 interface PersonalEventCreationProps {
   onClose: () => void;
@@ -69,7 +70,7 @@ export default function PersonalEventCreation({
                 <Input
                   id='date'
                   type='date'
-                  value={date?.toISOString().split('T')[0]}
+                  value={dayjs(date).format('YYYY-MM-DD')}
                   readOnly
                   className='pl-8'
                 />
