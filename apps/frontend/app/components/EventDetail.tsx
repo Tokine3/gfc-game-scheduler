@@ -88,22 +88,6 @@ export default function EventDetail({ event, onClose }: EventDetailProps) {
         </DialogHeader>
 
         <div className='space-y-6'>
-          <div className='flex flex-col sm:flex-row sm:items-center gap-4 text-gray-300'>
-            <div className='flex items-center space-x-2'>
-              <CalendarIcon className='h-4 w-4 flex-shrink-0' />
-              <p>日付：{dayjs(event.date).format('YYYY/MM/DD')}</p>
-            </div>
-
-            {!event.isPersonal && event.participants && event.quota && (
-              <div className='flex items-center space-x-2'>
-                <Users className='h-4 w-4 flex-shrink-0' />
-                <p>
-                  参加人数：{event.participants.length} / {event.quota}
-                </p>
-              </div>
-            )}
-          </div>
-
           {!event.isPersonal && event.participants && event.quota && (
             <>
               <div className='flex items-center justify-between text-gray-300'>
