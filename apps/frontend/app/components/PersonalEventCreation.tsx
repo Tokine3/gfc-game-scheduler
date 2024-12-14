@@ -151,17 +151,23 @@ export default function PersonalEventCreation({
     });
   };
 
-  // 一括チェック機能を更新
-  const handleBulkCheck = () => {
+  // 全ての予定が空きかどうかをチェックする関数
+  const isAllSchedulesAvailable = () => {
     const days = getDaysInRange();
-    const allChecked = days.every(
+    return days.every(
       (day) =>
         schedules.find((s) => dayjs(s.date).isSame(day, 'day'))?.isAvailable
     );
+  };
+
+  // 一括チェック機能を更新
+  const handleBulkCheck = () => {
+    const days = getDaysInRange();
+    const allChecked = isAllSchedulesAvailable();
 
     const newSchedules = days.map((day) => ({
       date: day.toDate(),
-      isAvailable: !allChecked, // 全てチェック済みの場合は解除
+      isAvailable: !allChecked,
       note: schedules.find((s) => dayjs(s.date).isSame(day, 'day'))?.note || '',
       isPrivate:
         schedules.find((s) => dayjs(s.date).isSame(day, 'day'))?.isPrivate ||
@@ -200,7 +206,11 @@ export default function PersonalEventCreation({
                 variant='outline'
                 size='sm'
                 onClick={handleBulkCheck}
-                className='text-xs sm:text-sm whitespace-nowrap'
+                className={cn(
+                  'text-xs sm:text-sm whitespace-nowrap',
+                  isAllSchedulesAvailable() &&
+                    'bg-gradient-to-r from-cyan-500 to-blue-500 text-white border-transparent'
+                )}
               >
                 <CheckIcon className='h-3 w-3 sm:h-4 sm:w-4 mr-1' />
                 全ての予定を空きにする
@@ -235,9 +245,9 @@ export default function PersonalEventCreation({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
-                    <Label className='cursor-help'>空</Label>
+                    <div className='cursor-help'>空</div>
                   </TooltipTrigger>
-                  <TooltipContent>
+                  <TooltipContent className='z-[100]' side='right'>
                     <p>予定が空いている場合はチェック</p>
                   </TooltipContent>
                 </Tooltip>
@@ -251,7 +261,7 @@ export default function PersonalEventCreation({
                   <TooltipTrigger>
                     <Lock className='h-4 w-4 cursor-help' />
                   </TooltipTrigger>
-                  <TooltipContent>
+                  <TooltipContent className='z-[100]' side='left'>
                     <p>非公開設定（自分のみ閲覧可能）</p>
                   </TooltipContent>
                 </Tooltip>

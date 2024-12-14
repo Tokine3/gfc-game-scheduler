@@ -8,7 +8,7 @@ import type { Event, Participant, AvailabilityCount } from './Calendar';
 import { DateSelectArg, EventContentArg } from '@fullcalendar/core';
 import { User, Crosshair } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { useRef, useMemo, useCallback } from 'react';
+import { useRef, useMemo, useCallback, useState, useEffect } from 'react';
 import {
   Tooltip,
   TooltipContent,
@@ -17,6 +17,7 @@ import {
 } from './ui/tooltip';
 import holidays from '@holiday-jp/holiday_jp';
 import dayjs from 'dayjs';
+import AvailableUsers from './AvailableUsers';
 
 interface CalendarViewProps {
   date: Date | undefined;
@@ -51,12 +52,27 @@ export function CalendarView({
 }: CalendarViewProps) {
   const calendarRef = useRef<any>(null);
   const lastTapRef = useRef<number>(0);
+  const [selectedAvailability, setSelectedAvailability] = useState<{
+    date: Date;
+    users: { id: number; name: string; avatarUrl?: string }[];
+  } | null>(null);
 
   const handleDateSelect = (selectInfo: DateSelectArg) => {
+    if (
+      (selectInfo.jsEvent?.target as Element)?.closest('.availability-count')
+    ) {
+      return;
+    }
     onDateSelect(selectInfo.start);
   };
 
-  const handleDateClick = (arg: { date: Date }) => {
+  const handleDateClick = (arg: { date: Date; jsEvent: MouseEvent }) => {
+    if ((arg.jsEvent.target as Element).closest('.availability-count')) {
+      return;
+    }
+
+    if (selectedAvailability) return;
+
     const now = Date.now();
     const DELAY = 200;
 
@@ -196,20 +212,21 @@ export function CalendarView({
 
     const count = availability?.count || 0;
 
-    // 人数に応じた色分けクラスを設定
     const colorClass =
       count === 0
-        ? 'text-gray-500' // グレー
+        ? 'text-gray-500'
         : count < 5
-          ? 'text-amber-200' // 黄色
-          : 'text-emerald-300'; // 緑
+          ? 'text-amber-200'
+          : 'text-emerald-300';
 
     return {
       html: `
         <div class="h-full flex flex-col">
           <div class="text-right p-1">${arg.dayNumberText}</div>
           <div class="flex-1 flex items-center justify-center">
-            <div class="flex items-center gap-1 ${colorClass} text-lg font-medium">
+            <div class="flex items-center gap-1 ${colorClass} text-lg font-medium ${
+              count > 0 ? 'cursor-pointer availability-count' : ''
+            }" ${count > 0 ? `data-date="${arg.date.toISOString()}"` : ''}>
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 <path d="M12 14C8.13401 14 5 17.134 5 21H19C19 17.134 15.866 14 12 14Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -221,6 +238,38 @@ export function CalendarView({
       `,
     };
   };
+
+  useEffect(() => {
+    const handleAvailabilityClick = (e: MouseEvent) => {
+      const availabilityCount = (e.target as Element).closest(
+        '.availability-count'
+      );
+      if (availabilityCount) {
+        e.stopPropagation();
+        e.preventDefault();
+        const dateStr = availabilityCount.getAttribute('data-date');
+        if (dateStr) {
+          const date = new Date(dateStr);
+          const availability = availabilities.find(
+            (a) =>
+              dayjs(a.date).format('YYYY-MM-DD') ===
+              dayjs(date).format('YYYY-MM-DD')
+          );
+          if (availability) {
+            setSelectedAvailability({
+              date,
+              users: availability.users,
+            });
+          }
+        }
+        return false;
+      }
+    };
+
+    document.addEventListener('click', handleAvailabilityClick, true);
+    return () =>
+      document.removeEventListener('click', handleAvailabilityClick, true);
+  }, [availabilities]);
 
   return (
     <div className='w-full h-full'>
@@ -246,26 +295,6 @@ export function CalendarView({
           prev: '＜',
           next: '＞',
         }}
-        customButtons={{
-          prev: {
-            text: '＜',
-            click: () => {
-              const calendarApi = calendarRef.current?.getApi();
-              if (calendarApi) {
-                calendarApi.prev();
-              }
-            },
-          },
-          next: {
-            text: '＞',
-            click: () => {
-              const calendarApi = calendarRef.current?.getApi();
-              if (calendarApi) {
-                calendarApi.next();
-              }
-            },
-          },
-        }}
         height='auto'
         dayMaxEvents={4}
         firstDay={0}
@@ -281,6 +310,13 @@ export function CalendarView({
         eventClick={handleEventClick}
         dayCellContent={dayCellContent}
       />
+      {selectedAvailability && (
+        <AvailableUsers
+          users={selectedAvailability.users}
+          date={selectedAvailability.date}
+          onClose={() => setSelectedAvailability(null)}
+        />
+      )}
     </div>
   );
 }
