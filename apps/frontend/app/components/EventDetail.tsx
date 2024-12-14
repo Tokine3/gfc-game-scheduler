@@ -36,31 +36,32 @@ interface EventDetailProps {
 
 export default function EventDetail({ event, onClose }: EventDetailProps) {
   const handleReaction = (reaction: string) => {
-    // ここでバックエンドとDiscordに反応を送信します
     console.log(`反応: ${reaction}`);
   };
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className='sm:max-w-[425px] bg-gray-900 text-gray-100 border-gray-800'>
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle className='text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600 flex items-center justify-center'>
+          <DialogTitle className='flex items-center justify-center gap-2'>
             {event.isPersonal ? (
-              <User className='mr-2 h-6 w-6' />
+              <User className='h-6 w-6' />
             ) : (
-              <Crosshair className='mr-2 h-6 w-6' />
+              <Crosshair className='h-6 w-6' />
             )}
             {event.title}
           </DialogTitle>
-          <DialogDescription className='text-gray-400 flex items-center justify-center'>
+          <DialogDescription>
             {event.isPersonal ? '個人予定の詳細' : 'イベントの詳細'}
           </DialogDescription>
         </DialogHeader>
+
         <div className='space-y-4'>
           <div className='flex items-center space-x-2 text-gray-300'>
             <CalendarIcon className='h-4 w-4' />
             <p>日付：{event.date.toLocaleDateString('ja-JP')}</p>
           </div>
+
           {!event.isPersonal &&
             event.participants !== undefined &&
             event.quota !== undefined && (
@@ -71,6 +72,7 @@ export default function EventDetail({ event, onClose }: EventDetailProps) {
                     参加人数：{event.participants} / {event.quota}
                   </p>
                 </div>
+
                 <Progress
                   value={(event.participants / event.quota) * 100}
                   className='w-full h-2 rounded-full overflow-hidden bg-gray-800/30'
@@ -82,24 +84,25 @@ export default function EventDetail({ event, onClose }: EventDetailProps) {
                     boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.1)',
                   }}
                 />
-                <div className='flex justify-between'>
+
+                <div className='flex justify-between flex-col sm:flex-row gap-2'>
                   <Button
                     onClick={() => handleReaction('join')}
-                    className='flex-1 mr-2 bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600'
+                    className='w-full sm:flex-1 bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600'
                   >
                     <CheckIcon className='mr-2 h-4 w-4' /> 参加
                   </Button>
                   <Button
                     variant='outline'
                     onClick={() => handleReaction('maybe')}
-                    className='flex-1 mx-2 border-gray-700 hover:bg-gray-800'
+                    className='w-full sm:flex-1 border-gray-700 hover:bg-gray-800'
                   >
                     <HelpCircleIcon className='mr-2 h-4 w-4' /> 未定
                   </Button>
                   <Button
                     variant='outline'
                     onClick={() => handleReaction('decline')}
-                    className='flex-1 ml-2 border-gray-700 hover:bg-gray-800'
+                    className='w-full sm:flex-1 border-gray-700 hover:bg-gray-800'
                   >
                     <XIcon className='mr-2 h-4 w-4' /> 不参加
                   </Button>
@@ -107,6 +110,7 @@ export default function EventDetail({ event, onClose }: EventDetailProps) {
               </>
             )}
         </div>
+
         <DialogFooter>
           <Button
             variant='outline'

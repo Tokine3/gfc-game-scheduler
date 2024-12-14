@@ -6,15 +6,20 @@ import PersonalEventCreation from './PersonalEventCreation';
 import EventDetail from './EventDetail';
 import dayjs from 'dayjs';
 import CalendarView from './CalendarView';
-import { Button } from './ui/custom-button';
+import { Button } from './ui/button';
 import {
   CalendarIcon,
   CrosshairIcon,
-  DicesIcon,
   Gamepad2Icon,
   UserIcon,
   UsersIcon,
 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from './ui/tooltip';
 
 export interface Event {
   id: number;
@@ -33,22 +38,10 @@ export default function Calendar() {
   const [showEventDetail, setShowEventDetail] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
-  const [tooltip, setTooltip] = useState<{
-    show: boolean;
-    x: number;
-    y: number;
-    content: React.ReactNode;
-  }>({
-    show: false,
-    x: 0,
-    y: 0,
-    content: null,
-  });
 
   // ダミーデータを作成
   useEffect(() => {
     const baseDate = dayjs().startOf('day');
-
     setEvents([
       {
         id: 1,
@@ -120,27 +113,49 @@ export default function Calendar() {
 
   return (
     <div className='space-y-6 py-6'>
-      <div className='flex justify-between items-center'>
-        <h2 className='text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-blue-500 flex items-center'>
-          <Gamepad2Icon className='mr-2 h-8 w-8 text-green-400' />
+      <div className='flex flex-col sm:flex-row justify-between items-center gap-4'>
+        <h2 className='text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-blue-500 flex items-center'>
+          <Gamepad2Icon className='mr-2 h-6 w-6 sm:h-8 sm:w-8 text-green-400' />
           ゲームスケジュール
         </h2>
-        <div>
-          <Button
-            onClick={() => setShowEventCreation(true)}
-            className='bg-gradient-to-r from-pink-500 to-yellow-500 hover:from-pink-600 hover:to-yellow-600 mr-2'
-          >
-            <CrosshairIcon className='mr-2 h-4 w-4' /> イベント作成
-          </Button>
-          <Button
-            onClick={() => setShowPersonalEventCreation(true)}
-            className='bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600'
-          >
-            <UserIcon className='mr-2 h-4 w-4' /> 個人予定作成
-          </Button>
+        <div className='flex gap-2 w-full sm:w-auto'>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={() => setShowEventCreation(true)}
+                  className='flex-1 sm:flex-none bg-gradient-to-r from-pink-500 to-yellow-500 hover:from-pink-600 hover:to-yellow-600'
+                >
+                  <CrosshairIcon className='mr-2 h-4 w-4' />
+                  <span className='sm:inline'>イベント作成</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>新しいゲームイベントを作成</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={() => setShowPersonalEventCreation(true)}
+                  className='flex-1 sm:flex-none bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600'
+                >
+                  <UserIcon className='mr-2 h-4 w-4' />
+                  <span className='sm:inline'>個人予定作成</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>個人の練習予定を作成</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
-      <div className='grid gap-6 md:grid-cols-[2fr_1fr]'>
+
+      <div className='grid gap-6 md:grid-cols-[2fr_1fr] lg:grid-cols-[3fr_1fr]'>
         <div className='bg-gray-900/50 backdrop-blur-sm rounded-lg border border-gray-800/50'>
           <div className='flex items-center justify-center border-b border-gray-800/50 p-4'>
             <h3 className='text-xl font-semibold text-gray-100 flex items-center'>
@@ -154,10 +169,10 @@ export default function Calendar() {
               events={events}
               onDateSelect={handleDateClick}
               onEventClick={handleEventClick}
-              onTooltipChange={setTooltip}
             />
           </div>
         </div>
+
         <div className='bg-gray-900/50 backdrop-blur-sm rounded-lg border border-gray-800/50'>
           <div className='flex items-center justify-center border-b border-gray-800/50 p-4'>
             <h3 className='text-xl font-semibold text-gray-100 flex items-center'>
@@ -172,11 +187,11 @@ export default function Calendar() {
                 variant='outline'
                 className={`w-full justify-start text-left border-gray-700 hover:bg-gray-800 ${
                   event.isPersonal
-                    ? 'bg-purple-900'
+                    ? 'bg-purple-900/50'
                     : event.participants === event.quota
-                      ? 'bg-green-900'
+                      ? 'bg-green-900/50'
                       : event.date < new Date()
-                        ? 'bg-red-900'
+                        ? 'bg-red-900/50'
                         : ''
                 }`}
                 onClick={() => handleEventClick(event)}
@@ -207,6 +222,7 @@ export default function Calendar() {
           </div>
         </div>
       </div>
+
       {showEventCreation && (
         <EventCreation
           onClose={() => setShowEventCreation(false)}
@@ -221,20 +237,9 @@ export default function Calendar() {
       )}
       {showEventDetail && selectedEvent && (
         <EventDetail
-          event={selectedEvent as Event}
+          event={selectedEvent}
           onClose={() => setShowEventDetail(false)}
         />
-      )}
-      {tooltip.show && (
-        <div
-          className='calendar-tooltip fixed'
-          style={{
-            left: `${tooltip.x + 16}px`,
-            top: `${tooltip.y - 16}px`,
-          }}
-        >
-          {tooltip.content}
-        </div>
       )}
     </div>
   );
