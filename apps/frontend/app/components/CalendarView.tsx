@@ -47,13 +47,22 @@ export function CalendarView({
   onEventClick,
 }: CalendarViewProps) {
   const calendarRef = useRef<any>(null);
+  const lastTapRef = useRef<number>(0);
 
   const handleDateSelect = (selectInfo: DateSelectArg) => {
     onDateSelect(selectInfo.start);
   };
 
   const handleDateClick = (arg: { date: Date }) => {
-    onDateSelect(arg.date);
+    const now = Date.now();
+    const DELAY = 200;
+
+    if (now - lastTapRef.current > DELAY) {
+      lastTapRef.current = now;
+      setTimeout(() => {
+        onDateSelect(arg.date);
+      }, 100);
+    }
   };
 
   const renderEventContent = (eventContent: EventContentArg) => {

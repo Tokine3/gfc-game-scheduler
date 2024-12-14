@@ -358,14 +358,24 @@
 @media (max-width: 640px) {
   .fc-day {
     touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent; /* タップ時のハイライトを無効化 */
   }
 
   .fc-daygrid-day-frame {
-    min-height: 80px; /* タップ領域を確保 */
+    min-height: 80px;
   }
 
-  /* タップ時のフィードバック */
+  /* タップ時のフィードバックを調整 */
   .fc-day:active {
     background-color: rgba(255, 255, 255, 0.05) !important;
+    transition: background-color 0.2s ease; /* フィードバックをスムーズに */
+  }
+
+  /* タップ時の即時反応を防ぐ */
+  .fc-day,
+  .fc-daygrid-day-frame,
+  .fc-daygrid-day-events {
+    pointer-events: auto;
+    user-select: none;
   }
 }
