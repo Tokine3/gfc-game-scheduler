@@ -154,8 +154,9 @@ export function CalendarView({
   };
 
   const holidayList = useMemo(() => {
-    const start = new Date(new Date().getFullYear(), 0, 1);
-    const end = new Date(new Date().getFullYear(), 11, 31);
+    const currentYear = new Date().getFullYear();
+    const start = new Date(currentYear, 0, 1); // 現在の年の1月1日
+    const end = new Date(currentYear + 1, 2, 31); // 来年の3月31日
     return holidays.between(start, end);
   }, []);
 

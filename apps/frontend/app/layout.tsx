@@ -6,8 +6,8 @@ import { ThemeProvider } from 'next-themes';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: 'FPS Gamer Discord Scheduler',
-  description: 'Schedule your gaming sessions with style',
+  title: 'GFC Scheduler',
+  description: 'GFC Scheduler',
 };
 
 export default function RootLayout({
@@ -16,7 +16,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang='en' suppressHydrationWarning>
+    <html lang='ja' suppressHydrationWarning>
+      <head>
+        <meta
+          name='viewport'
+          content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
+        />
+      </head>
       <body
         className={`${inter.className} min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/40 to-pink-900/30`}
         style={{
