@@ -11,6 +11,7 @@ import {
 import { Button } from './ui/button';
 import { User } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { useCallback } from 'react';
 
 interface AvailableUsersProps {
   users: {
@@ -27,8 +28,14 @@ export default function AvailableUsers({
   date,
   onClose,
 }: AvailableUsersProps) {
+  const handleClose = useCallback(() => {
+    Promise.resolve().then(() => {
+      onClose();
+    });
+  }, [onClose]);
+
   return (
-    <Dialog open onOpenChange={onClose}>
+    <Dialog open onOpenChange={handleClose}>
       <DialogContent className='max-w-md'>
         <DialogHeader>
           <DialogTitle className='text-center'>
@@ -68,7 +75,7 @@ export default function AvailableUsers({
         <DialogFooter>
           <Button
             variant='outline'
-            onClick={onClose}
+            onClick={handleClose}
             className='w-full sm:w-auto border-gray-700 hover:bg-gray-800'
           >
             閉じる
