@@ -17,7 +17,8 @@ import {
 } from './ui/tooltip';
 import holidays from '@holiday-jp/holiday_jp';
 import dayjs from 'dayjs';
-import AvailableUsers from './AvailableUsers';
+import dynamic from 'next/dynamic';
+import { debounce, rafThrottle } from '../../lib/utils';
 
 interface CalendarViewProps {
   date: Date | undefined;
@@ -43,6 +44,11 @@ interface Holiday {
   name: string;
 }
 
+const AvailableUsers = dynamic(() => import('./AvailableUsers'), {
+  loading: () => null,
+  ssr: false,
+});
+
 export function CalendarView({
   date,
   events,
@@ -57,14 +63,17 @@ export function CalendarView({
     users: { id: number; name: string; avatarUrl?: string }[];
   } | null>(null);
 
-  const handleDateSelect = (selectInfo: DateSelectArg) => {
-    if (
-      (selectInfo.jsEvent?.target as Element)?.closest('.availability-count')
-    ) {
-      return;
-    }
-    onDateSelect(selectInfo.start);
-  };
+  const handleDateSelect = useCallback(
+    debounce((selectInfo: DateSelectArg) => {
+      if (
+        (selectInfo.jsEvent?.target as Element)?.closest('.availability-count')
+      ) {
+        return;
+      }
+      onDateSelect(selectInfo.start);
+    }, 100),
+    [onDateSelect]
+  );
 
   const handleDateClick = (arg: { date: Date; jsEvent: MouseEvent }) => {
     if ((arg.jsEvent.target as Element).closest('.availability-count')) {
@@ -239,8 +248,8 @@ export function CalendarView({
     };
   };
 
-  useEffect(() => {
-    const handleAvailabilityClick = (e: MouseEvent) => {
+  const handleAvailabilityClick = useCallback(
+    rafThrottle((e: MouseEvent) => {
       const availabilityCount = (e.target as Element).closest(
         '.availability-count'
       );
@@ -264,12 +273,15 @@ export function CalendarView({
         }
         return false;
       }
-    };
+    }),
+    [availabilities]
+  );
 
+  useEffect(() => {
     document.addEventListener('click', handleAvailabilityClick, true);
     return () =>
       document.removeEventListener('click', handleAvailabilityClick, true);
-  }, [availabilities]);
+  }, [handleAvailabilityClick]);
 
   return (
     <div className='w-full h-full'>
