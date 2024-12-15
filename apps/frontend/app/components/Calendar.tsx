@@ -45,6 +45,17 @@ export interface Event {
   };
 }
 
+// 空き状況を管理する新しい型を追加
+export interface AvailabilityCount {
+  date: Date;
+  count: number;
+  users: {
+    id: number;
+    name: string;
+    avatarUrl?: string;
+  }[];
+}
+
 export default function Calendar() {
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [showEventCreation, setShowEventCreation] = useState(false);
@@ -54,6 +65,7 @@ export default function Calendar() {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [showTypeSelector, setShowTypeSelector] = useState(false);
+  const [availabilities, setAvailabilities] = useState<AvailabilityCount[]>([]);
 
   // ダミーデータを作成
   useEffect(() => {
@@ -180,6 +192,94 @@ export default function Calendar() {
       },
     ]);
     setDate(baseDate.toDate());
+    setAvailabilities([
+      {
+        date: baseDate.subtract(3, 'day').toDate(),
+        count: 5,
+        users: [
+          { id: 2, name: 'ユーザー2' },
+          { id: 4, name: 'ユーザー4' },
+          { id: 5, name: 'ユーザー5' },
+          { id: 7, name: 'ユーザー7' },
+          { id: 8, name: 'ユーザー8' },
+        ],
+      },
+      {
+        date: baseDate.subtract(2, 'day').toDate(),
+        count: 2,
+        users: [
+          { id: 5, name: 'ユーザー5' },
+          { id: 8, name: 'ユーザー8' },
+        ],
+      },
+      {
+        date: baseDate.subtract(1, 'day').toDate(),
+        count: 4,
+        users: [
+          { id: 1, name: 'ユーザー1' },
+          { id: 3, name: 'ユーザー3' },
+          { id: 6, name: 'ユーザー6' },
+          { id: 8, name: 'ユーザー8' },
+        ],
+      },
+      {
+        date: baseDate.toDate(),
+        count: 1,
+        users: [
+          {
+            id: 1,
+            name: 'ユーザー1',
+            avatarUrl: 'https://github.com/shadcn.png',
+          },
+        ],
+      },
+      {
+        date: baseDate.add(1, 'day').toDate(),
+        count: 3,
+        users: [
+          { id: 1, name: 'ユーザー1' },
+          { id: 2, name: 'ユーザー2' },
+          { id: 3, name: 'ユーザー3' },
+        ],
+      },
+      {
+        date: baseDate.add(2, 'day').toDate(),
+        count: 5,
+        users: [
+          { id: 4, name: 'ユーザー4' },
+          { id: 5, name: 'ユーザー5' },
+          { id: 6, name: 'ユーザー6' },
+          { id: 7, name: 'ユーザー7' },
+          { id: 8, name: 'ユーザー8' },
+        ],
+      },
+      {
+        date: baseDate.add(3, 'day').toDate(),
+        count: 4,
+        users: [
+          { id: 4, name: 'ユーザー4' },
+          { id: 5, name: 'ユーザー5' },
+          { id: 6, name: 'ユーザー6' },
+          { id: 7, name: 'ユーザー7' },
+        ],
+      },
+      {
+        date: baseDate.add(4, 'day').toDate(),
+        count: 1,
+        users: [{ id: 2, name: 'ユーザー2' }],
+      },
+      {
+        date: baseDate.add(5, 'day').toDate(),
+        count: 5,
+        users: [
+          { id: 1, name: 'ユーザー1' },
+          { id: 3, name: 'ユーザー3' },
+          { id: 4, name: 'ユーザー4' },
+          { id: 6, name: 'ユーザー6' },
+          { id: 8, name: 'ユーザー8' },
+        ],
+      },
+    ]);
   }, []);
 
   const handleDateClick = (date: Date | undefined) => {
@@ -263,6 +363,7 @@ export default function Calendar() {
             <CalendarView
               date={date}
               events={calendarEvents}
+              availabilities={availabilities}
               onDateSelect={handleDateClick}
               onEventClick={handleEventClick}
             />
