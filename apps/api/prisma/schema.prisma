@@ -8,7 +8,81 @@ generator client {
 }
 
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
+  pesonalSchedule PersonalSchedule[]
+  participants    Participant[]
+  gameSetting     GameSetting[]
+  id              String             @id // Discord ID
+  name            String
+  avatar          String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  lastLoggedInAt  DateTime
+}
+
+model PublicSchedule {
+  participants Participant[]
+  id           Int           @id @default(autoincrement())
+  date         DateTime
+  title        String
+  description  String?
+  recruitCount Int
+  isRecruiting Boolean       @default(true)
+  createdBy    String
+  updatedBy    String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model PersonalSchedule {
+  user        User     @relation(fields: [userId], references: [id])
+  id          Int      @id @default(autoincrement())
+  date        DateTime
+  userId      String
+  description String?
+  isPrivate   Boolean  @default(false)
+  isFree      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// UserとPublicScheduleの中間テーブル
+model Participant {
+  user             User           @relation(fields: [userId], references: [id])
+  publicSchedule   PublicSchedule @relation(fields: [publicScheduleId], references: [id])
+  id               Int            @id @default(autoincrement())
+  userId           String
+  publicScheduleId Int
+  reaction         Reaction
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+}
+
+enum Reaction {
+  OK // 行く
+  UNDECIDED // 行けたら行く（未定）
+  NG // 行かない
+}
+
+// --- まだ使わないテーブル --- //
+model GameTitle {
+  gameSetting GameSetting[]
+  id          Int           @id @default(autoincrement())
+  name        String
+  imageUrl    String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+// UserとGameTitleの中間テーブル
+model GameSetting {
+  user        User      @relation(fields: [userId], references: [id])
+  gameTitle   GameTitle @relation(fields: [gameTitleId], references: [id])
+  id          Int       @id @default(autoincrement())
+  userId      String
+  gameTitleId Int
+  sensitivity Float? // マウス感度
+  dpi         Int? // マウスDPI
+  fov         Int? // FOV
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }

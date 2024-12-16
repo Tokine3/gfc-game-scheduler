@@ -5,14 +5,27 @@ import { useTheme } from 'next-themes';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { Button } from './ui/button';
+import { useRouter } from 'next/navigation';
 
 export default function Header() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleLogin = () => {
+    // Discord OAuth2 URLを構築
+    const DISCORD_CLIENT_ID = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID;
+    const REDIRECT_URI = encodeURIComponent(
+      `${process.env.NEXT_PUBLIC_API_URL}/auth/discord/callback`
+    );
+    const DISCORD_AUTH_URL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=identify%20guilds`;
+
+    window.location.href = DISCORD_AUTH_URL;
+  };
 
   if (!mounted) {
     return (
@@ -71,7 +84,18 @@ export default function Header() {
             )}
             <span className='sr-only'>Toggle theme</span>
           </Button>
-          <Button className='flex-1 sm:flex-none bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600'>
+          <Button
+            onClick={handleLogin}
+            className='bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white border-transparent transition-all duration-200'
+          >
+            <div className='w-5 h-5 relative mr-2'>
+              <Image
+                src='/discord-logo.svg'
+                alt='Discord'
+                fill
+                className='object-contain'
+              />
+            </div>
             Login with Discord
           </Button>
         </div>

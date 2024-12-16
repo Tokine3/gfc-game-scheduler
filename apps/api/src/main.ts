@@ -10,6 +10,14 @@ async function bootstrap() {
     credentials: true,
   });
 
-  await app.listen(4000);
+  const port = process.env.PORT || 8000;
+
+  try {
+    await app.listen(port);
+    console.log(`Application is running on: http://localhost:${port}`);
+  } catch (error) {
+    console.error('Failed to start the application:', error);
+    process.exit(1);
+  }
 }
 bootstrap();
