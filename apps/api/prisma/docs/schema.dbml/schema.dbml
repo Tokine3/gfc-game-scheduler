@@ -1,0 +1,90 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table User {
+  personalSchedule PersonalSchedule [not null]
+  participants Participant [not null]
+  gameSetting GameSetting [not null]
+  id String [pk]
+  name String [not null]
+  avatar String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  lastLoggedInAt DateTime [default: `now()`, not null]
+}
+
+Table PublicSchedule {
+  participants Participant [not null]
+  id Int [pk, increment]
+  date DateTime [not null]
+  title String [not null]
+  description String
+  recruitCount Int [not null]
+  isRecruiting Boolean [not null, default: true]
+  createdBy String [not null]
+  updatedBy String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table PersonalSchedule {
+  user User [not null]
+  id Int [pk, increment]
+  date DateTime [not null]
+  userId String [not null]
+  description String
+  isPrivate Boolean [not null, default: false]
+  isFree Boolean [not null, default: false]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Participant {
+  user User [not null]
+  publicSchedule PublicSchedule [not null]
+  id Int [pk, increment]
+  userId String [not null]
+  publicScheduleId Int [not null]
+  reaction Reaction [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table GameTitle {
+  gameSetting GameSetting [not null]
+  id Int [pk, increment]
+  name String [not null]
+  imageUrl String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table GameSetting {
+  user User [not null]
+  gameTitle GameTitle [not null]
+  id Int [pk, increment]
+  userId String [not null]
+  gameTitleId Int [not null]
+  sensitivity Float
+  dpi Int
+  fov Int
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Enum Reaction {
+  OK
+  UNDECIDED
+  NG
+}
+
+Ref: PersonalSchedule.userId > User.id
+
+Ref: Participant.userId > User.id
+
+Ref: Participant.publicScheduleId > PublicSchedule.id
+
+Ref: GameSetting.userId > User.id
+
+Ref: GameSetting.gameTitleId > GameTitle.id

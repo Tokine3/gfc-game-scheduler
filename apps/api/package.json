@@ -13,7 +13,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand"
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "swagger:gen": "ts-node src/swagger.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
@@ -24,6 +25,7 @@
     "@nestjs/platform-express": "^10.0.0",
     "@prisma/client": "^6.0.1",
     "@types/passport-jwt": "^4.0.1",
+    "cookie-parser": "^1.4.7",
     "passport": "^0.7.0",
     "passport-discord": "^0.1.4",
     "passport-jwt": "^4.0.1",
@@ -33,7 +35,9 @@
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
+    "@nestjs/swagger": "^8.1.0",
     "@nestjs/testing": "^10.0.0",
+    "@types/cookie-parser": "^1.4.8",
     "@types/express": "^4.17.17",
     "@types/jest": "^29.5.2",
     "@types/node": "^20.3.1",
@@ -44,6 +48,7 @@
     "jest": "^29.5.0",
     "prisma": "^6.0.1",
     "source-map-support": "^0.5.21",
+    "swagger-ui-express": "^5.0.1",
     "ts-jest": "^29.1.0",
     "ts-loader": "^9.4.3",
     "ts-node": "^10.9.1",

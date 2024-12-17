@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
-import { User } from './entities/user.entity';
+import { User } from 'src/user/entities/user.entity';
+import { AuthUserDto } from './dto/auth-user.dto';
+import { JwtPayload } from '../types/jwt.types';
 
 @Injectable()
 export class AuthService {
@@ -10,26 +12,29 @@ export class AuthService {
     private jwtService: JwtService
   ) {}
 
-  async validateUser(discordUser: User) {
+  async validateUser(discordUser: AuthUserDto) {
+    const { id, name, avatar } = discordUser;
+    console.log('validateUser', id, name, avatar);
     let user = await this.prisma.user.findUnique({
-      where: { discordId: discordUser.discordId },
+      where: { id },
     });
 
     if (!user) {
       user = await this.prisma.user.create({
         data: {
-          discordId: discordUser.discordId,
-          name: discordUser.name,
-          avatar: discordUser.avatar,
+          id,
+          name,
+          avatar,
+          lastLoggedInAt: new Date(),
         },
       });
     } else {
       user = await this.prisma.user.update({
         where: { id: user.id },
         data: {
-          name: discordUser.name,
-          avatar: discordUser.avatar,
-          updatedAt: new Date(),
+          name,
+          avatar,
+          lastLoggedInAt: new Date(),
         },
       });
     }
@@ -37,8 +42,12 @@ export class AuthService {
     return user;
   }
 
-  async login(user: any) {
-    const payload = { sub: user.id, discordId: user.discordId };
+  async login(user: AuthUserDto) {
+    const payload: JwtPayload = {
+      sub: user.id,
+      name: user.name,
+    };
+
     return {
       access_token: this.jwtService.sign(payload),
     };

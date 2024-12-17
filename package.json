@@ -7,9 +7,10 @@
   ],
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev",
+    "dev": "turbo run dev --no-cache --parallel --continue",
     "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "api:build": "pnpm --filter api swagger:build && cp apps/api/swagger.json apps/frontend/ && pnpm --filter frontend api:build"
   },
   "devDependencies": {
     "prettier": "^3.2.5",

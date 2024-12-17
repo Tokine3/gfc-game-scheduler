@@ -2,7 +2,9 @@ import { Controller, Get, UseGuards, Req, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 import { Response } from 'express';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
@@ -19,15 +21,23 @@ export class AuthController {
     try {
       const { access_token } = await this.authService.login(req.user);
 
+      // Discord IDをクッキーに設定
+      res.cookie('X-Discord-ID', req.user.id, {
+        httpOnly: false, // JavaScriptからアクセス可能に
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 24 * 60 * 60 * 1000,
+        path: '/', // パスを明示的に指定
+      });
+
       // JWTトークンをクッキーに設定
       res.cookie('token', access_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 24 * 60 * 60 * 1000, // 24時間
+        maxAge: 24 * 60 * 60 * 1000,
       });
 
-      // フームページにリダイレクト
       res.redirect(`${process.env.FRONTEND_URL}/home`);
     } catch (error) {
       console.error('Auth callback error:', error);

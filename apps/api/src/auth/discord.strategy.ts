@@ -20,7 +20,7 @@ export class DiscordStrategy extends PassportStrategy(Strategy, 'discord') {
 
   async validate(accessToken: string, refreshToken: string, profile: any) {
     console.log('accessToken', accessToken);
-    const { id, username, avatar } = profile;
+    const { id, username, avatar, global_name } = profile;
     const guilds = profile.guilds || [];
     console.log('profile', profile);
     console.log('guilds', guilds);
@@ -55,9 +55,13 @@ export class DiscordStrategy extends PassportStrategy(Strategy, 'discord') {
       );
     }
 
+    console.log('id', id);
+    console.log('username', username);
+    console.log('avatar', avatar);
+
     return this.authService.validateUser({
-      discordId: id,
-      name: username,
+      id,
+      name: global_name,
       avatar: avatar,
     });
   }
