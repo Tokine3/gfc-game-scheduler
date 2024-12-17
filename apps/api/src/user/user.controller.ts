@@ -37,14 +37,16 @@ export class UserController {
   //   return this.userService.findOne(+id);
   // }
 
-  @ApiOperation({ summary: 'Get current user' })
-  @ApiResponse({ status: 200, description: 'User found' })
+  @ApiOperation({ summary: '認証済みでのログイン' })
+  @ApiResponse({
+    status: 200,
+    description: '最終ログイン時間の更新と自身のデータ取得成功',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @Get('me')
+  @Get('login')
   @UseGuards(JwtAuthGuard)
-  async me(@Request() req: RequestWithUser) {
-    console.log(req.user);
-    return await this.userService.me(req.user.id);
+  async login(@Request() req: RequestWithUser) {
+    return await this.userService.login(req.user.id);
   }
 
   @Patch(':id')

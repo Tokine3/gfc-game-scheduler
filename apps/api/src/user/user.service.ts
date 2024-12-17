@@ -11,21 +11,27 @@ export class UserService {
     return 'This action adds a new user';
   }
 
-  async me(discordId: string) {
+  async login(discordId: string) {
     if (!discordId) {
       throw new NotFoundException('Discord ID not found');
     }
 
-    const user = await this.prisma.user.update({
-      where: { id: discordId },
-      data: {
-        lastLoggedInAt: new Date(),
-      },
-    });
+    const user = await this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({
+        where: { id: discordId },
+      });
 
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      return await tx.user.update({
+        where: { id: discordId },
+        data: {
+          lastLoggedInAt: new Date(),
+        },
+      });
+    });
 
     return user;
   }

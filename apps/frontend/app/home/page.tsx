@@ -12,7 +12,7 @@ export default function HomePage() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await client.user.me.get();
+        const response = await client.user.login.get();
         console.log('User data:', response.body);
       } catch (error) {
         console.error('Failed to fetch user:', error);

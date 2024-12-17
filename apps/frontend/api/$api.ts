@@ -5,7 +5,7 @@ import type { Methods as Methods_12zp75v } from './auth/discord/callback';
 import type { Methods as Methods_10yceks } from './auth/verify';
 import type { Methods as Methods_tli9od } from './user';
 import type { Methods as Methods_13i5w2z } from './user/_id@string';
-import type { Methods as Methods_9k2hsc } from './user/me';
+import type { Methods as Methods_1904ovn } from './user/login';
 
 const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
   const prefix = (baseURL === undefined ? '' : baseURL).replace(/\/$/, '');
@@ -13,7 +13,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
   const PATH1 = '/auth/discord/callback';
   const PATH2 = '/auth/verify';
   const PATH3 = '/user';
-  const PATH4 = '/user/me';
+  const PATH4 = '/user/login';
   const GET = 'GET';
   const POST = 'POST';
   const DELETE = 'DELETE';
@@ -59,11 +59,11 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
           $path: () => `${prefix}${prefix1}`,
         };
       },
-      me: {
+      login: {
         get: (option?: { config?: T | undefined } | undefined) =>
-          fetch<void, BasicHeaders, Methods_9k2hsc['get']['status']>(prefix, PATH4, GET, option).send(),
+          fetch<void, BasicHeaders, Methods_1904ovn['get']['status']>(prefix, PATH4, GET, option).send(),
         $get: (option?: { config?: T | undefined } | undefined) =>
-          fetch<void, BasicHeaders, Methods_9k2hsc['get']['status']>(prefix, PATH4, GET, option).send().then(r => r.body),
+          fetch<void, BasicHeaders, Methods_1904ovn['get']['status']>(prefix, PATH4, GET, option).send().then(r => r.body),
         $path: () => `${prefix}${PATH4}`,
       },
       post: (option: { body: Methods_tli9od['post']['reqBody'], config?: T | undefined }) =>
