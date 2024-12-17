@@ -2,22 +2,43 @@ import { Controller, Get, UseGuards, Req, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 import { Response } from 'express';
-import { ApiTags } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiCookieAuth,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
+import { RequestWithUser } from 'src/types/request.types';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @ApiOperation({ summary: 'Discordログイン開始' })
+  @ApiResponse({
+    status: 302,
+    description: 'Discordの認証ページにリダイレクト',
+  })
   @Get('discord')
   @UseGuards(AuthGuard('discord'))
   async discordAuth() {
     // Discord認証へのリダイレクトは@UseGuards(AuthGuard('discord'))で自動的に処理されます
   }
 
+  @ApiOperation({ summary: 'Discord認証コールバック' })
+  @ApiResponse({
+    status: 302,
+    description: '認証成功時にフロントエンドにリダイレクト',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Discord認証失敗',
+  })
   @Get('discord/callback')
   @UseGuards(AuthGuard('discord'))
-  async discordAuthCallback(@Req() req: any, @Res() res: Response) {
+  async discordAuthCallback(@Req() req: RequestWithUser, @Res() res: Response) {
     try {
       const { access_token } = await this.authService.login(req.user);
 
@@ -45,6 +66,22 @@ export class AuthController {
     }
   }
 
+  @ApiOperation({ summary: 'JWTトークンの検証' })
+  @ApiCookieAuth('token')
+  @ApiResponse({
+    status: 200,
+    description: 'トークンが有効',
+    schema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'Discord User ID',
+        },
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({ description: '無効なトークン' })
   @Get('verify')
   @UseGuards(AuthGuard('jwt'))
   async verifyToken(@Req() req: any) {

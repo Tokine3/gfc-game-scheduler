@@ -15,7 +15,6 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
   const PATH3 = '/user';
   const PATH4 = '/user/login';
   const GET = 'GET';
-  const POST = 'POST';
   const DELETE = 'DELETE';
   const PATCH = 'PATCH';
 
@@ -36,10 +35,16 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
         $path: () => `${prefix}${PATH0}`,
       },
       verify: {
+        /**
+         * @returns トークンが有効
+         */
         get: (option?: { config?: T | undefined } | undefined) =>
-          fetch<void, BasicHeaders, Methods_10yceks['get']['status']>(prefix, PATH2, GET, option).send(),
+          fetch<Methods_10yceks['get']['resBody'], BasicHeaders, Methods_10yceks['get']['status']>(prefix, PATH2, GET, option).json(),
+        /**
+         * @returns トークンが有効
+         */
         $get: (option?: { config?: T | undefined } | undefined) =>
-          fetch<void, BasicHeaders, Methods_10yceks['get']['status']>(prefix, PATH2, GET, option).send().then(r => r.body),
+          fetch<Methods_10yceks['get']['resBody'], BasicHeaders, Methods_10yceks['get']['status']>(prefix, PATH2, GET, option).json().then(r => r.body),
         $path: () => `${prefix}${PATH2}`,
       },
     },
@@ -48,6 +53,10 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
         const prefix1 = `${PATH3}/${val1}`;
 
         return {
+          get: (option?: { config?: T | undefined } | undefined) =>
+            fetch<void, BasicHeaders, Methods_13i5w2z['get']['status']>(prefix, prefix1, GET, option).send(),
+          $get: (option?: { config?: T | undefined } | undefined) =>
+            fetch<void, BasicHeaders, Methods_13i5w2z['get']['status']>(prefix, prefix1, GET, option).send().then(r => r.body),
           patch: (option: { body: Methods_13i5w2z['patch']['reqBody'], config?: T | undefined }) =>
             fetch<void, BasicHeaders, Methods_13i5w2z['patch']['status']>(prefix, prefix1, PATCH, option).send(),
           $patch: (option: { body: Methods_13i5w2z['patch']['reqBody'], config?: T | undefined }) =>
@@ -66,10 +75,6 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
           fetch<void, BasicHeaders, Methods_1904ovn['get']['status']>(prefix, PATH4, GET, option).send().then(r => r.body),
         $path: () => `${prefix}${PATH4}`,
       },
-      post: (option: { body: Methods_tli9od['post']['reqBody'], config?: T | undefined }) =>
-        fetch<void, BasicHeaders, Methods_tli9od['post']['status']>(prefix, PATH3, POST, option).send(),
-      $post: (option: { body: Methods_tli9od['post']['reqBody'], config?: T | undefined }) =>
-        fetch<void, BasicHeaders, Methods_tli9od['post']['status']>(prefix, PATH3, POST, option).send().then(r => r.body),
       get: (option?: { config?: T | undefined } | undefined) =>
         fetch<void, BasicHeaders, Methods_tli9od['get']['status']>(prefix, PATH3, GET, option).send(),
       $get: (option?: { config?: T | undefined } | undefined) =>

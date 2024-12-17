@@ -9,38 +9,38 @@ import {
   Request,
   UseGuards,
   Headers,
+  Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { RequestWithUser } from 'src/types/request.types';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { FindAllUserDto } from './dto/findAll-user.dto';
+import { FindAllUser, User } from './entities/user.entity';
 
 @ApiTags('User')
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
-  }
-
+  @ApiOperation({ summary: '検索条件に当てはまるユーザの全取得' })
+  @ApiResponse({
+    status: 200,
+    description: '検索条件に当てはまるユーザの取得成功',
+    type: FindAllUser,
+  })
+  @UseGuards(JwtAuthGuard)
   @Get()
-  findAll() {
-    return this.userService.findAll();
+  findAll(@Query() query: FindAllUserDto) {
+    return this.userService.findAll(query);
   }
-
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.userService.findOne(+id);
-  // }
 
   @ApiOperation({ summary: '認証済みでのログイン' })
   @ApiResponse({
     status: 200,
     description: '最終ログイン時間の更新と自身のデータ取得成功',
+    type: User,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @Get('login')
@@ -49,13 +49,39 @@ export class UserController {
     return await this.userService.login(req.user.id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(+id, updateUserDto);
+  @ApiOperation({ summary: '指定したユーザの取得' })
+  @ApiResponse({
+    status: 200,
+    description: '指定したユーザの取得成功',
+    type: User,
+  })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.userService.findOne(id);
   }
 
+  @ApiOperation({ summary: 'ユーザの更新' })
+  @ApiResponse({
+    status: 200,
+    description: 'ユーザの更新成功',
+    type: User,
+  })
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id')
+  update(@Request() req: RequestWithUser, @Body() body: UpdateUserDto) {
+    return this.userService.update(req.user.id, body);
+  }
+
+  @ApiOperation({ summary: 'ユーザの削除' })
+  @ApiResponse({
+    status: 200,
+    description: 'ユーザの削除成功',
+  })
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
+  remove(@Request() req: RequestWithUser) {
+    return this.userService.remove(req.user.id);
   }
 }
