@@ -6,6 +6,7 @@ import { ServersModule } from './servers/servers.module';
 import { CalendarsModule } from './calendars/calendars.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SchedulesModule } from './schedules/schedules.module';
+import { HealthController } from './health/health.controller';
 
 @Module({
   imports: [
@@ -19,5 +20,6 @@ import { SchedulesModule } from './schedules/schedules.module';
     CalendarsModule,
     SchedulesModule,
   ],
+  controllers: [HealthController], // Railwayのヘルスチェック用
 }) //
 export class AppModule {}
