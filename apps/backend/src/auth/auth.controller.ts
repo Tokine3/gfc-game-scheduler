@@ -82,41 +82,33 @@ export class AuthController {
       console.log('Setting cookies with token:', {
         token: access_token ? 'exists' : 'null',
         secure: true,
-        sameSite: 'lax',
-        domain:
-          process.env.NODE_ENV === 'development' ? '.railway.app' : undefined,
+        sameSite: 'none',
       });
 
       res.cookie('token', access_token, {
         httpOnly: true,
         secure: true,
-        sameSite: 'lax',
+        sameSite: 'none',
         maxAge: 24 * 60 * 60 * 1000,
         path: '/',
-        domain:
-          process.env.NODE_ENV === 'development' ? '.railway.app' : undefined,
       });
 
       // Discordアクセストークンをクッキーに設定
       res.cookie('discord_token', req.user.accessToken, {
         httpOnly: true,
         secure: true,
-        sameSite: 'lax',
+        sameSite: 'none',
         maxAge: 24 * 60 * 60 * 1000,
         path: '/',
-        domain:
-          process.env.NODE_ENV === 'development' ? '.railway.app' : undefined,
       });
 
       // Discord IDをクッキーに設定
       res.cookie('discord_id', req.user.id, {
         httpOnly: false,
         secure: true,
-        sameSite: 'lax',
+        sameSite: 'none',
         maxAge: 24 * 60 * 60 * 1000,
         path: '/',
-        domain:
-          process.env.NODE_ENV === 'development' ? '.railway.app' : undefined,
       });
 
       const redirectPath = redirect

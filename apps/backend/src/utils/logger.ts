@@ -1,7 +1,9 @@
 import { ConfigService } from '@nestjs/config';
 
 const configService = new ConfigService();
-const isDevelopment = configService.get('NODE_ENV') === 'development';
+const isDevelopment =
+  configService.get('NODE_ENV') === 'development' ||
+  configService.get('NODE_ENV') === 'local';
 
 export const logger = {
   log: (...args: any[]) => {
