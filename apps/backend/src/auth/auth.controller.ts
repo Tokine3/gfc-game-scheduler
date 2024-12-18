@@ -88,30 +88,30 @@ export class AuthController {
       res.cookie('token', access_token, {
         httpOnly: true,
         secure: true,
-        sameSite: 'strict',
+        sameSite: 'lax',
         path: '/',
         maxAge: 24 * 60 * 60 * 1000,
-        domain: new URL(process.env.FRONTEND_URL || '').hostname,
+        domain: new URL(process.env.FRONTEND_URL).hostname,
       });
 
       // Discordアクセストークンをクッキーに設定
       res.cookie('discord_token', req.user.accessToken, {
         httpOnly: true,
         secure: true,
-        sameSite: 'strict',
+        sameSite: 'lax',
         path: '/',
         maxAge: 24 * 60 * 60 * 1000,
-        domain: new URL(process.env.FRONTEND_URL || '').hostname,
+        domain: new URL(process.env.FRONTEND_URL).hostname,
       });
 
       // Discord IDをクッキーに設定
       res.cookie('discord_id', req.user.id, {
-        httpOnly: false,
+        httpOnly: true,
         secure: true,
-        sameSite: 'strict',
+        sameSite: 'lax',
         path: '/',
         maxAge: 24 * 60 * 60 * 1000,
-        domain: new URL(process.env.FRONTEND_URL || '').hostname,
+        domain: new URL(process.env.FRONTEND_URL).hostname,
       });
 
       const redirectPath = redirect
