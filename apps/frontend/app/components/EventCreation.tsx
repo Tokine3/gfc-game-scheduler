@@ -20,6 +20,7 @@ import {
   UsersIcon,
 } from 'lucide-react';
 import dayjs from 'dayjs';
+import { client } from '../../lib/api';
 
 interface EventCreationProps {
   onClose: () => void;
@@ -31,10 +32,21 @@ export default function EventCreation({ onClose, date }: EventCreationProps) {
   const [quota, setQuota] = useState('');
   const [notes, setNotes] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log({ title, date, quota, notes });
-    onClose();
+    try {
+      await client.schedules.public.post({
+        body: {
+          date: dayjs(date).format('YYYY-MM-DD'),
+          title,
+          description: notes,
+          recruitCount: parseInt(quota),
+        },
+      });
+      onClose();
+    } catch (error) {
+      console.error('Failed to create event:', error);
+    }
   };
 
   return (

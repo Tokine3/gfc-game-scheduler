@@ -4,5 +4,6 @@ export interface RequestWithUser extends Request {
   user: {
     id: string;
     name: string;
+    accessToken: string; // Discordアクセストークン
   };
 }

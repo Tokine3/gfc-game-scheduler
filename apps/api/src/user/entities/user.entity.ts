@@ -8,7 +8,7 @@ export class User {
   name: string;
 
   @ApiProperty({ description: 'アバター画像URL', nullable: true })
-  avatar?: string;
+  avatar: string | null;
 
   @ApiProperty({ description: '作成日時' })
   createdAt: Date;

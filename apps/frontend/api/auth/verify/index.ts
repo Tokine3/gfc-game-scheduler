@@ -1,5 +1,5 @@
 /* eslint-disable */
-import type { DefineMethods } from 'aspida';
+import type { DefineMethods } from "aspida";
 
 export type Methods = DefineMethods<{
   get: {

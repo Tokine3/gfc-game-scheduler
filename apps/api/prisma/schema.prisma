@@ -14,43 +14,93 @@ generator dbml {
 
 // ユーザー
 model User {
+  serverUsers      ServerUser[]
   personalSchedule PersonalSchedule[]
-  participants    Participant[]
-  gameSetting     GameSetting[]
-  id              String             @id // Discord ID
-  name            String
-  avatar          String?
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
-  lastLoggedInAt  DateTime           @default(now())
+  participants     Participant[]
+  gameSetting      GameSetting[]
+  id               String             @id // Discord ID
+  name             String
+  avatar           String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  lastLoggedInAt   DateTime           @default(now())
+  createdPublicSchedules    PublicSchedule[]  @relation("CreatedPublicSchedules")
+  updatedPublicSchedules    PublicSchedule[]  @relation("UpdatedPublicSchedules")
+  createdPersonalSchedules  PersonalSchedule[] @relation("CreatedPersonalSchedules")
+  updatedPersonalSchedules  PersonalSchedule[] @relation("UpdatedPersonalSchedules")
+}
+
+model Server {
+  serverUsers ServerUser[]
+  calendars   Calendar[]
+  id          String       @id @default(uuid())
+  name        String
+  icon        String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+// サーバーとユーザーの中間テーブル
+model ServerUser {
+  server    Server   @relation(fields: [serverId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  serverId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@id([userId, serverId])
+}
+
+model Calendar {
+  publicSchedules   PublicSchedule[]
+  personalSchedules PersonalSchedule[]
+  id                String             @id @default(uuid())
+  server            Server             @relation(fields: [serverId], references: [id])
+  serverId          String
+  name              String
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
 }
 
 // 公開スケジュール・イベント
 model PublicSchedule {
+  calendar     Calendar      @relation(fields: [calendarId], references: [id])
   participants Participant[]
   id           Int           @id @default(autoincrement())
+  calendarId   String
   date         DateTime
   title        String
   description  String?
   recruitCount Int
   isRecruiting Boolean       @default(true)
-  createdBy    String
-  updatedBy    String
+  createdBy    User    @relation("CreatedPublicSchedules", fields: [createdById], references: [id])
+  createdById  String
+  updatedBy    User    @relation("UpdatedPublicSchedules", fields: [updatedById], references: [id])
+  updatedById  String
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+  isPersonal   Boolean       @default(false)
 }
 
 // 個人スケジュール
 model PersonalSchedule {
+  calendar    Calendar @relation(fields: [calendarId], references: [id])
   user        User     @relation(fields: [userId], references: [id])
   id          Int      @id @default(autoincrement())
+  calendarId  String
   date        DateTime
+  title       String
   userId      String
   description String?
   isPrivate   Boolean  @default(false)
   isFree      Boolean  @default(false)
+  createdBy    User    @relation("CreatedPersonalSchedules", fields: [createdById], references: [id])
+  createdById  String
+  updatedBy    User    @relation("UpdatedPersonalSchedules", fields: [updatedById], references: [id])
+  updatedById  String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  isPersonal  Boolean  @default(true)
 }
 
 // UserとPublicScheduleの中間テーブル

@@ -14,7 +14,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "swagger:gen": "ts-node src/swagger.ts"
+    "swagger:gen": "ts-node -r tsconfig-paths/register src/swagger.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",

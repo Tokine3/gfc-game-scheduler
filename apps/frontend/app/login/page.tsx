@@ -1,20 +1,79 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/ui/button';
-import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Gamepad2Icon } from 'lucide-react';
+import { cn } from '../../lib/utils';
 
 export default function LoginPage() {
+  const { user, loading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const error = searchParams.get('error');
+
+  // エラーメッセージの表示用state
+  const [errorMessage, setErrorMessage] = useState<string>('');
+
+  useEffect(() => {
+    if (error === 'auth_cancelled') {
+      setErrorMessage('認証がキャンセルされました');
+      setTimeout(() => setErrorMessage(''), 3000); // 3秒後に消える
+    } else if (error === 'auth_failed') {
+      setErrorMessage('認証に失敗しました');
+      setTimeout(() => setErrorMessage(''), 3000);
+    } else if (searchParams.get('status') === 'success') {
+      setErrorMessage('認証に成功しました');
+      setTimeout(() => setErrorMessage(''), 3000);
+    }
+  }, [error, searchParams]);
+
+  useEffect(() => {
+    // 未認証でアクセスしたURLをsessionStorageに保存
+    const redirectPath = sessionStorage.getItem('redirectPath');
+    if (!loading && user) {
+      if (redirectPath) {
+        sessionStorage.removeItem('redirectPath');
+        router.push(redirectPath);
+      } else {
+        router.push('/servers');
+      }
+    }
+  }, [loading, user, router]);
+
+  if (loading) {
+    return (
+      <div className='flex items-center justify-center min-h-screen'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-100' />
+      </div>
+    );
+  }
 
   const handleLogin = () => {
+    // 現在のURLをsessionStorageに保存
+    const currentPath = window.location.pathname;
+    const currentSearch = window.location.search;
+    const fullPath = currentPath + currentSearch;
+
+    if (currentPath !== '/login') {
+      sessionStorage.setItem('redirectPath', fullPath);
+    }
+
     // Discord OAuth2 URLを構築
     const DISCORD_CLIENT_ID = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID;
     const REDIRECT_URI = encodeURIComponent(
       `${process.env.NEXT_PUBLIC_API_URL}/auth/discord/callback`
     );
-    const DISCORD_AUTH_URL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=identify+guilds+guilds.members.read`;
+
+    // リダイレクトパスがある場合はクエリパラメータとして追加
+    const redirectPath = sessionStorage.getItem('redirectPath');
+    const redirectQuery = redirectPath
+      ? `&redirect=${encodeURIComponent(redirectPath)}`
+      : '';
+
+    const DISCORD_AUTH_URL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=identify+guilds+guilds.members.read${redirectQuery}`;
 
     window.location.href = DISCORD_AUTH_URL;
   };
@@ -120,6 +179,19 @@ export default function LoginPage() {
           </p>
         </div>
       </footer>
+
+      {errorMessage && (
+        <div
+          className={cn(
+            'fixed top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-md transition-opacity duration-300',
+            error
+              ? 'bg-red-500/10 border border-red-500/30 text-red-200'
+              : 'bg-green-500/10 border border-green-500/30 text-green-200'
+          )}
+        >
+          {errorMessage}
+        </div>
+      )}
     </div>
   );
 }
