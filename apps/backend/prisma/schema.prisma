@@ -7,10 +7,10 @@ generator client {
   provider = "prisma-client-js"
 }
 
-generator dbml {
-  provider = "prisma-dbml-generator"
-  output   = "./docs/schema.dbml"
-}
+// generator dbml {
+//   provider = "prisma-dbml-generator"
+//   output   = "./docs/schema.dbml"
+// }
 
 // ユーザー
 model User {
