@@ -89,8 +89,10 @@ export class AuthController {
         httpOnly: true,
         secure: true,
         sameSite: 'none',
-        maxAge: 24 * 60 * 60 * 1000,
         path: '/',
+        maxAge: 24 * 60 * 60 * 1000,
+        partitioned: false,
+        priority: 'high',
       });
 
       // Discordアクセストークンをクッキーに設定
@@ -100,6 +102,8 @@ export class AuthController {
         sameSite: 'none',
         maxAge: 24 * 60 * 60 * 1000,
         path: '/',
+        partitioned: false,
+        priority: 'high',
       });
 
       // Discord IDをクッキーに設定
@@ -107,8 +111,10 @@ export class AuthController {
         httpOnly: false,
         secure: true,
         sameSite: 'none',
-        maxAge: 24 * 60 * 60 * 1000,
         path: '/',
+        maxAge: 24 * 60 * 60 * 1000,
+        partitioned: false,
+        priority: 'high',
       });
 
       const redirectPath = redirect
