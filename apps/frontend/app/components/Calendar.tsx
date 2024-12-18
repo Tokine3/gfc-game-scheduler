@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import EventCreation from './EventCreation';
 import PersonalEventCreation from './PersonalEventCreation';
 import EventDetail from './EventDetail';
@@ -23,286 +23,136 @@ import {
 } from './ui/tooltip';
 import { cn } from '../../lib/utils';
 import EventTypeSelector from './EventTypeSelector';
+import {
+  CalendarWithRelations,
+  PersonalScheduleWithRelations,
+  PublicScheduleWithRelations,
+} from '../../api/@types';
+import { logger } from '../../lib/logger';
 
-export interface Participant {
-  id: number;
-  name: string;
-  status: 'join' | 'maybe' | 'decline';
-  avatarUrl?: string;
+export type CalendarEvent =
+  | PublicScheduleWithRelations
+  | PersonalScheduleWithRelations;
+
+// 型ガードの追加
+export function isPublicSchedule(
+  event: CalendarEvent
+): event is PublicScheduleWithRelations {
+  return !event.isPersonal;
 }
 
-export interface Event {
-  id: number;
-  title: string;
-  date: Date;
-  participants?: Participant[];
-  quota?: number;
-  isPersonal: boolean;
-  creator: {
-    id: number;
-    name: string;
-    avatarUrl?: string;
-  };
-}
-
-// 空き状況を管理する新しい型を追加
-export interface AvailabilityCount {
-  date: Date;
+// 型定義を追加
+export type Availability = {
+  date: string;
   count: number;
-  users: {
-    id: number;
+  users: Array<{
+    id: string;
     name: string;
-    avatarUrl?: string;
-  }[];
-}
+    avatar: string | null;
+  }>;
+};
 
-export default function Calendar() {
+// サブコンポーネントをメモ化
+const MemoizedCalendarView = memo(CalendarView);
+const MemoizedEventCreation = memo(EventCreation);
+const MemoizedPersonalEventCreation = memo(PersonalEventCreation);
+const MemoizedEventDetail = memo(EventDetail);
+const MemoizedEventTypeSelector = memo(EventTypeSelector);
+
+export default memo(function Calendar(props: CalendarWithRelations) {
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [showEventCreation, setShowEventCreation] = useState(false);
   const [showPersonalEventCreation, setShowPersonalEventCreation] =
     useState(false);
   const [showEventDetail, setShowEventDetail] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [events, setEvents] = useState<Event[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
+    null
+  );
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [showTypeSelector, setShowTypeSelector] = useState(false);
-  const [availabilities, setAvailabilities] = useState<AvailabilityCount[]>([]);
+  const [availabilities, setAvailabilities] = useState<Availability[]>([]);
 
-  // ダミーデータを作成
-  useEffect(() => {
-    const baseDate = dayjs().startOf('day');
-    setEvents([
-      {
-        id: 1,
-        title: 'チームデスマッチ',
-        date: baseDate.toDate(),
-        participants: [
-          {
-            id: 1,
-            name: 'ときね',
-            status: 'join',
-            avatarUrl: 'https://github.com/Tokine3.png',
-          },
-          { id: 2, name: 'ユーザー2', status: 'join' },
-          { id: 3, name: 'ユーザー3', status: 'maybe' },
-          { id: 4, name: 'ユーザー4', status: 'join' },
-          { id: 5, name: 'ユーザー5', status: 'join' },
-        ],
-        quota: 5,
-        isPersonal: false,
-        creator: {
-          id: 1,
-          name: 'うなす太郎',
-          avatarUrl:
-            'https://pbs.twimg.com/profile_images/1727132144026427392/hr4uinlf_400x400.jpg',
-        },
-      },
-      {
-        id: 2,
-        title: 'コンペティティブ',
-        date: baseDate.add(1, 'day').toDate(),
-        participants: [
-          { id: 6, name: 'ユーザー6', status: 'join' },
-          { id: 7, name: 'ユーザー7', status: 'maybe' },
-        ],
-        quota: 5,
-        isPersonal: false,
-        creator: {
-          id: 2,
-          name: 'まる',
-          avatarUrl:
-            'https://pbs.twimg.com/profile_images/686859461386846209/y-4uA3cH_400x400.jpg',
-        },
-      },
-      {
-        id: 3,
-        title: '個人練習',
-        date: baseDate.add(2, 'day').toDate(),
-        isPersonal: true,
-        creator: {
-          id: 3,
-          name: 'うなす太郎',
-          avatarUrl:
-            'https://pbs.twimg.com/profile_images/1727132144026427392/hr4uinlf_400x400.jpg',
-        },
-      },
-      {
-        id: 4,
-        title: 'デスマッチ',
-        date: baseDate.add(2, 'day').toDate(),
-        participants: [
-          { id: 8, name: 'ユーザー8', status: 'join' },
-          { id: 9, name: 'ユーザー9', status: 'join' },
-          { id: 10, name: 'ユーザー10', status: 'join' },
-          { id: 11, name: 'ユーザー11', status: 'decline' },
-        ],
-        quota: 10,
-        isPersonal: false,
-        creator: {
-          id: 4,
-          name: 'ときね',
-          avatarUrl:
-            'https://pbs.twimg.com/profile_images/824190388785348608/vW09xZDi_400x400.jpg',
-        },
-      },
-      {
-        id: 5,
-        title: '朝からコンペ',
-        date: baseDate.add(5, 'day').toDate(),
-        participants: [{ id: 12, name: 'ユーザー12', status: 'join' }],
-        quota: 5,
-        isPersonal: false,
-        creator: {
-          id: 5,
-          name: 'まる',
-          avatarUrl:
-            'https://pbs.twimg.com/profile_images/686859461386846209/y-4uA3cH_400x400.jpg',
-        },
-      },
-      {
-        id: 6,
-        title: 'コンペティティブ',
-        date: baseDate.add(7, 'day').toDate(),
-        participants: [
-          { id: 13, name: 'ユーザー13', status: 'join' },
-          { id: 14, name: 'ユーザー14', status: 'join' },
-          { id: 15, name: 'ユーザー15', status: 'join' },
-          { id: 16, name: 'ユーザー16', status: 'join' },
-          { id: 17, name: 'ユーザー17', status: 'join' },
-        ],
-        quota: 5,
-        isPersonal: false,
-        creator: {
-          id: 6,
-          name: 'うなす太郎',
-          avatarUrl:
-            'https://pbs.twimg.com/profile_images/1727132144026427392/hr4uinlf_400x400.jpg',
-        },
-      },
-      {
-        id: 7,
-        title: 'bot撃ち',
-        date: baseDate.subtract(7, 'day').toDate(),
-        isPersonal: true,
-        creator: {
-          id: 7,
-          name: 'ときね',
-          avatarUrl:
-            'https://pbs.twimg.com/profile_images/824190388785348608/vW09xZDi_400x400.jpg',
-        },
-      },
-    ]);
-    setDate(baseDate.toDate());
-    setAvailabilities([
-      {
-        date: baseDate.subtract(3, 'day').toDate(),
-        count: 5,
-        users: [
-          { id: 2, name: 'ユーザー2' },
-          { id: 4, name: 'ユーザー4' },
-          { id: 5, name: 'ユーザー5' },
-          { id: 7, name: 'ユーザー7' },
-          { id: 8, name: 'ユーザー8' },
-        ],
-      },
-      {
-        date: baseDate.subtract(2, 'day').toDate(),
-        count: 2,
-        users: [
-          { id: 5, name: 'ユーザー5' },
-          { id: 8, name: 'ユーザー8' },
-        ],
-      },
-      {
-        date: baseDate.subtract(1, 'day').toDate(),
-        count: 4,
-        users: [
-          { id: 1, name: 'ユーザー1' },
-          { id: 3, name: 'ユーザー3' },
-          { id: 6, name: 'ユーザー6' },
-          { id: 8, name: 'ユーザー8' },
-        ],
-      },
-      {
-        date: baseDate.toDate(),
-        count: 1,
-        users: [
-          {
-            id: 1,
-            name: 'ユーザー1',
-            avatarUrl: 'https://github.com/shadcn.png',
-          },
-        ],
-      },
-      {
-        date: baseDate.add(1, 'day').toDate(),
-        count: 3,
-        users: [
-          { id: 1, name: 'ユーザー1' },
-          { id: 2, name: 'ユーザー2' },
-          { id: 3, name: 'ユーザー3' },
-        ],
-      },
-      {
-        date: baseDate.add(2, 'day').toDate(),
-        count: 5,
-        users: [
-          { id: 4, name: 'ユーザー4' },
-          { id: 5, name: 'ユーザー5' },
-          { id: 6, name: 'ユーザー6' },
-          { id: 7, name: 'ユーザー7' },
-          { id: 8, name: 'ユーザー8' },
-        ],
-      },
-      {
-        date: baseDate.add(3, 'day').toDate(),
-        count: 4,
-        users: [
-          { id: 4, name: 'ユーザー4' },
-          { id: 5, name: 'ユーザー5' },
-          { id: 6, name: 'ユーザー6' },
-          { id: 7, name: 'ユーザー7' },
-        ],
-      },
-      {
-        date: baseDate.add(4, 'day').toDate(),
-        count: 1,
-        users: [{ id: 2, name: 'ユーザー2' }],
-      },
-      {
-        date: baseDate.add(5, 'day').toDate(),
-        count: 5,
-        users: [
-          { id: 1, name: 'ユーザー1' },
-          { id: 3, name: 'ユーザー3' },
-          { id: 4, name: 'ユーザー4' },
-          { id: 6, name: 'ユーザー6' },
-          { id: 8, name: 'ユーザー8' },
-        ],
-      },
-    ]);
-  }, []);
+  logger.log('calendar', props);
 
-  const handleDateClick = (date: Date | undefined) => {
+  // コールバック関数をメモ化
+  const handleDateSelect = useCallback((date: Date | undefined) => {
     if (date) {
       setDate(date);
       setShowTypeSelector(true);
     }
-  };
+  }, []);
 
-  const handleEventClick = (event: Event) => {
+  const handleEventClick = useCallback((event: CalendarEvent) => {
     setSelectedEvent(event);
     setShowEventDetail(true);
-  };
+  }, []);
 
+  const handleEventTypeChange = useCallback((type: 'public' | 'personal') => {
+    if (type === 'public') {
+      setShowEventCreation(true);
+    } else {
+      setShowPersonalEventCreation(true);
+    }
+    setShowTypeSelector(false);
+  }, []);
+
+  // イベントの取得をメモ化
+  const fetchEvents = useCallback(async () => {
+    try {
+      const [publicEvents, personalEvents] = await Promise.all([
+        props.publicSchedules,
+        props.personalSchedules,
+      ]);
+      setEvents([...publicEvents, ...personalEvents]);
+    } catch (error) {
+      logger.error('Failed to fetch events:', error);
+    }
+  }, [props.publicSchedules, props.personalSchedules]);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
+
+  // カレンダーコンポーネントで空き予定を集計
+  useEffect(() => {
+    const freeSchedules = props.personalSchedules.filter(
+      (schedule) => schedule.isFree
+    );
+
+    const availabilityMap = freeSchedules.reduce(
+      (acc, schedule) => {
+        const dateStr = dayjs(schedule.date).format('YYYY-MM-DD');
+        if (!acc[dateStr]) {
+          acc[dateStr] = {
+            date: dateStr,
+            count: 0,
+            users: [],
+          };
+        }
+        acc[dateStr].count += 1;
+        acc[dateStr].users.push({
+          id: schedule.user.id,
+          name: schedule.user.name,
+          avatar: schedule.user.avatar,
+        });
+        return acc;
+      },
+      {} as Record<string, Availability>
+    );
+
+    setAvailabilities(Object.values(availabilityMap));
+  }, [props.personalSchedules]);
+
+  // CalendarViewに渡すイベントデータを変換
   const calendarEvents = events.map((event) => ({
-    id: String(event.id),
-    start: event.date,
-    end: event.date,
-    title: event.title,
+    id: event.id,
+    start: new Date(event.date),
+    end: new Date(event.date),
+    title: isPublicSchedule(event) ? event.title : event.title,
     extendedProps: {
       isPersonal: event.isPersonal,
-      participants: event.participants,
-      quota: event.quota,
+      participants: isPublicSchedule(event) ? event.participants : undefined,
+      quota: isPublicSchedule(event) ? event.recruitCount : undefined,
       originalEvent: event,
     },
   }));
@@ -360,11 +210,11 @@ export default function Calendar() {
             </h3>
           </div>
           <div className='p-4'>
-            <CalendarView
+            <MemoizedCalendarView
               date={date}
               events={calendarEvents}
               availabilities={availabilities}
-              onDateSelect={handleDateClick}
+              onDateSelect={handleDateSelect}
               onEventClick={handleEventClick}
             />
           </div>
@@ -380,18 +230,20 @@ export default function Calendar() {
           <div className='p-4 space-y-4 max-h-[40vh] md:max-h-[calc(100vh-20rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent'>
             {/* 未来のイベント */}
             {events
-              .filter((event) => event.date >= new Date())
-              .sort((a, b) => a.date.getTime() - b.date.getTime())
+              .filter((event) => new Date(event.date) >= new Date())
+              .sort((a, b) => dayjs(a.date).valueOf() - dayjs(b.date).valueOf())
               .map((event) => {
-                const joinCount =
-                  event.participants?.filter((p) => p.status === 'join')
-                    .length || 0;
+                const joinCount = isPublicSchedule(event)
+                  ? event.participants?.filter((p) => p.reaction === 'OK')
+                      .length
+                  : 0;
+
                 const isAlmostFull =
-                  !event.isPersonal &&
-                  event.quota &&
-                  joinCount === event.quota - 1;
+                  isPublicSchedule(event) &&
+                  joinCount === event.recruitCount - 1;
+
                 const isFull =
-                  !event.isPersonal && event.quota && joinCount >= event.quota;
+                  isPublicSchedule(event) && joinCount >= event.recruitCount;
 
                 return (
                   <Button
@@ -405,7 +257,7 @@ export default function Calendar() {
                           ? 'bg-green-900/50'
                           : isAlmostFull
                             ? 'bg-yellow-900/50'
-                            : event.date < new Date()
+                            : dayjs(event.date).isBefore(dayjs())
                               ? 'bg-red-900/50'
                               : ''
                     )}
@@ -419,25 +271,25 @@ export default function Calendar() {
                       )}
                       <div className='flex-1'>
                         <div className='font-medium text-gray-100'>
-                          {event.title}
+                          {isPublicSchedule(event) ? event.title : event.title}
                         </div>
                         <div className='text-sm text-gray-400'>
                           {dayjs(event.date).format('YYYY年MM月DD日')}
-                          {!event.isPersonal && (
+                          {isPublicSchedule(event) && (
                             <>
                               - <UsersIcon className='inline h-3 w-3' />{' '}
                               {event.participants?.filter(
-                                (p) => p.status === 'join'
+                                (p) => p.reaction === 'OK'
                               ).length || 0}
-                              /{event.quota}
+                              /{event.recruitCount}
                             </>
                           )}
                         </div>
                       </div>
-                      {event.creator.avatarUrl ? (
+                      {event.createdBy.avatar ? (
                         <img
-                          src={event.creator.avatarUrl}
-                          alt={event.creator.name}
+                          src={`https://cdn.discordapp.com/icons/${event.createdBy.id}/${event.createdBy.avatar}.png`}
+                          alt={event.createdBy.name}
                           className='w-6 h-6 rounded-full ml-2 border border-gray-700'
                         />
                       ) : (
@@ -451,7 +303,7 @@ export default function Calendar() {
               })}
 
             {/* 過去のイベントがある場合のみ表示 */}
-            {events.some((event) => event.date < new Date()) && (
+            {events.some((event) => dayjs(event.date).isBefore(dayjs())) && (
               <>
                 <div className='relative my-6'>
                   <div className='absolute inset-0 flex items-center'>
@@ -465,8 +317,11 @@ export default function Calendar() {
                 </div>
 
                 {events
-                  .filter((event) => event.date < new Date())
-                  .sort((a, b) => b.date.getTime() - a.date.getTime())
+                  .filter((event) => dayjs(event.date).isBefore(dayjs()))
+                  .sort(
+                    (a, b) =>
+                      new Date(b.date).getTime() - new Date(a.date).getTime()
+                  )
                   .map((event) => (
                     <Button
                       key={event.id}
@@ -485,25 +340,27 @@ export default function Calendar() {
                         )}
                         <div className='flex-1'>
                           <div className='font-medium text-gray-400'>
-                            {event.title}
+                            {isPublicSchedule(event)
+                              ? event.title
+                              : event.title}
                           </div>
                           <div className='text-sm text-gray-500'>
                             {dayjs(event.date).format('YYYY年MM月DD日')}
-                            {!event.isPersonal && (
+                            {!event.isPersonal && isPublicSchedule(event) && (
                               <>
                                 - <UsersIcon className='inline h-3 w-3' />{' '}
                                 {event.participants?.filter(
-                                  (p) => p.status === 'join'
+                                  (p) => p.reaction === 'OK'
                                 ).length || 0}
-                                /{event.quota}
+                                /{event.recruitCount}
                               </>
                             )}
                           </div>
                         </div>
-                        {event.creator.avatarUrl ? (
+                        {event.createdBy.avatar ? (
                           <img
-                            src={event.creator.avatarUrl}
-                            alt={event.creator.name}
+                            src={`https://cdn.discordapp.com/avatars/${event.createdBy.id}/${event.createdBy.avatar}.png`}
+                            alt={event.createdBy.name}
                             className='w-6 h-6 rounded-full ml-2 border border-gray-700'
                           />
                         ) : (
@@ -521,7 +378,7 @@ export default function Calendar() {
       </div>
 
       {showTypeSelector && (
-        <EventTypeSelector
+        <MemoizedEventTypeSelector
           onClose={() => setShowTypeSelector(false)}
           onSelectEvent={() => {
             setShowTypeSelector(false);
@@ -535,23 +392,23 @@ export default function Calendar() {
       )}
 
       {showEventCreation && (
-        <EventCreation
+        <MemoizedEventCreation
           onClose={() => setShowEventCreation(false)}
           date={date}
         />
       )}
       {showPersonalEventCreation && (
-        <PersonalEventCreation
+        <MemoizedPersonalEventCreation
           onClose={() => setShowPersonalEventCreation(false)}
           date={date}
         />
       )}
       {showEventDetail && selectedEvent && (
-        <EventDetail
+        <MemoizedEventDetail
           event={selectedEvent}
           onClose={() => setShowEventDetail(false)}
         />
       )}
     </div>
   );
-}
+});

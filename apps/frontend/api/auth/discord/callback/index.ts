@@ -1,8 +1,19 @@
 /* eslint-disable */
-import type { DefineMethods } from 'aspida';
+import type { DefineMethods } from "aspida";
 
 export type Methods = DefineMethods<{
   get: {
-    status: 302;
+    query: {
+      error: string;
+      /** Discord認証コード */
+      code: string;
+    };
+
+    status: 200;
+
+    /** Discord認証成功 */
+    resBody: {
+      success?: boolean | undefined;
+    };
   };
 }>;

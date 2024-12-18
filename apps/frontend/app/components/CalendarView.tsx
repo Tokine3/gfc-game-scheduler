@@ -4,7 +4,6 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import jaLocale from '@fullcalendar/core/locales/ja';
-import type { Event, Participant, AvailabilityCount } from './Calendar';
 import { DateSelectArg, EventContentArg } from '@fullcalendar/core';
 import { User, Crosshair } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -19,6 +18,8 @@ import holidays from '@holiday-jp/holiday_jp';
 import dayjs from 'dayjs';
 import dynamic from 'next/dynamic';
 import { debounce, rafThrottle } from '../../lib/utils';
+import { Participant } from '../../api/@types';
+import { Availability, CalendarEvent } from './Calendar';
 
 interface CalendarViewProps {
   date: Date | undefined;
@@ -31,12 +32,12 @@ interface CalendarViewProps {
       isPersonal: boolean;
       participants: Participant[] | undefined;
       quota: number | undefined;
-      originalEvent: Event;
+      originalEvent: CalendarEvent;
     };
   }[];
-  availabilities: AvailabilityCount[];
+  availabilities: Availability[];
   onDateSelect: (date: Date | undefined) => void;
-  onEventClick: (event: Event) => void;
+  onEventClick: (event: CalendarEvent) => void;
 }
 
 interface Holiday {
@@ -58,10 +59,8 @@ export function CalendarView({
 }: CalendarViewProps) {
   const calendarRef = useRef<any>(null);
   const lastTapRef = useRef<number>(0);
-  const [selectedAvailability, setSelectedAvailability] = useState<{
-    date: Date;
-    users: { id: number; name: string; avatarUrl?: string }[];
-  } | null>(null);
+  const [selectedAvailability, setSelectedAvailability] =
+    useState<Availability | null>(null);
 
   const handleDateSelect = useCallback(
     debounce((selectInfo: DateSelectArg) => {
@@ -99,7 +98,7 @@ export function CalendarView({
     const isFull =
       participants &&
       quota &&
-      participants.filter((p: Participant) => p.status === 'join').length >=
+      participants.filter((p: Participant) => p.reaction === 'OK').length >=
         quota;
 
     return (
@@ -149,27 +148,29 @@ export function CalendarView({
                   </div>
                   <div className='space-y-1'>
                     {participants.filter(
-                      (p: Participant) => p.status === 'join'
+                      (p: Participant) => p.reaction === 'OK'
                     ).length > 0 && (
                       <div className='text-xs'>
                         <span className='text-green-400 font-medium'>
                           参加者:{' '}
                         </span>
                         {participants
-                          .filter((p: Participant) => p.status === 'join')
+                          .filter((p: Participant) => p.reaction === 'OK')
                           .map((p: Participant) => p.name)
                           .join(', ')}
                       </div>
                     )}
                     {participants.filter(
-                      (p: Participant) => p.status === 'maybe'
+                      (p: Participant) => p.reaction === 'UNDECIDED'
                     ).length > 0 && (
                       <div className='text-xs'>
                         <span className='text-yellow-400 font-medium'>
                           未定:{' '}
                         </span>
                         {participants
-                          .filter((p: Participant) => p.status === 'maybe')
+                          .filter(
+                            (p: Participant) => p.reaction === 'UNDECIDED'
+                          )
                           .map((p: Participant) => p.name)
                           .join(', ')}
                       </div>
@@ -185,7 +186,7 @@ export function CalendarView({
   };
 
   const handleEventClick = (clickInfo: any) => {
-    const eventId = parseInt(clickInfo.event.id);
+    const eventId = clickInfo.event.id;
     const originalEvent = events.find(
       (e) => e.extendedProps.originalEvent.id === eventId
     );
@@ -220,6 +221,7 @@ export function CalendarView({
     );
 
     const count = availability?.count || 0;
+    const users = availability?.users || [];
 
     const colorClass =
       count === 0
@@ -266,8 +268,13 @@ export function CalendarView({
           );
           if (availability) {
             setSelectedAvailability({
-              date,
-              users: availability.users,
+              date: dayjs(date).format('YYYY-MM-DD'),
+              count: availability.count,
+              users: availability.users.map((user) => ({
+                id: user.id,
+                name: user.name,
+                avatar: user.avatar,
+              })),
             });
           }
         }

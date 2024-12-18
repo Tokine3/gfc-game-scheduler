@@ -2,34 +2,25 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Calendar from '../components/Calendar';
-import Header from '../components/Header';
-import { client } from '../../lib/api';
+import { useAuth } from '../hooks/useAuth';
 
-export default function HomePage() {
+export default function Home() {
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await client.user.login.get();
-        console.log('User data:', response.body);
-      } catch (error) {
-        console.error('Failed to fetch user:', error);
-        // APIサーバーに接続できない場合はログインページへ
-        router.push('/');
+    if (!loading) {
+      if (user) {
+        router.replace('/servers');
+      } else {
+        router.replace('/login');
       }
-    };
-
-    fetchUser();
-  }, [router]);
+    }
+  }, [loading, user, router]);
 
   return (
-    <div className='min-h-screen text-gray-100'>
-      <Header />
-      <main className='container mx-auto p-4'>
-        <Calendar />
-      </main>
+    <div className='flex items-center justify-center min-h-screen'>
+      <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-100' />
     </div>
   );
 }

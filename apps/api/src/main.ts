@@ -11,7 +11,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('GFC Scheduler API')
-    .setDescription('API documentation for GFC Scheduler')
+    .setDescription('GFC Scheduler API description')
     .setVersion('1.0')
     .build();
 
@@ -24,18 +24,10 @@ async function bootstrap() {
 
   // CORSを有効化
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: process.env.FRONTEND_URL,
     credentials: true,
   });
 
-  const port = process.env.PORT || 8000;
-
-  try {
-    await app.listen(port);
-    console.log(`Application is running on: http://localhost:${port}`);
-  } catch (error) {
-    console.error('Failed to start the application:', error);
-    process.exit(1);
-  }
+  await app.listen(8000);
 }
 bootstrap();

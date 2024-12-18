@@ -13,11 +13,12 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { RequestWithUser } from 'src/types/request.types';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FindAllUserDto } from './dto/findAll-user.dto';
 import { FindAllUser, User } from './entities/user.entity';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { logger } from 'src/utils/logger';
 
 @ApiTags('User')
 @Controller('user')
@@ -46,6 +47,7 @@ export class UserController {
   @Get('login')
   @UseGuards(JwtAuthGuard)
   async login(@Request() req: RequestWithUser) {
+    logger.log('login', req.user.id);
     return await this.userService.login(req.user.id);
   }
 
