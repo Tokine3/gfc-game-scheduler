@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import dayjs from 'dayjs';
 import { client } from '../../lib/api';
+import { logger } from '../../lib/logger';
 
 interface EventCreationProps {
   onClose: () => void;
@@ -45,7 +46,7 @@ export default function EventCreation({ onClose, date }: EventCreationProps) {
       });
       onClose();
     } catch (error) {
-      console.error('Failed to create event:', error);
+      logger.error('Failed to create event:', error);
     }
   };
 

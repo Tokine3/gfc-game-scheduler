@@ -7,6 +7,7 @@ import { JwtPayload } from '../types/jwt.types';
 import { GetUserServersResponse } from './entities/server.entity';
 import { getUserDiscordServer } from 'utils/getDiscordServer';
 import { RequestWithUser } from 'src/types/request.types';
+import { logger } from 'src/utils/logger';
 
 @Injectable()
 export class AuthService {
@@ -64,7 +65,7 @@ export class AuthService {
 
       // レート制限チェックを追加
       if ('retry_after' in guilds) {
-        console.log('Rate limited, waiting...', guilds.retry_after);
+        logger.log('Rate limited, waiting...', guilds.retry_after);
         // レート制限時は少し待ってから再試行
         await new Promise((resolve) =>
           setTimeout(resolve, guilds.retry_after * 1000 + 100)
@@ -73,9 +74,9 @@ export class AuthService {
       }
 
       // guildsの型チェックとデバッグログ
-      console.log('Fetched guilds:', guilds);
+      logger.log('Fetched guilds:', guilds);
       if (!Array.isArray(guilds)) {
-        console.error('Guilds is not an array:', guilds);
+        logger.error('Guilds is not an array:', guilds);
         return {
           data: [],
           calendarCount: 0,
@@ -83,7 +84,7 @@ export class AuthService {
       }
 
       const guildIds = guilds.map((guild) => guild.id);
-      console.log('Guild IDs:', guildIds);
+      logger.log('Guild IDs:', guildIds);
 
       const serversWithCalendars = await this.prisma.server.findMany({
         where: { id: { in: guildIds } },
@@ -114,7 +115,7 @@ export class AuthService {
         ),
       };
     } catch (error) {
-      console.error('Error in getDiscordServers:', error);
+      logger.error('Error in getDiscordServers:', error);
       return {
         data: [],
         calendarCount: 0,

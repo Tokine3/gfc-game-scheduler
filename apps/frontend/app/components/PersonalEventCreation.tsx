@@ -33,6 +33,7 @@ import { Switch } from './ui/switch';
 import { cn } from '../../lib/utils';
 import { Segment } from './ui/segment';
 import { client } from '../../lib/api';
+import { logger } from '../../lib/logger';
 
 interface PersonalEventCreationProps {
   onClose: () => void;
@@ -195,16 +196,16 @@ export default function PersonalEventCreation({
       }));
 
       if (schedulesToSubmit.length > 0) {
-        console.log('Submitting schedules:', schedulesToSubmit); // デバッグ用
+        logger.log('Submitting schedules:', schedulesToSubmit); // デバッグ用
         await client.schedules.personal.post({
           body: schedulesToSubmit,
         });
         onClose();
       } else {
-        console.log('No schedules to submit'); // デバッグ用
+        logger.log('No schedules to submit'); // デバッグ用
       }
     } catch (error) {
-      console.error('Failed to create personal events:', error);
+      logger.error('Failed to create personal events:', error);
     }
   };
 

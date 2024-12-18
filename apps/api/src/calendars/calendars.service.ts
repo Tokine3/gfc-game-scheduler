@@ -4,6 +4,7 @@ import { UpdateCalendarDto } from './dto/update-calendar.dto';
 import { RequestWithUser } from '../types/request.types';
 import { PrismaService } from '../prisma/prisma.service';
 import { User } from '@prisma/client';
+import { logger } from 'src/utils/logger';
 
 @Injectable()
 export class CalendarsService {
@@ -11,8 +12,8 @@ export class CalendarsService {
 
   constructor(private readonly prisma: PrismaService) {}
   create(req: RequestWithUser, body: CreateCalendarDto) {
-    console.log('CALENDARS SERVICE');
-    console.log(body);
+    logger.log('CALENDARS SERVICE');
+    logger.log(body);
     const { name, serverId, serverName } = body;
     return this.prisma.calendar.create({
       data: {

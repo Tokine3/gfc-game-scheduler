@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../hooks/useAuth';
+import { logger } from '../../../lib/logger';
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -10,21 +11,21 @@ export default function AuthCallback() {
   const redirectPath = sessionStorage.getItem('redirectPath');
 
   useEffect(() => {
-    console.log('Auth Callback - Loading:', loading, 'User:', user);
-    console.log('Redirect Path:', redirectPath);
+    logger.log('Auth Callback - Loading:', loading, 'User:', user);
+    logger.log('Redirect Path:', redirectPath);
 
     if (!loading) {
       if (user) {
         if (redirectPath) {
-          console.log('Redirecting to saved path:', redirectPath);
+          logger.log('Redirecting to saved path:', redirectPath);
           sessionStorage.removeItem('redirectPath');
           router.replace(redirectPath);
         } else {
-          console.log('No redirect path, going to /servers');
+          logger.log('No redirect path, going to /servers');
           router.replace('/servers');
         }
       } else {
-        console.log('No user, redirecting to /login');
+        logger.log('No user, redirecting to /login');
         router.replace('/login');
       }
     }

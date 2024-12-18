@@ -37,6 +37,7 @@ import {
   ToastTitle,
   ToastViewport,
 } from '../components/ui/toast';
+import { logger } from '../../lib/logger';
 
 type ServerType = {
   id: string;
@@ -105,13 +106,13 @@ export default function ServersPage() {
     const fetchServers = async () => {
       try {
         const response = await client.auth.servers.get();
-        console.log('response', response);
+        logger.log('response', response);
         // response.body.servers.dataからデータを取得
         if (response.body.data) {
           setServers(response.body.data);
         }
       } catch (error) {
-        console.error('Failed to fetch servers:', error);
+        logger.error('Failed to fetch servers:', error);
       }
     };
 
@@ -157,7 +158,7 @@ export default function ServersPage() {
   };
 
   const handleCreateCalendar = async (serverId: string) => {
-    console.log('handleCreateCalendar');
+    logger.log('handleCreateCalendar');
     if (!showCreateCalendarForm) {
       setShowCreateCalendarForm(true);
       return;
@@ -168,7 +169,7 @@ export default function ServersPage() {
     }
 
     try {
-      console.log('create calendar');
+      logger.log('create calendar');
       const response = await client.calendars.$post({
         body: {
           name: newCalendarName,
@@ -177,7 +178,7 @@ export default function ServersPage() {
           icon: selectedServer?.icon || null,
         },
       });
-      console.log('response', response.id);
+      logger.log('response', response.id);
       setToast({
         title: 'カレンダー作成完了',
         description: `${newCalendarName}を作成しました`,
@@ -189,7 +190,7 @@ export default function ServersPage() {
       setNewCalendarName('');
       router.push(`/calendar/${response.id}`);
     } catch (error) {
-      console.error('Failed to create calendar:', error);
+      logger.error('Failed to create calendar:', error);
       setToast({
         title: 'エラー',
         description: 'カレンダーの作成に失敗しました',
@@ -219,7 +220,7 @@ export default function ServersPage() {
       setShowCalendarDialog(true);
       setShowCreateCalendarForm(true);
     } catch (error) {
-      console.error('Failed to join server:', error);
+      logger.error('Failed to join server:', error);
       setToast({
         title: 'エラー',
         description: 'サーバーへの参加に失敗しました',

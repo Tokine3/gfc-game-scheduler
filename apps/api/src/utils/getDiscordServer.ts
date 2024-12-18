@@ -1,4 +1,5 @@
 import { RequestWithUser } from 'src/types/request.types';
+import { logger } from './logger';
 
 export async function getUserDiscordServer(req: RequestWithUser) {
   try {
@@ -22,7 +23,7 @@ export async function getUserDiscordServer(req: RequestWithUser) {
 
     return data;
   } catch (error) {
-    console.error('Error fetching Discord servers:', error);
+    logger.error('Error fetching Discord servers:', error);
     throw error;
   }
 }

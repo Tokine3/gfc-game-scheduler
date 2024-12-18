@@ -23,6 +23,7 @@ import dayjs from 'dayjs';
 import { cn } from '../../lib/utils';
 import { isPublicSchedule, type CalendarEvent } from './Calendar';
 import { Participant } from '../../api/@types';
+import { logger } from '../../lib/logger';
 
 type EventDetailProps = {
   event: CalendarEvent;
@@ -51,7 +52,7 @@ function StatusBadge({ status }: { status: Participant['reaction'] }) {
 
 export default function EventDetail({ event, onClose }: EventDetailProps) {
   const handleReaction = (reaction: string) => {
-    console.log(`反応: ${reaction}`);
+    logger.log(`反応: ${reaction}`);
   };
 
   return (

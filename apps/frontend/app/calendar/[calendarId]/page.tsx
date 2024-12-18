@@ -16,6 +16,7 @@ import {
   DialogFooter,
 } from '../../components/ui/dialog';
 import { Button } from '../../components/ui/button';
+import { logger } from '../../../lib/logger';
 
 interface CalendarPageProps {
   params: Promise<{ calendarId: string }>;
@@ -62,7 +63,7 @@ export default function CalendarPage({ params }: CalendarPageProps) {
 
       setCalendar(calendarResponse.body);
     } catch (error) {
-      console.error('Failed to fetch calendar:', error);
+      logger.error('Error fetching calendar:', error);
       setError('カレンダーの取得に失敗しました');
       router.push('/servers');
     }
@@ -119,7 +120,7 @@ export default function CalendarPage({ params }: CalendarPageProps) {
                   setShowJoinDialog(false);
                   window.location.reload();
                 } catch (error) {
-                  console.error('Failed to join server:', error);
+                  logger.error('Failed to join server:', error);
                 }
               }}
             >

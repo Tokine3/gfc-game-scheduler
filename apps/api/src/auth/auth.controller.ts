@@ -21,6 +21,7 @@ import {
 import { RequestWithUser } from '../types/request.types';
 import { GetUserServersResponse } from './entities/server.entity';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { logger } from 'src/utils/logger';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -62,7 +63,7 @@ export class AuthController {
     @Query('redirect') redirect?: string
   ) {
     if (error) {
-      console.log('Auth callback error:', error);
+      logger.error('Auth callback error:', error);
       return res.redirect(
         `${process.env.FRONTEND_URL}/login?error=auth_cancelled`
       );
@@ -76,7 +77,7 @@ export class AuthController {
       const { access_token } = await this.authService.login(req.user);
 
       // アクセストークンがundefinedでないことを確認
-      console.log('Auth Controller - req.user:', req.user);
+      logger.log('Auth Controller - req.user:', req.user);
 
       // JWTトークンをクッキーに設定
       res.cookie('token', access_token, {
@@ -114,7 +115,7 @@ export class AuthController {
 
       res.redirect(`${process.env.FRONTEND_URL}${redirectPath}`);
     } catch (error) {
-      console.error('Auth callback error:', error);
+      logger.error('Auth callback error:', error);
       res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
     }
   }

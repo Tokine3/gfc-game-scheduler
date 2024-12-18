@@ -4,13 +4,14 @@ import { UpdateServerDto } from './dto/update-server.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { RequestWithUser } from 'src/types/request.types';
 import { JoinServerDto } from './dto/join-server.dto';
+import { logger } from 'src/utils/logger';
 
 @Injectable()
 export class ServersService {
   constructor(private readonly prisma: PrismaService) {}
 
   join(req: RequestWithUser, joinServerDto: JoinServerDto) {
-    console.log('joinServerDto', joinServerDto);
+    logger.log('joinServerDto', joinServerDto);
     const { serverId, serverName, serverIcon } = joinServerDto;
     return this.prisma.server.create({
       data: {
