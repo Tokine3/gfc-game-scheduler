@@ -1,15 +1,33 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // cookie-parserを追加
+  app.use(cookieParser());
+
+  const config = new DocumentBuilder()
+    .setTitle('GFC Scheduler API')
+    .setDescription('GFC Scheduler API description')
+    .setVersion('1.0')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('docs', app, document);
+
+  // Swagger JSONをファイルとして出力
+  const fs = require('fs');
+  fs.writeFileSync('./swagger.json', JSON.stringify(document));
+
   // CORSを有効化
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: process.env.FRONTEND_URL,
     credentials: true,
   });
 
-  await app.listen(4000);
+  await app.listen(8000);
 }
 bootstrap();

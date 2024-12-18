@@ -32,18 +32,20 @@ import { Checkbox } from './ui/checkbox';
 import { Switch } from './ui/switch';
 import { cn } from '../../lib/utils';
 import { Segment } from './ui/segment';
+import { client } from '../../lib/api';
+import { logger } from '../../lib/logger';
 
 interface PersonalEventCreationProps {
   onClose: () => void;
   date?: Date;
 }
 
-interface DaySchedule {
-  date: Date;
-  isAvailable: boolean;
-  note: string;
+type DaySchedule = {
+  date: string;
+  isFree: boolean;
+  description: string;
   isPrivate: boolean;
-}
+};
 
 // 月/週切り替えボタンのカスタムスタイル
 const viewModeButtonStyle = (isActive: boolean) =>
@@ -110,28 +112,30 @@ export default function PersonalEventCreation({
     );
   };
 
-  // 予定の更新
+  // スケジュールの変更を処理
   const handleScheduleChange = (
-    date: dayjs.Dayjs,
-    field: keyof DaySchedule,
-    value: any
+    day: dayjs.Dayjs,
+    field: 'isFree' | 'description' | 'isPrivate',
+    value: boolean | string
   ) => {
     setSchedules((prev) => {
-      const index = prev.findIndex((s) => dayjs(s.date).isSame(date, 'day'));
-      if (index === -1) {
-        return [
-          ...prev,
-          {
-            date: date.toDate(),
-            isAvailable: field === 'isAvailable' ? value : false,
-            note: field === 'note' ? value : '',
-            isPrivate: field === 'isPrivate' ? value : false,
-          },
-        ];
+      const existingSchedule = prev.find((s) =>
+        dayjs(s.date).isSame(day, 'day')
+      );
+      const newSchedule: DaySchedule = {
+        date: day.format('YYYY-MM-DD'),
+        isFree: existingSchedule?.isFree || false,
+        description: existingSchedule?.description || '',
+        isPrivate: existingSchedule?.isPrivate || false,
+        [field]: value,
+      };
+
+      if (existingSchedule) {
+        return prev.map((s) =>
+          dayjs(s.date).isSame(day, 'day') ? newSchedule : s
+        );
       }
-      const newSchedules = [...prev];
-      newSchedules[index] = { ...newSchedules[index], [field]: value };
-      return newSchedules;
+      return [...prev, newSchedule];
     });
     setHasChanges(true);
   };
@@ -155,26 +159,54 @@ export default function PersonalEventCreation({
   const isAllSchedulesAvailable = () => {
     const days = getDaysInRange();
     return days.every(
-      (day) =>
-        schedules.find((s) => dayjs(s.date).isSame(day, 'day'))?.isAvailable
+      (day) => schedules.find((s) => dayjs(s.date).isSame(day, 'day'))?.isFree
     );
   };
 
   // 一括チェック機能を更新
-  const handleBulkCheck = () => {
+  const handleBulkCheck = (e: React.MouseEvent) => {
+    e.preventDefault();
     const days = getDaysInRange();
     const allChecked = isAllSchedulesAvailable();
 
-    const newSchedules = days.map((day) => ({
-      date: day.toDate(),
-      isAvailable: !allChecked,
-      note: schedules.find((s) => dayjs(s.date).isSame(day, 'day'))?.note || '',
+    const newSchedules: DaySchedule[] = days.map((day) => ({
+      date: day.format('YYYY-MM-DD'),
+      isFree: !allChecked,
+      description:
+        schedules.find((s) => dayjs(s.date).isSame(day, 'day'))?.description ||
+        '',
       isPrivate:
         schedules.find((s) => dayjs(s.date).isSame(day, 'day'))?.isPrivate ||
         false,
     }));
     setSchedules(newSchedules);
     setHasChanges(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      // 空き予定がある日のみを抽出してAPIリクエストを作成
+      const schedulesToSubmit = schedules.map((schedule) => ({
+        date: dayjs(schedule.date).format('YYYY-MM-DD'),
+        title: schedule.description || '予定あり',
+        description: schedule.description,
+        isPrivate: schedule.isPrivate,
+        isFree: schedule.isFree, // 空き予定として登録
+      }));
+
+      if (schedulesToSubmit.length > 0) {
+        logger.log('Submitting schedules:', schedulesToSubmit); // デバッグ用
+        await client.schedules.personal.post({
+          body: schedulesToSubmit,
+        });
+        onClose();
+      } else {
+        logger.log('No schedules to submit'); // デバッグ用
+      }
+    } catch (error) {
+      logger.error('Failed to create personal events:', error);
+    }
   };
 
   return (
@@ -278,9 +310,10 @@ export default function PersonalEventCreation({
               const schedule = schedules.find((s) =>
                 dayjs(s.date).isSame(day, 'day')
               ) || {
-                isAvailable: false,
-                note: '',
+                isFree: false,
+                description: '',
                 isPrivate: false,
+                date: day.format('YYYY-MM-DD'),
               };
 
               return (
@@ -290,18 +323,18 @@ export default function PersonalEventCreation({
                     <div className='flex justify-center'>
                       <Checkbox
                         id={`available-${day.format()}`}
-                        checked={schedule.isAvailable}
+                        checked={schedule.isFree}
                         onCheckedChange={(checked) =>
-                          handleScheduleChange(day, 'isAvailable', checked)
+                          handleScheduleChange(day, 'isFree', checked)
                         }
                       />
                     </div>
                     <div className='text-center'>{formatDate(day)}</div>
                     <Input
                       placeholder='予定の内容'
-                      value={schedule.note}
+                      value={schedule.description}
                       onChange={(e) =>
-                        handleScheduleChange(day, 'note', e.target.value)
+                        handleScheduleChange(day, 'description', e.target.value)
                       }
                       className='h-8 text-sm'
                     />
@@ -324,9 +357,9 @@ export default function PersonalEventCreation({
                         <div className='flex items-center gap-1'>
                           <Checkbox
                             id={`available-mobile-${day.format()}`}
-                            checked={schedule.isAvailable}
+                            checked={schedule.isFree}
                             onCheckedChange={(checked) =>
-                              handleScheduleChange(day, 'isAvailable', checked)
+                              handleScheduleChange(day, 'isFree', checked)
                             }
                           />
                           <Label
@@ -355,9 +388,9 @@ export default function PersonalEventCreation({
                     </div>
                     <Input
                       placeholder='予定の内容'
-                      value={schedule.note}
+                      value={schedule.description}
                       onChange={(e) =>
-                        handleScheduleChange(day, 'note', e.target.value)
+                        handleScheduleChange(day, 'description', e.target.value)
                       }
                       className='text-sm'
                     />

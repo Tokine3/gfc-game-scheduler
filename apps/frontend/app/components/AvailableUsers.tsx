@@ -14,12 +14,12 @@ import { cn } from '../../lib/utils';
 import { useCallback } from 'react';
 
 interface AvailableUsersProps {
-  users: {
-    id: number;
+  users: Array<{
+    id: string;
     name: string;
-    avatarUrl?: string;
-  }[];
-  date: Date;
+    avatar: string | null;
+  }>;
+  date: string;
   onClose: () => void;
 }
 
@@ -39,7 +39,7 @@ export default function AvailableUsers({
       <DialogContent className='max-w-md'>
         <DialogHeader>
           <DialogTitle className='text-center'>
-            {date.toLocaleDateString('ja-JP', {
+            {new Date(date).toLocaleDateString('ja-JP', {
               year: 'numeric',
               month: 'long',
               day: 'numeric',
@@ -54,9 +54,9 @@ export default function AvailableUsers({
           {users.map((user) => (
             <div key={user.id} className='flex items-center gap-3 py-3 px-1'>
               <div className='flex-shrink-0'>
-                {user.avatarUrl ? (
+                {user.avatar ? (
                   <img
-                    src={user.avatarUrl}
+                    src={user.avatar}
                     alt={user.name}
                     className='w-8 h-8 rounded-full border border-gray-700'
                   />

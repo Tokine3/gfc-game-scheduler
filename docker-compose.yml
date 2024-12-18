@@ -10,8 +10,6 @@ services:
       - .:/app
       - /app/node_modules
       - /app/apps/frontend/.next
-    environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:4000
     depends_on:
       - backend
 
@@ -28,11 +26,11 @@ services:
       - db
 
   db:
-    image: postgres:13
+    image: postgres:15-alpine
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: myapp
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: game_scheduler
     ports:
       - '5432:5432'
     volumes:

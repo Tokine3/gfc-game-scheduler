@@ -1,0 +1,160 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table User {
+  serverUsers ServerUser [not null]
+  personalSchedule PersonalSchedule [not null]
+  participants Participant [not null]
+  gameSetting GameSetting [not null]
+  id String [pk]
+  name String [not null]
+  avatar String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  lastLoggedInAt DateTime [default: `now()`, not null]
+  createdPublicSchedules PublicSchedule [not null]
+  updatedPublicSchedules PublicSchedule [not null]
+  createdPersonalSchedules PersonalSchedule [not null]
+  updatedPersonalSchedules PersonalSchedule [not null]
+}
+
+Table Server {
+  serverUsers ServerUser [not null]
+  calendars Calendar [not null]
+  id String [pk]
+  name String [not null]
+  icon String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table ServerUser {
+  server Server [not null]
+  user User [not null]
+  userId String [not null]
+  serverId String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  indexes {
+    (userId, serverId) [pk]
+  }
+}
+
+Table Calendar {
+  publicSchedules PublicSchedule [not null]
+  personalSchedules PersonalSchedule [not null]
+  id String [pk]
+  server Server [not null]
+  serverId String [not null]
+  name String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table PublicSchedule {
+  calendar Calendar [not null]
+  participants Participant [not null]
+  id Int [pk, increment]
+  calendarId String [not null]
+  date DateTime [not null]
+  title String [not null]
+  description String
+  recruitCount Int [not null]
+  isRecruiting Boolean [not null, default: true]
+  createdBy User [not null]
+  createdById String [not null]
+  updatedBy User [not null]
+  updatedById String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  isPersonal Boolean [not null, default: false]
+}
+
+Table PersonalSchedule {
+  calendar Calendar [not null]
+  user User [not null]
+  id Int [pk, increment]
+  calendarId String [not null]
+  date DateTime [not null]
+  title String [not null]
+  userId String [not null]
+  description String
+  isPrivate Boolean [not null, default: false]
+  isFree Boolean [not null, default: false]
+  createdBy User [not null]
+  createdById String [not null]
+  updatedBy User [not null]
+  updatedById String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  isPersonal Boolean [not null, default: true]
+}
+
+Table Participant {
+  user User [not null]
+  publicSchedule PublicSchedule [not null]
+  id Int [pk, increment]
+  userId String [not null]
+  publicScheduleId Int [not null]
+  reaction Reaction [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table GameTitle {
+  gameSetting GameSetting [not null]
+  id Int [pk, increment]
+  name String [not null]
+  imageUrl String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table GameSetting {
+  user User [not null]
+  gameTitle GameTitle [not null]
+  id Int [pk, increment]
+  userId String [not null]
+  gameTitleId Int [not null]
+  sensitivity Float
+  dpi Int
+  fov Int
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Enum Reaction {
+  OK
+  UNDECIDED
+  NG
+}
+
+Ref: ServerUser.serverId > Server.id
+
+Ref: ServerUser.userId > User.id
+
+Ref: Calendar.serverId > Server.id
+
+Ref: PublicSchedule.calendarId > Calendar.id
+
+Ref: PublicSchedule.createdById > User.id
+
+Ref: PublicSchedule.updatedById > User.id
+
+Ref: PersonalSchedule.calendarId > Calendar.id
+
+Ref: PersonalSchedule.userId > User.id
+
+Ref: PersonalSchedule.createdById > User.id
+
+Ref: PersonalSchedule.updatedById > User.id
+
+Ref: Participant.userId > User.id
+
+Ref: Participant.publicScheduleId > PublicSchedule.id
+
+Ref: GameSetting.userId > User.id
+
+Ref: GameSetting.gameTitleId > GameTitle.id
