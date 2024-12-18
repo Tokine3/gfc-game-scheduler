@@ -82,31 +82,28 @@ export class AuthController {
       // JWTトークンをクッキーに設定
       res.cookie('token', access_token, {
         httpOnly: true,
-        secure:
-          process.env.NODE_ENV === 'production' ||
-          process.env.NODE_ENV === 'dev',
+        secure: true,
         sameSite: 'lax',
         maxAge: 24 * 60 * 60 * 1000,
+        path: '/',
       });
 
       // Discordアクセストークンをクッキーに設定
       res.cookie('discord_token', req.user.accessToken, {
         httpOnly: true,
-        secure:
-          process.env.NODE_ENV === 'production' ||
-          process.env.NODE_ENV === 'dev',
+        secure: true,
         sameSite: 'lax',
         maxAge: 24 * 60 * 60 * 1000,
+        path: '/',
       });
 
       // Discord IDをクッキーに設定（httpOnly: falseで設定）
       res.cookie('discord_id', req.user.id, {
         httpOnly: false,
-        secure:
-          process.env.NODE_ENV === 'production' ||
-          process.env.NODE_ENV === 'dev',
+        secure: true,
         sameSite: 'lax',
         maxAge: 24 * 60 * 60 * 1000,
+        path: '/',
       });
 
       const redirectPath = redirect

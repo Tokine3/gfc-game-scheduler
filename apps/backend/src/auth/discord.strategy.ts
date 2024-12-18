@@ -14,8 +14,10 @@ export class DiscordStrategy extends PassportStrategy(Strategy, 'discord') {
     super({
       clientID: configService.get('DISCORD_CLIENT_ID'),
       clientSecret: configService.get('DISCORD_CLIENT_SECRET'),
-      callbackURL: configService.get('DISCORD_CALLBACK_URL'),
-      scope: ['identify', 'guilds'],
+      callbackURL:
+        configService.get('DISCORD_CALLBACK_URL') ||
+        `${configService.get('API_URL')}/auth/discord/callback`,
+      scope: ['identify', 'guilds', 'guilds.members.read'],
     });
   }
 
