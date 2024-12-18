@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../hooks/useAuth';
@@ -8,19 +9,18 @@ import Image from 'next/image';
 import { Gamepad2Icon } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
-export default function LoginPage() {
+function LoginContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
 
-  // エラーメッセージの表示用state
   const [errorMessage, setErrorMessage] = useState<string>('');
 
   useEffect(() => {
     if (error === 'auth_cancelled') {
       setErrorMessage('認証がキャンセルされました');
-      setTimeout(() => setErrorMessage(''), 3000); // 3秒後に消える
+      setTimeout(() => setErrorMessage(''), 3000);
     } else if (error === 'auth_failed') {
       setErrorMessage('認証に失敗しました');
       setTimeout(() => setErrorMessage(''), 3000);
@@ -31,7 +31,6 @@ export default function LoginPage() {
   }, [error, searchParams]);
 
   useEffect(() => {
-    // 未認証でアクセスしたURLをsessionStorageに保存
     const redirectPath = sessionStorage.getItem('redirectPath');
     if (!loading && user) {
       if (redirectPath) {
@@ -52,7 +51,6 @@ export default function LoginPage() {
   }
 
   const handleLogin = () => {
-    // 現在のURLをsessionStorageに保存
     const currentPath = window.location.pathname;
     const currentSearch = window.location.search;
     const fullPath = currentPath + currentSearch;
@@ -61,13 +59,11 @@ export default function LoginPage() {
       sessionStorage.setItem('redirectPath', fullPath);
     }
 
-    // Discord OAuth2 URLを構築
     const DISCORD_CLIENT_ID = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID;
     const REDIRECT_URI = encodeURIComponent(
       `${process.env.NEXT_PUBLIC_API_URL}/auth/discord/callback`
     );
 
-    // リダイレクトパスがある場合はクエリパラメータとして追加
     const redirectPath = sessionStorage.getItem('redirectPath');
     const redirectQuery = redirectPath
       ? `&redirect=${encodeURIComponent(redirectPath)}`
@@ -80,7 +76,6 @@ export default function LoginPage() {
 
   return (
     <div className='min-h-screen flex flex-col'>
-      {/* ヘッダー */}
       <header className='border-b border-gray-800'>
         <div className='container mx-auto px-4 py-3'>
           <div className='flex items-center space-x-2'>
@@ -100,7 +95,6 @@ export default function LoginPage() {
         </div>
       </header>
 
-      {/* メインコンテンツ */}
       <main className='flex-1 flex items-center justify-center p-4'>
         <div className='w-full max-w-md space-y-8'>
           <div className='text-center space-y-4'>
@@ -151,7 +145,6 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* 機能紹介 */}
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8'>
             <div className='p-4 rounded-lg bg-gray-900/30 backdrop-blur-sm border border-gray-800/30'>
               <h3 className='font-medium text-gray-200 mb-2'>簡単な予定管理</h3>
@@ -171,7 +164,6 @@ export default function LoginPage() {
         </div>
       </main>
 
-      {/* フッター */}
       <footer className='border-t border-gray-800 py-4'>
         <div className='container mx-auto px-4'>
           <p className='text-center text-sm text-gray-500'>
@@ -193,5 +185,19 @@ export default function LoginPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className='flex items-center justify-center min-h-screen'>
+          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-100' />
+        </div>
+      }
+    >
+      <LoginContent />
+    </Suspense>
   );
 }

@@ -1,42 +1,41 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '../../hooks/useAuth';
-import { logger } from '../../../lib/logger';
+import { useEffect } from 'react';
 
-export default function AuthCallback() {
+function CallbackContent() {
+  const searchParams = useSearchParams();
   const router = useRouter();
-  const { user, loading } = useAuth();
-  const redirectPath = sessionStorage.getItem('redirectPath');
 
   useEffect(() => {
-    logger.log('Auth Callback - Loading:', loading, 'User:', user);
-    logger.log('Redirect Path:', redirectPath);
+    const status = searchParams.get('status');
+    const redirect = searchParams.get('redirect');
 
-    if (!loading) {
-      if (user) {
-        if (redirectPath) {
-          logger.log('Redirecting to saved path:', redirectPath);
-          sessionStorage.removeItem('redirectPath');
-          router.replace(redirectPath);
-        } else {
-          logger.log('No redirect path, going to /servers');
-          router.replace('/servers');
-        }
-      } else {
-        logger.log('No user, redirecting to /login');
-        router.replace('/login');
-      }
+    if (status === 'success') {
+      const redirectPath = sessionStorage.getItem('redirectPath') || '/servers';
+      sessionStorage.removeItem('redirectPath');
+      router.replace(redirect || redirectPath);
     }
-  }, [loading, user, router, redirectPath]);
+  }, [router, searchParams]);
 
   return (
-    <div className='flex items-center justify-center min-h-screen bg-gray-950'>
-      <div className='text-center space-y-4'>
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-100 mx-auto' />
-        <p className='text-gray-400'>読込中...</p>
-      </div>
+    <div className='flex items-center justify-center min-h-screen'>
+      <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-100' />
     </div>
+  );
+}
+
+export default function CallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className='flex items-center justify-center min-h-screen'>
+          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-100' />
+        </div>
+      }
+    >
+      <CallbackContent />
+    </Suspense>
   );
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../hooks/useAuth';
@@ -39,46 +40,7 @@ import {
 } from '../components/ui/toast';
 import { logger } from '../../lib/logger';
 
-type ServerType = {
-  id: string;
-  name: string;
-  icon: string | null;
-  calendarCount: number;
-  calendars: {
-    id: string;
-    name: string;
-  }[];
-};
-
-// モックデータ
-const MOCK_SERVERS: ServerType[] = [
-  {
-    id: '1',
-    name: 'GFC Main Server',
-    icon: 'https://cdn.discordapp.com/icons/123456789/abcdef.png',
-    calendarCount: 2,
-    calendars: [
-      { id: '101', name: 'メインカレンダー' },
-      { id: '102', name: 'スクリム用カレンダー' },
-    ],
-  },
-  {
-    id: '2',
-    name: 'GFC Scrim Server',
-    icon: null,
-    calendarCount: 1,
-    calendars: [{ id: '201', name: 'スクリム調整用' }],
-  },
-  {
-    id: '3',
-    name: 'GFC Practice',
-    icon: 'https://cdn.discordapp.com/icons/987654321/xyz.png',
-    calendarCount: 0,
-    calendars: [],
-  },
-];
-
-export default function ServersPage() {
+function ServersContent() {
   const { user, loading } = useAuth();
   const [servers, setServers] = useState<ServerWithRelations[]>([]);
   const [selectedServer, setSelectedServer] =
@@ -229,19 +191,11 @@ export default function ServersPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className='flex items-center justify-center min-h-screen'>
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-100' />
-      </div>
-    );
-  }
-
   return (
     <>
-      <div className='min-h-screen bg-gray-950 text-gray-100'>
+      <div className='min-h-screen bg-gray-900 text-gray-100'>
         <Header />
-        <main className='container mx-auto px-4 py-8'>
+        <main className='container mx-auto p-4'>
           <h1 className='text-2xl sm:text-3xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600 flex items-center'>
             <ServerIcon className='mr-2 h-6 w-6 sm:h-8 sm:w-8 text-purple-400' />
             サーバーを選択
@@ -425,5 +379,19 @@ export default function ServersPage() {
         <ToastViewport />
       </ToastProvider>
     </>
+  );
+}
+
+export default function ServersPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className='flex items-center justify-center min-h-screen'>
+          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-100' />
+        </div>
+      }
+    >
+      <ServersContent />
+    </Suspense>
   );
 }
