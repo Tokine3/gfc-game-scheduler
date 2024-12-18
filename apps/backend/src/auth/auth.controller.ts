@@ -82,13 +82,13 @@ export class AuthController {
       console.log('Setting cookies with token:', {
         token: access_token ? 'exists' : 'null',
         secure: true,
-        sameSite: 'none',
+        sameSite: 'lax',
       });
 
       res.cookie('token', access_token, {
         httpOnly: true,
         secure: true,
-        sameSite: 'none',
+        sameSite: 'strict',
         path: '/',
         maxAge: 24 * 60 * 60 * 1000,
         domain: new URL(process.env.FRONTEND_URL || '').hostname,
@@ -98,7 +98,7 @@ export class AuthController {
       res.cookie('discord_token', req.user.accessToken, {
         httpOnly: true,
         secure: true,
-        sameSite: 'none',
+        sameSite: 'strict',
         path: '/',
         maxAge: 24 * 60 * 60 * 1000,
         domain: new URL(process.env.FRONTEND_URL || '').hostname,
@@ -108,7 +108,7 @@ export class AuthController {
       res.cookie('discord_id', req.user.id, {
         httpOnly: false,
         secure: true,
-        sameSite: 'none',
+        sameSite: 'strict',
         path: '/',
         maxAge: 24 * 60 * 60 * 1000,
         domain: new URL(process.env.FRONTEND_URL || '').hostname,
