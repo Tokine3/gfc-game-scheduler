@@ -11,7 +11,9 @@ export const useAuth = (skipInitialCheck: boolean = false) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        console.log('checkAuth');
         const response = await client.user.login.$get();
+        console.log('response', response);
         setUser(response);
       } catch (error) {
         setUser(null);

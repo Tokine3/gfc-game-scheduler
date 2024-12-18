@@ -8,6 +8,7 @@ export class UserService {
   constructor(private prisma: PrismaService) {}
 
   async login(id: string) {
+    console.log('id', id);
     if (!id) {
       throw new NotFoundException('Discord ID not found');
     }

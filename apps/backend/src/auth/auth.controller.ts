@@ -20,7 +20,6 @@ import {
 } from '@nestjs/swagger';
 import { RequestWithUser } from '../types/request.types';
 import { GetUserServersResponse } from './entities/server.entity';
-import { JwtAuthGuard } from './jwt-auth.guard';
 import { logger } from 'src/utils/logger';
 
 @ApiTags('Auth')
@@ -80,12 +79,22 @@ export class AuthController {
       logger.log('Auth Controller - req.user:', req.user);
 
       // JWTトークンをクッキーに設定
+      console.log('Setting cookies with token:', {
+        token: access_token ? 'exists' : 'null',
+        secure: true,
+        sameSite: 'lax',
+        domain:
+          process.env.NODE_ENV === 'development' ? '.railway.app' : undefined,
+      });
+
       res.cookie('token', access_token, {
         httpOnly: true,
         secure: true,
         sameSite: 'lax',
         maxAge: 24 * 60 * 60 * 1000,
         path: '/',
+        domain:
+          process.env.NODE_ENV === 'development' ? '.railway.app' : undefined,
       });
 
       // Discordアクセストークンをクッキーに設定
@@ -95,15 +104,19 @@ export class AuthController {
         sameSite: 'lax',
         maxAge: 24 * 60 * 60 * 1000,
         path: '/',
+        domain:
+          process.env.NODE_ENV === 'development' ? '.railway.app' : undefined,
       });
 
-      // Discord IDをクッキーに設定（httpOnly: falseで設定）
+      // Discord IDをクッキーに設定
       res.cookie('discord_id', req.user.id, {
         httpOnly: false,
         secure: true,
         sameSite: 'lax',
         maxAge: 24 * 60 * 60 * 1000,
         path: '/',
+        domain:
+          process.env.NODE_ENV === 'development' ? '.railway.app' : undefined,
       });
 
       const redirectPath = redirect
@@ -146,6 +159,7 @@ export class AuthController {
   @Get('verify')
   @UseGuards(AuthGuard('jwt'))
   async verifyToken(@Req() req: any) {
+    console.log('verifyToken', req.user);
     return { userId: req.user.id };
   }
 
@@ -156,7 +170,7 @@ export class AuthController {
     type: GetUserServersResponse,
   })
   @Get('servers')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard('jwt'))
   async getDiscordServers(@Request() req: RequestWithUser) {
     return this.authService.getDiscordServers(req);
   }

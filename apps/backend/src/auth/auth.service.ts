@@ -47,13 +47,19 @@ export class AuthService {
   }
 
   async login(user: AuthUserDto) {
+    console.log('Auth Service - Login user:', user);
     const payload: JwtPayload = {
       sub: user.id,
       name: user.name,
     };
-
+    console.log('Auth Service - JWT payload:', payload);
+    const access_token = this.jwtService.sign(payload);
+    console.log(
+      'Auth Service - Generated token:',
+      access_token ? 'exists' : 'null'
+    );
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token,
     };
   }
 
