@@ -28,6 +28,9 @@ async function bootstrap() {
     credentials: true,
   });
 
-  await app.listen(8000);
+  // Railwayが提供するPORTを使用
+  const port = process.env.PORT || 8000;
+  await app.listen(port);
+  console.log(`Application is running on: ${port}`);
 }
 bootstrap();
