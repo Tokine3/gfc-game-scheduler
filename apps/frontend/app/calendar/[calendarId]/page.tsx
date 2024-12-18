@@ -6,7 +6,7 @@ import Calendar from '../../components/Calendar';
 import Header from '../../components/Header';
 import { useAuth } from '../../hooks/useAuth';
 import { client } from '../../../lib/api';
-import { CalendarWithRelations } from '../../../api/@types';
+import { CalendarWithRelations } from '../../../apis/@types';
 import {
   Dialog,
   DialogContent,

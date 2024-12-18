@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from '../components/ui/select';
 import Header from '../components/Header';
-import { Calendar, ServerWithRelations } from '../../api/@types';
+import { Calendar, ServerWithRelations } from '../../apis/@types';
 import { Input } from '../components/ui/input';
 import {
   Toast,

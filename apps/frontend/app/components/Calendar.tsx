@@ -27,7 +27,7 @@ import {
   CalendarWithRelations,
   PersonalScheduleWithRelations,
   PublicScheduleWithRelations,
-} from '../../api/@types';
+} from '../../apis/@types';
 import { logger } from '../../lib/logger';
 
 export type CalendarEvent =

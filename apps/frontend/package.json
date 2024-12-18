@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "api:build": "rm -rf ./api && npx openapi2aspida -i http://localhost:8000/docs-json && pnpm prettier ./api --write"
+    "api:build": "rm -rf ./apis && npx openapi2aspida -i http://localhost:8000/docs-json -c aspida.config.js && pnpm prettier ./apis --write"
   },
   "dependencies": {
     "@aspida/axios": "^1.14.0",

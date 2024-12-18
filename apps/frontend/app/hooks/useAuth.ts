@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { client } from '../../lib/api';
-import { User } from '../../api/@types';
+import { User } from '../../apis/@types';
 import { logger } from '../../lib/logger';
 
 export const useAuth = () => {

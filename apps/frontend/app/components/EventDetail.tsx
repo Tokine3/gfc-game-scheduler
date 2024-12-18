@@ -22,7 +22,7 @@ import { Button } from './ui/button';
 import dayjs from 'dayjs';
 import { cn } from '../../lib/utils';
 import { isPublicSchedule, type CalendarEvent } from './Calendar';
-import { Participant } from '../../api/@types';
+import { Participant } from '../../apis/@types';
 import { logger } from '../../lib/logger';
 
 type EventDetailProps = {

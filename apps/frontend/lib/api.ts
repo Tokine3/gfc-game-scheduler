@@ -1,7 +1,6 @@
 import aspida from '@aspida/axios';
 import axios, { InternalAxiosRequestConfig } from 'axios';
-import type { ApiInstance } from '../api/$api';
-import api from '../api/$api';
+import api from '../apis/$api';
 
 const getCookie = (name: string): string | undefined => {
   const value = `; ${document.cookie}`;

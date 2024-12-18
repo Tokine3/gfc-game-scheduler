@@ -18,7 +18,7 @@ import holidays from '@holiday-jp/holiday_jp';
 import dayjs from 'dayjs';
 import dynamic from 'next/dynamic';
 import { debounce, rafThrottle } from '../../lib/utils';
-import { Participant } from '../../api/@types';
+import { Participant } from '../../apis/@types';
 import { Availability, CalendarEvent } from './Calendar';
 
 interface CalendarViewProps {
