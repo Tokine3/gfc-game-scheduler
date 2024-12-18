@@ -10,9 +10,25 @@ import { logger } from 'src/utils/logger';
 export class ServersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  join(req: RequestWithUser, joinServerDto: JoinServerDto) {
+  async join(req: RequestWithUser, joinServerDto: JoinServerDto) {
     logger.log('joinServerDto', joinServerDto);
     const { serverId, serverName, serverIcon } = joinServerDto;
+    // サーバーが既に存在するか確認
+    const server = await this.prisma.server.findUnique({
+      where: {
+        id: serverId,
+      },
+    });
+    if (server) {
+      // サーバーが既に存在する場合はサーバーユーザーを作成
+      return await this.prisma.serverUser.create({
+        data: {
+          userId: req.user.id,
+          serverId,
+        },
+      });
+    }
+    // サーバーが存在しない場合はサーバーを作成
     return this.prisma.server.create({
       data: {
         id: serverId,
@@ -27,8 +43,8 @@ export class ServersService {
     });
   }
 
-  findMeServerUser(req: RequestWithUser, serverId: string) {
-    const serverUser = this.prisma.serverUser.findFirst({
+  async findMeServerUser(req: RequestWithUser, serverId: string) {
+    const serverUser = await this.prisma.serverUser.findFirst({
       where: {
         userId: req.user.id,
         serverId: serverId,
