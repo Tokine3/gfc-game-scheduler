@@ -22,18 +22,28 @@ export class DiscordStrategy extends PassportStrategy(Strategy, 'discord') {
   }
 
   async validate(accessToken: string, refreshToken: string, profile: any) {
-    logger.log('Discord Strategy - accessToken:', accessToken);
-    const { id, global_name, avatar } = profile;
-    console.log('Discord Strategy - profile:', profile);
-    const user = await this.authService.validateUser({
-      id,
-      name: global_name,
-      avatar,
-    });
+    try {
+      logger.log('Discord Strategy - accessToken:', accessToken);
+      const { id, global_name, username, avatar } = profile;
+      console.log('Discord Strategy - profile:', profile);
+      const user = await this.authService.validateUser({
+        id,
+        name: global_name || username,
+        avatar,
+      });
 
-    return {
-      ...user,
-      accessToken,
-    };
+      return {
+        ...user,
+        accessToken,
+      };
+    } catch (error) {
+      if (error.message?.includes('rate limited')) {
+        logger.log('Rate limit hit, waiting before retry...');
+        // 5秒待機してリトライ
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+        return this.validate(accessToken, refreshToken, profile);
+      }
+      throw error;
+    }
   }
 }

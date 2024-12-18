@@ -118,7 +118,17 @@ export class AuthController {
       res.redirect(`${process.env.FRONTEND_URL}${redirectPath}`);
     } catch (error) {
       logger.error('Auth callback error:', error);
-      res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
+
+      // レート制限エラーの場合
+      if (error.message?.includes('rate limited')) {
+        return res.redirect(
+          `${process.env.FRONTEND_URL}/login?error=rate_limit`
+        );
+      }
+
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/login?error=auth_failed`
+      );
     }
   }
 
