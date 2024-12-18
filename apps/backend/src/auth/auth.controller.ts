@@ -35,7 +35,7 @@ export class AuthController {
   @Get('discord')
   @UseGuards(AuthGuard('discord'))
   async discordAuth() {
-    // Discord認証へのリダイレクトは@UseGuards(AuthGuard('discord'))で自動的に処理されます
+    // Discord認証へのリダイレクトは@UseGuards(AuthGuard('discord'))で自動的に処理
   }
 
   @ApiOperation({ summary: 'Discord認証コールバック' })

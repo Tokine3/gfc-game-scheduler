@@ -23,10 +23,11 @@ export class DiscordStrategy extends PassportStrategy(Strategy, 'discord') {
 
   async validate(accessToken: string, refreshToken: string, profile: any) {
     logger.log('Discord Strategy - accessToken:', accessToken);
-    const { id, username, avatar } = profile;
+    const { id, global_name, avatar } = profile;
+    console.log('Discord Strategy - profile:', profile);
     const user = await this.authService.validateUser({
       id,
-      name: username,
+      name: global_name,
       avatar,
     });
 
