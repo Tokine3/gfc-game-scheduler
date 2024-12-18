@@ -72,20 +72,21 @@ function ServersContent() {
     const fetchServers = async () => {
       try {
         const response = await client.auth.servers.get();
-        logger.log('response', response);
-        // response.body.servers.dataからデータを取得
         if (response.body.data) {
           setServers(response.body.data);
         }
-      } catch (error) {
+      } catch (error: any) {
         logger.error('Failed to fetch servers:', error);
+        if (error?.response?.status === 401) {
+          router.push('/login');
+        }
       }
     };
 
     if (user) {
       fetchServers();
     }
-  }, [user]);
+  }, [user, router]);
 
   useEffect(() => {
     if (searchParams.get('status') === 'success') {

@@ -91,8 +91,8 @@ export class AuthController {
         sameSite: 'none',
         path: '/',
         maxAge: 24 * 60 * 60 * 1000,
-        partitioned: false,
-        priority: 'high',
+        domain:
+          process.env.NODE_ENV === 'development' ? '.railway.app' : undefined,
       });
 
       // Discordアクセストークンをクッキーに設定
@@ -100,10 +100,10 @@ export class AuthController {
         httpOnly: true,
         secure: true,
         sameSite: 'none',
-        maxAge: 24 * 60 * 60 * 1000,
         path: '/',
-        partitioned: false,
-        priority: 'high',
+        maxAge: 24 * 60 * 60 * 1000,
+        domain:
+          process.env.NODE_ENV === 'development' ? '.railway.app' : undefined,
       });
 
       // Discord IDをクッキーに設定
@@ -113,8 +113,8 @@ export class AuthController {
         sameSite: 'none',
         path: '/',
         maxAge: 24 * 60 * 60 * 1000,
-        partitioned: false,
-        priority: 'high',
+        domain:
+          process.env.NODE_ENV === 'development' ? '.railway.app' : undefined,
       });
 
       const redirectPath = redirect
