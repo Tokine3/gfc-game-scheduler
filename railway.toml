@@ -1,14 +1,9 @@
 [build]
 builder = "nixpacks"
-buildCommand = """
-  cd apps/backend
-  pnpm install
-  pnpm build
-  pnpm prisma generate
-"""
+buildCommand = "cd apps/backend && pnpm install && pnpm build && pnpm prisma generate"
 
 [deploy]
 startCommand = "cd apps/backend && pnpm start:prod"
 healthcheckPath = "/health"
 healthcheckTimeout = 100
-restartPolicyType = "on_failure" 
+restartPolicyType = "on_failure"
