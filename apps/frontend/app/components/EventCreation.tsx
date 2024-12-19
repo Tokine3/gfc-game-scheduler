@@ -52,72 +52,74 @@ export default function EventCreation({ onClose, date }: EventCreationProps) {
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className='flex items-center justify-center gap-2'>
-            <CrosshairIcon className='h-6 w-6' />
+      <DialogContent className='sm:max-w-[500px] bg-gray-900/95 backdrop-blur-md border-gray-800'>
+        <DialogHeader className='space-y-4'>
+          <div className='mx-auto bg-gradient-to-br from-purple-500/20 to-pink-500/20 p-3 rounded-xl border border-purple-500/20'>
+            <CrosshairIcon className='h-6 w-6 text-purple-400' />
+          </div>
+          <DialogTitle className='text-xl font-bold text-center text-gray-100'>
             新規イベント作成
           </DialogTitle>
-          <DialogDescription>
-            イベントの詳細を入力してください
+          <DialogDescription className='text-center text-gray-400'>
+            みんなで参加できるイベントを作成します
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className='space-y-6'>
+        <form onSubmit={handleSubmit} className='space-y-6 mt-4'>
           <div className='grid gap-6 sm:grid-cols-2'>
             <div className='space-y-2'>
-              <Label htmlFor='title'>タイトル</Label>
+              <Label className='text-gray-200'>タイトル</Label>
               <div className='relative'>
-                <CrosshairIcon className='absolute left-2 top-2.5 h-4 w-4 text-gray-500' />
+                <CrosshairIcon className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-purple-400' />
                 <Input
-                  id='title'
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required
-                  className='pl-8'
+                  className='pl-10 bg-gray-800/50 border-gray-700 focus:border-purple-500 text-gray-100'
+                  placeholder='イベント名を入力'
                 />
               </div>
             </div>
 
             <div className='space-y-2'>
-              <Label htmlFor='date'>日付</Label>
+              <Label className='text-gray-200'>日付</Label>
               <div className='relative'>
-                <CalendarIcon className='absolute left-2 top-2.5 h-4 w-4 text-gray-500' />
+                <CalendarIcon className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-purple-400' />
                 <Input
-                  id='date'
                   type='date'
                   value={dayjs(date).format('YYYY-MM-DD')}
                   readOnly
-                  className='pl-8'
+                  className='pl-10 bg-gray-800/50 border-gray-700 text-gray-100'
                 />
               </div>
             </div>
           </div>
 
           <div className='space-y-2'>
-            <Label htmlFor='quota'>参加人数上限</Label>
+            <Label className='text-gray-200'>参加人数上限</Label>
             <div className='relative'>
-              <UsersIcon className='absolute left-2 top-2.5 h-4 w-4 text-gray-500' />
+              <UsersIcon className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-purple-400' />
               <Input
-                id='quota'
                 type='number'
                 value={quota}
                 onChange={(e) => setQuota(e.target.value)}
                 required
-                className='pl-8'
+                min='1'
+                className='pl-10 bg-gray-800/50 border-gray-700 focus:border-purple-500 text-gray-100'
+                placeholder='参加可能な最大人数'
               />
             </div>
           </div>
 
           <div className='space-y-2'>
-            <Label htmlFor='notes'>メモ</Label>
+            <Label className='text-gray-200'>メモ</Label>
             <div className='relative'>
-              <FileTextIcon className='absolute left-2 top-2.5 h-4 w-4 text-gray-500' />
+              <FileTextIcon className='absolute left-3 top-3 h-4 w-4 text-purple-400' />
               <Textarea
-                id='notes'
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className='pl-8 min-h-[100px]'
+                className='pl-10 min-h-[100px] bg-gray-800/50 border-gray-700 focus:border-purple-500 text-gray-100'
+                placeholder='イベントの詳細や注意事項など'
               />
             </div>
           </div>
@@ -125,17 +127,18 @@ export default function EventCreation({ onClose, date }: EventCreationProps) {
           <DialogFooter>
             <div className='flex w-full flex-col-reverse sm:flex-row sm:justify-end gap-2'>
               <Button
+                type='button'
                 variant='outline'
                 onClick={onClose}
-                className='w-full sm:w-auto border-gray-700 hover:bg-gray-800'
+                className='w-full sm:w-auto border-gray-700 hover:bg-gray-800 text-gray-300'
               >
                 キャンセル
               </Button>
               <Button
                 type='submit'
-                className='w-full sm:w-auto bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600'
+                className='w-full sm:w-auto bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg shadow-purple-500/25'
               >
-                イベント作成
+                イベントを作成
               </Button>
             </div>
           </DialogFooter>

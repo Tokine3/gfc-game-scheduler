@@ -107,15 +107,15 @@ export function CalendarView({
           <TooltipTrigger asChild>
             <div
               className={cn(
-                'flex items-center gap-1.5 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md sm:rounded-full',
-                'text-[10px] sm:text-xs font-medium shadow-sm backdrop-blur-sm',
-                'transition-all duration-200 hover:scale-105',
-                'min-w-0 max-w-full',
+                'flex items-center gap-1.5 px-2 py-1 rounded-md',
+                'text-xs font-medium shadow-lg backdrop-blur-sm',
+                'transition-all duration-200 hover:scale-105 hover:shadow-xl',
+                'border border-opacity-30',
                 isPersonal
-                  ? 'bg-purple-500/20 text-purple-200 border border-purple-500/30'
+                  ? 'bg-purple-500/20 text-purple-200 border-purple-500/30 hover:bg-purple-500/30'
                   : isFull
-                    ? 'bg-green-500/20 text-green-200 border border-green-500/30'
-                    : 'bg-blue-500/20 text-blue-200 border border-blue-500/30'
+                    ? 'bg-green-500/20 text-green-200 border-green-500/30 hover:bg-green-500/30'
+                    : 'bg-blue-500/20 text-blue-200 border-blue-500/30 hover:bg-blue-500/30'
               )}
             >
               <div className='flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-1.5 min-w-0'>
@@ -135,7 +135,7 @@ export function CalendarView({
               </div>
             </div>
           </TooltipTrigger>
-          <TooltipContent side='bottom' className='max-w-xs'>
+          <TooltipContent side='bottom' className='bg-gray-800 border-gray-700'>
             <div className='space-y-2'>
               <div className='font-medium'>{eventContent.event.title}</div>
               {!isPersonal && participants && quota && (
@@ -292,6 +292,33 @@ export function CalendarView({
 
   return (
     <div className='w-full h-full'>
+      <style jsx global>{`
+        .fc {
+          --fc-border-color: rgba(75, 85, 99, 0.3);
+          --fc-today-bg-color: rgba(139, 92, 246, 0.05);
+          --fc-neutral-bg-color: rgba(31, 41, 55, 0.5);
+          --fc-list-event-hover-bg-color: rgba(139, 92, 246, 0.1);
+          --fc-theme-standard-border-color: var(--fc-border-color);
+        }
+        .fc-theme-standard td,
+        .fc-theme-standard th {
+          border-color: var(--fc-border-color);
+        }
+        .fc .fc-day-today {
+          background: var(--fc-today-bg-color) !important;
+          backdrop-filter: blur(8px);
+        }
+        .fc-day-header {
+          background: var(--fc-neutral-bg-color);
+          backdrop-filter: blur(8px);
+        }
+        .fc-event {
+          cursor: pointer;
+        }
+        .holiday {
+          background-color: rgba(239, 68, 68, 0.05);
+        }
+      `}</style>
       <FullCalendar
         ref={calendarRef}
         locale='ja'

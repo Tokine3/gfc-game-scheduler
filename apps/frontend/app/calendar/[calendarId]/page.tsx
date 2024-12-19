@@ -17,7 +17,16 @@ import {
 } from '../../components/ui/dialog';
 import { Button } from '../../components/ui/button';
 import { logger } from '../../../lib/logger';
-import { ArrowLeft, ServerIcon } from 'lucide-react';
+import {
+  ArrowLeft,
+  ServerIcon,
+  CalendarDays,
+  Settings,
+  Users,
+  Bell,
+  Calendar as CalendarIcon,
+  ChevronLeft,
+} from 'lucide-react';
 
 interface CalendarPageProps {
   params: Promise<{ calendarId: string }>;
@@ -136,11 +145,66 @@ export default function CalendarPage({ params }: CalendarPageProps) {
   }
 
   return (
-    <div className='min-h-screen text-gray-100'>
+    <div className='flex flex-col min-h-screen bg-gray-900'>
       <Header />
-      <main className='container mx-auto p-4'>
-        {calendar && <Calendar {...calendar} />}
-      </main>
+
+      {/* メインコンテンツ */}
+      <div className='flex-1 flex flex-col mt-16'>
+        {' '}
+        {/* Header の高さ分だけ margin-top を設定 */}
+        {/* カレンダーヘッダー */}
+        <div className='sticky top-0 z-30 bg-gray-900/95 backdrop-blur-md border-b border-gray-800/60'>
+          <div className='container mx-auto px-4 py-3'>
+            <div className='flex flex-col gap-3'>
+              {/* 上部: 戻るボタンとカレンダー情報 */}
+              <div className='flex items-center gap-3'>
+                <button
+                  onClick={() => router.push('/servers')}
+                  className='p-1.5 rounded-full hover:bg-gray-800/60 transition-colors shrink-0'
+                >
+                  <ChevronLeft className='w-5 h-5 text-gray-400' />
+                </button>
+                <div className='min-w-0'>
+                  <h1 className='text-lg sm:text-xl font-bold text-gray-100 flex items-center gap-2 truncate'>
+                    <CalendarIcon className='w-5 h-5 text-purple-400 shrink-0' />
+                    <span className='truncate'>{calendar?.name}</span>
+                  </h1>
+                  <p className='text-xs text-gray-400 flex items-center gap-1.5 truncate'>
+                    <Users className='w-3.5 h-3.5 shrink-0' />
+                    <span className='truncate'>{calendar?.server.name}</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* 下部: アクションボタン */}
+              <div className='flex items-center gap-2 overflow-x-auto scrollbar-none'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className='h-8 border-gray-700 hover:bg-gray-800 whitespace-nowrap text-sm'
+                >
+                  <Bell className='w-3.5 h-3.5 sm:mr-2' />
+                  <span className='ml-1.5 sm:ml-0'>通知</span>
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className='h-8 border-gray-700 hover:bg-gray-800 whitespace-nowrap text-sm'
+                >
+                  <Settings className='w-3.5 h-3.5 sm:mr-2' />
+                  <span className='ml-1.5 sm:ml-0'>設定</span>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* カレンダーコンテンツ */}
+        <div className='flex-1'>
+          <main className='container mx-auto p-4'>
+            {calendar && <Calendar {...calendar} />}
+          </main>
+        </div>
+      </div>
     </div>
   );
 }

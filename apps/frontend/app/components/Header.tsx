@@ -1,13 +1,24 @@
 'use client';
 
-import { MoonIcon, SunIcon } from 'lucide-react';
+import { MoonIcon, SunIcon, LogOut } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { Button } from './ui/button';
 import { useRouter } from 'next/navigation';
+import { cn } from '../../lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from './ui/tooltip';
 
-export default function Header() {
+interface HeaderProps {
+  className?: string;
+}
+
+export default function Header({ className }: HeaderProps) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
@@ -27,26 +38,35 @@ export default function Header() {
     window.location.href = DISCORD_AUTH_URL;
   };
 
+  const handleLogout = () => {
+    // ログアウト処理
+    localStorage.removeItem('token');
+    router.push('/');
+  };
+
   if (!mounted) {
     return (
-      <header className='border-b border-gray-800'>
-        <div className='container mx-auto px-4 py-3 flex justify-between items-center'>
-          <div className='flex items-center space-x-2'>
-            <Image
-              src='/GFC.png?height=32&width=32'
-              alt='Logo'
-              width={32}
-              height={32}
-            />
-            <h1 className='text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600'>
+      <header
+        className={cn(
+          'fixed top-0 left-0 right-0 h-16 z-50 bg-gray-900/95 backdrop-blur-md border-b border-gray-800/60',
+          'before:absolute before:inset-0 before:bg-gradient-to-b before:from-gray-900 before:to-transparent before:opacity-50 before:-z-10',
+          className
+        )}
+      >
+        <div className='container mx-auto px-4 h-full flex items-center justify-between'>
+          <div className='flex items-center gap-3'>
+            <div className='relative w-8 h-8 rounded-lg overflow-hidden ring-1 ring-gray-800/60'>
+              <Image src='/GFC.png' alt='Logo' fill className='object-cover' />
+            </div>
+            <h1 className='text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600'>
               GFC Scheduler
             </h1>
           </div>
-          <div className='flex items-center space-x-4'>
+          <div className='flex items-center gap-3'>
             <div className='w-10 h-10' />
             <Button
               variant='default'
-              className='bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600'
+              className='bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 shadow-lg shadow-cyan-500/20'
             >
               Login with Discord
             </Button>
@@ -57,36 +77,44 @@ export default function Header() {
   }
 
   return (
-    <header className='border-b border-gray-800'>
-      <div className='container mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0'>
-        <div className='flex items-center space-x-2'>
-          <Image
-            src='/GFC.png?height=32&width=32'
-            alt='Logo'
-            width={32}
-            height={32}
-          />
-          <h1 className='text-xl sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600'>
+    <header
+      className={cn(
+        'fixed top-0 left-0 right-0 h-16 z-50 bg-gray-900/95 backdrop-blur-md border-b border-gray-800/60',
+        'before:absolute before:inset-0 before:bg-gradient-to-b before:from-gray-900 before:to-transparent before:opacity-50 before:-z-10',
+        className
+      )}
+    >
+      <div className='container mx-auto px-4 h-full flex items-center justify-between'>
+        <div className='flex items-center gap-3'>
+          <div className='relative w-8 h-8 rounded-lg overflow-hidden ring-1 ring-gray-800/60 transition-transform hover:scale-105'>
+            <Image src='/GFC.png' alt='Logo' fill className='object-cover' />
+          </div>
+          <h1 className='text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600'>
             GFC Scheduler
           </h1>
         </div>
-        <div className='flex items-center space-x-4 w-full sm:w-auto'>
-          <Button
-            variant='outline'
-            size='icon'
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className='border-gray-700 hover:bg-gray-800'
-          >
-            {theme === 'dark' ? (
-              <SunIcon className='h-[1.2rem] w-[1.2rem]' />
-            ) : (
-              <MoonIcon className='h-[1.2rem] w-[1.2rem]' />
-            )}
-            <span className='sr-only'>Toggle theme</span>
-          </Button>
+        <div className='flex items-center gap-3'>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant='outline'
+                  size='icon'
+                  onClick={handleLogout}
+                  className='h-9 w-9 border-gray-700 hover:bg-gray-800 hover:text-red-400 transition-all'
+                >
+                  <LogOut className='h-4 w-4' />
+                  <span className='sr-only'>Logout</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side='bottom'>
+                <p>ログアウト</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <Button
             onClick={handleLogin}
-            className='bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white border-transparent transition-all duration-200'
+            className='bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 shadow-lg shadow-cyan-500/20 transition-all'
           >
             <div className='w-5 h-5 relative mr-2'>
               <Image
@@ -96,7 +124,7 @@ export default function Header() {
                 className='object-contain'
               />
             </div>
-            Login with Discord
+            <p className='text-sm text-white'>Login with Discord</p>
           </Button>
         </div>
       </div>
