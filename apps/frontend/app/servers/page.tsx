@@ -100,7 +100,7 @@ export default function ServersPage() {
     if (!server.isJoined) {
       return (
         <Button
-          className='w-full bg-gradient-to-r from-indigo-400 to-cyan-400 hover:from-indigo-500 hover:to-cyan-500 text-white shadow-lg shadow-indigo-500/10'
+          className='w-full bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white shadow-lg shadow-violet-500/25 border border-violet-600/20'
           onClick={() => handleJoinServer(server)}
         >
           <Users className='w-4 h-4 mr-2' />
@@ -295,7 +295,7 @@ export default function ServersPage() {
                   <div className='mt-4 space-y-2'>
                     {!server.isJoined ? (
                       <Button
-                        className='w-full bg-gradient-to-r from-indigo-400 to-cyan-400 hover:from-indigo-500 hover:to-cyan-500 text-white shadow-lg shadow-indigo-500/10'
+                        className='w-full bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white shadow-lg shadow-violet-500/25 border border-violet-600/20'
                         onClick={() => handleJoinServer(server)}
                       >
                         <Users className='w-4 h-4 mr-2' />
@@ -449,7 +449,7 @@ export default function ServersPage() {
                     });
                   }
                 }}
-                className='bg-gradient-to-r from-indigo-400 to-cyan-400 hover:from-indigo-500 hover:to-cyan-500 text-white shadow-lg shadow-indigo-500/10 min-w-[100px]'
+                className='bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white shadow-lg shadow-violet-500/25 border border-violet-600/20 min-w-[100px]'
               >
                 <Users className='w-4 h-4 mr-2' />
                 参加する

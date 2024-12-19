@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '../components/ui/button';
 import Image from 'next/image';
@@ -13,9 +13,13 @@ import {
   Github,
   Twitter,
 } from 'lucide-react';
+import { TermsModal } from '../components/TermsModal';
+import { PrivacyPolicyModal } from '../components/PrivacyPolicyModal';
 
 export default function LoginPage() {
   const router = useRouter();
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -132,7 +136,7 @@ export default function LoginPage() {
                   icon: <Users className='w-5 h-5' />,
                   title: 'Discord 連携',
                   description: 'サーバーメンバーと簡単に共有',
-                  color: 'pink',
+                  color: 'indigo',
                 },
               ].map((feature, index) => (
                 <motion.div
@@ -197,7 +201,21 @@ export default function LoginPage() {
               </Button>
 
               <p className='mt-4 text-center text-sm text-gray-500'>
-                ログインすることで、利用規約とプライバシーポリシーに同意したことになります。
+                ログインすることで、
+                <button
+                  onClick={() => setShowTerms(true)}
+                  className='text-violet-400 hover:text-violet-300 hover:underline transition-colors'
+                >
+                  利用規約
+                </button>
+                と
+                <button
+                  onClick={() => setShowPrivacyPolicy(true)}
+                  className='text-violet-400 hover:text-violet-300 hover:underline transition-colors'
+                >
+                  プライバシーポリシー
+                </button>
+                に同意したことになります。
               </p>
             </div>
 
@@ -245,6 +263,13 @@ export default function LoginPage() {
           </div>
         </div>
       </footer>
+
+      {/* モーダル */}
+      <TermsModal open={showTerms} onOpenChange={setShowTerms} />
+      <PrivacyPolicyModal
+        open={showPrivacyPolicy}
+        onOpenChange={setShowPrivacyPolicy}
+      />
     </div>
   );
 }
