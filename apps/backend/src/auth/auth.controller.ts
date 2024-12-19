@@ -81,7 +81,7 @@ export class AuthController {
         secure: process.env.NODE_ENV === 'development',
         path: '/',
         maxAge: '24 * 60 * 60 * 1000',
-        sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
+        sameSite: process.env.NODE_ENV === 'development' ? 'none' : 'lax',
       });
 
       res.cookie('token', access_token, {
@@ -89,7 +89,7 @@ export class AuthController {
         secure: process.env.NODE_ENV === 'development',
         path: '/',
         maxAge: 24 * 60 * 60 * 1000,
-        sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
+        sameSite: process.env.NODE_ENV === 'development' ? 'none' : 'lax',
       });
 
       // Discordアクセストークンをクッキーに設定
@@ -98,7 +98,7 @@ export class AuthController {
         secure: process.env.NODE_ENV === 'development',
         path: '/',
         maxAge: 24 * 60 * 60 * 1000,
-        sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
+        sameSite: process.env.NODE_ENV === 'development' ? 'none' : 'lax',
       });
 
       // Discord IDをクッキーに設定
@@ -107,7 +107,7 @@ export class AuthController {
         secure: process.env.NODE_ENV === 'development',
         path: '/',
         maxAge: 24 * 60 * 60 * 1000,
-        sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
+        sameSite: process.env.NODE_ENV === 'development' ? 'none' : 'lax',
       });
       // クッキーの設定後に確認
       const cookies = req.cookies;
