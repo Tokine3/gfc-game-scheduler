@@ -17,6 +17,7 @@ import {
 } from '../../components/ui/dialog';
 import { Button } from '../../components/ui/button';
 import { logger } from '../../../lib/logger';
+import { ArrowLeft, ServerIcon } from 'lucide-react';
 
 interface CalendarPageProps {
   params: Promise<{ calendarId: string }>;
@@ -25,16 +26,17 @@ interface CalendarPageProps {
 export default function CalendarPage({ params }: CalendarPageProps) {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
   const [showJoinDialog, setShowJoinDialog] = useState(false);
   const [calendar, setCalendar] = useState<CalendarWithRelations>();
   const { calendarId } = use(params);
 
   const fetchCalendar = useCallback(async () => {
     if (!user) return;
-
     try {
+      // カレンダー情報を取得
       const calendarResponse = await client.calendars._id(calendarId).get();
+
+      // ユーザーのサーバー一覧を取得
       const serverResponse = await client.auth.servers.get();
       const userServers = serverResponse.body.data;
 
@@ -44,9 +46,9 @@ export default function CalendarPage({ params }: CalendarPageProps) {
       );
 
       if (!hasServerAccess) {
-        setError('このカレンダーにアクセスする権限がありません');
-        setTimeout(() => router.push('/servers'), 3000);
-        return;
+        // 権限がない場合は即座にリダイレクト
+        router.replace('/error/unauthorized');
+        throw new Error('unauthorized');
       }
 
       // サーバーユーザー情報を取得
@@ -59,13 +61,16 @@ export default function CalendarPage({ params }: CalendarPageProps) {
       const isServerMember = response;
       if (!isServerMember) {
         setShowJoinDialog(true);
+        return;
       }
 
       setCalendar(calendarResponse.body);
     } catch (error) {
-      logger.error('Error fetching calendar:', error);
-      setError('カレンダーの取得に失敗しました');
-      router.push('/servers');
+      if (error instanceof Error && error.message === 'unauthorized') {
+        return; // 既にリダイレクト済みの場合は何もしない
+      }
+      // その他のエラーの場合も権限エラーとして扱う
+      router.replace('/error/unauthorized');
     }
   }, [user, calendarId, router]);
 
@@ -81,18 +86,16 @@ export default function CalendarPage({ params }: CalendarPageProps) {
     }
   }, [loading, user, router, calendarId, fetchCalendar]);
 
-  // エラー表示
-  if (error) {
+  // ローディング表示
+  if (loading || !calendar) {
     return (
       <div className='flex items-center justify-center min-h-screen'>
-        <div className='bg-red-500/10 border border-red-500/30 text-red-200 px-4 py-2 rounded-md'>
-          {error}
-        </div>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-100' />
       </div>
     );
   }
 
-  // サーバー参加確認ダイアログ
+  // エーバー参加確認ダイアログ
   if (showJoinDialog && calendar) {
     return (
       <Dialog open onOpenChange={() => setShowJoinDialog(false)}>
@@ -129,14 +132,6 @@ export default function CalendarPage({ params }: CalendarPageProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    );
-  }
-
-  if (loading || error) {
-    return (
-      <div className='flex items-center justify-center min-h-screen'>
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-100' />
-      </div>
     );
   }
 
