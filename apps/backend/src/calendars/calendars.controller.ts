@@ -13,9 +13,9 @@ import { CalendarsService } from './calendars.service';
 import { CreateCalendarDto } from './dto/create-calendar.dto';
 import { UpdateCalendarDto } from './dto/update-calendar.dto';
 import { RequestWithUser } from '../types/request.types';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { ApiResponse } from '@nestjs/swagger';
 import { Calendar, CalendarWithRelations } from './entities/calendar.entity';
+import { DiscordAuthGuard } from 'src/auth/discord-auth.guard';
 
 @Controller('calendars')
 export class CalendarsController {
@@ -27,7 +27,7 @@ export class CalendarsController {
     type: CalendarWithRelations,
   })
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(DiscordAuthGuard)
   create(@Request() req: RequestWithUser, @Body() body: CreateCalendarDto) {
     return this.calendarsService.create(req, body);
   }
@@ -42,7 +42,7 @@ export class CalendarsController {
     description: 'カレンダー取得成功',
     type: CalendarWithRelations,
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(DiscordAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.calendarsService.findOne(id);

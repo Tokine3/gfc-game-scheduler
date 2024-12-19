@@ -6,9 +6,6 @@ import * as cookieParser from 'cookie-parser';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // cookie-parserを追加
-  app.use(cookieParser());
-
   const config = new DocumentBuilder()
     .setTitle('GFC Scheduler API')
     .setDescription('GFC Scheduler API description')
@@ -26,9 +23,12 @@ async function bootstrap() {
   app.enableCors({
     origin: process.env.FRONTEND_URL,
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Accept', 'Authorization', 'X-Discord-Id'],
-    exposedHeaders: ['Set-Cookie'],
+    allowedHeaders: [
+      'content-type',
+      'authorization',
+      'x-discord-id',
+      'x-discord-token',
+    ],
   });
 
   // Railwayが提供するPORTを使用

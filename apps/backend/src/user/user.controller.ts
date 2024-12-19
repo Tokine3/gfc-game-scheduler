@@ -17,8 +17,8 @@ import { RequestWithUser } from 'src/types/request.types';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FindAllUserDto } from './dto/findAll-user.dto';
 import { FindAllUser, User } from './entities/user.entity';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { logger } from 'src/utils/logger';
+import { DiscordAuthGuard } from 'src/auth/discord-auth.guard';
 
 @ApiTags('User')
 @Controller('user')
@@ -31,7 +31,7 @@ export class UserController {
     description: '検索条件に当てはまるユーザの取得成功',
     type: FindAllUser,
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(DiscordAuthGuard)
   @Get()
   findAll(@Query() query: FindAllUserDto) {
     return this.userService.findAll(query);
@@ -45,7 +45,7 @@ export class UserController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @Get('login')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(DiscordAuthGuard)
   async login(@Request() req: RequestWithUser) {
     logger.log('login', req.user.id);
     return await this.userService.login(req.user.id);
@@ -58,7 +58,7 @@ export class UserController {
     type: User,
   })
   @ApiResponse({ status: 404, description: 'User not found' })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(DiscordAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.userService.findOne(id);
@@ -70,7 +70,7 @@ export class UserController {
     description: 'ユーザの更新成功',
     type: User,
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(DiscordAuthGuard)
   @Patch(':id')
   update(@Request() req: RequestWithUser, @Body() body: UpdateUserDto) {
     return this.userService.update(req.user.id, body);
@@ -81,7 +81,7 @@ export class UserController {
     status: 200,
     description: 'ユーザの削除成功',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(DiscordAuthGuard)
   @Delete(':id')
   remove(@Request() req: RequestWithUser) {
     return this.userService.remove(req.user.id);

@@ -2,6 +2,7 @@ import './globals.css';
 import { Inter } from 'next/font/google';
 import './styles/calendar.css';
 import { ThemeProvider } from 'next-themes';
+import { Providers } from './providers';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -35,7 +36,7 @@ export default function RootLayout({
         }}
       >
         <ThemeProvider attribute='class' defaultTheme='dark' enableSystem>
-          <div className='contents'>{children}</div>
+          <Providers>{children}</Providers>
         </ThemeProvider>
       </body>
     </html>
