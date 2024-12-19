@@ -14,6 +14,9 @@ import {
   UserIcon,
   UsersIcon,
   User,
+  CalendarDays,
+  Settings,
+  Bell,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -29,6 +32,7 @@ import {
   PublicScheduleWithRelations,
 } from '../../apis/@types';
 import { logger } from '../../lib/logger';
+import { mockPublicEvent, mockPersonalEvent } from '../../mock/events';
 
 export type CalendarEvent =
   | PublicScheduleWithRelations
@@ -49,6 +53,8 @@ export type Availability = {
     id: string;
     name: string;
     avatar: string | null;
+    isAvailable: boolean;
+    isJoined: boolean;
   }>;
 };
 
@@ -99,15 +105,12 @@ export default memo(function Calendar(props: CalendarWithRelations) {
   // イベントの取得をメモ化
   const fetchEvents = useCallback(async () => {
     try {
-      const [publicEvents, personalEvents] = await Promise.all([
-        props.publicSchedules,
-        props.personalSchedules,
-      ]);
-      setEvents([...publicEvents, ...personalEvents]);
+      // 開発用にモックデータを使用
+      setEvents([mockPublicEvent, mockPersonalEvent]);
     } catch (error) {
       logger.error('Failed to fetch events:', error);
     }
-  }, [props.publicSchedules, props.personalSchedules]);
+  }, []);
 
   useEffect(() => {
     fetchEvents();
@@ -134,6 +137,8 @@ export default memo(function Calendar(props: CalendarWithRelations) {
           id: schedule.user.id,
           name: schedule.user.name,
           avatar: schedule.user.avatar,
+          isAvailable: schedule.isFree,
+          isJoined: false,
         });
         return acc;
       },
@@ -148,7 +153,7 @@ export default memo(function Calendar(props: CalendarWithRelations) {
     id: event.id,
     start: new Date(event.date),
     end: new Date(event.date),
-    title: isPublicSchedule(event) ? event.title : event.title,
+    title: event.title,
     extendedProps: {
       isPersonal: event.isPersonal,
       participants: isPublicSchedule(event) ? event.participants : undefined,
@@ -158,225 +163,240 @@ export default memo(function Calendar(props: CalendarWithRelations) {
   }));
 
   return (
-    <div className='space-y-6 py-6'>
-      <div className='flex flex-col sm:flex-row justify-between items-center gap-4'>
-        <h2 className='text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-blue-500 flex items-center'>
-          <Gamepad2Icon className='mr-2 h-6 w-6 sm:h-8 sm:w-8 text-green-400' />
-          ゲームスケジュール
-        </h2>
-        <div className='flex gap-2 w-full sm:w-auto'>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={() => setShowEventCreation(true)}
-                  className='flex-1 sm:flex-none bg-gradient-to-r from-pink-500 to-yellow-500 hover:from-pink-600 hover:to-yellow-600'
-                >
-                  <CrosshairIcon className='mr-2 h-4 w-4' />
-                  <span className='sm:inline'>イベント作成</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>新しいゲームイベントを作成</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+    <div className='space-y-6'>
+      {/* アクションバー */}
+      <div className='bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50 p-4'>
+        <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4'>
+          <div className='flex items-center gap-4'>
+            <div className='p-2.5 bg-purple-500/10 rounded-lg'>
+              <CalendarDays className='w-5 h-5 text-purple-400' />
+            </div>
+            <div className='space-y-1'>
+              <h2 className='text-lg font-semibold text-gray-100'>
+                イベントカレンダー
+              </h2>
+              <p className='text-sm text-gray-400'>
+                ゲームイベントや個人の予定を管理できます
+              </p>
+            </div>
+          </div>
 
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={() => setShowPersonalEventCreation(true)}
-                  className='flex-1 sm:flex-none bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600'
-                >
-                  <UserIcon className='mr-2 h-4 w-4' />
-                  <span className='sm:inline'>個人予定作成</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>個人の練習予定を作成</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <div className='grid grid-cols-1 sm:flex gap-2 w-full sm:w-auto'>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => setShowEventCreation(true)}
+                    className='w-full sm:w-auto bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white shadow-lg shadow-violet-500/25 border border-violet-600/20'
+                  >
+                    <CrosshairIcon className='w-4 h-4 sm:mr-2' />
+                    <span className='ml-2 sm:ml-0'>イベント作成</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side='bottom'>
+                  <p>新しいゲームイベントを作成</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => setShowPersonalEventCreation(true)}
+                    variant='outline'
+                    className='w-full sm:w-auto bg-gradient-to-r from-gray-900/50 to-gray-800/50 hover:from-gray-800/50 hover:to-gray-700/50 border-purple-500/20 text-purple-100 hover:text-purple-50 shadow-lg shadow-purple-500/10'
+                  >
+                    <UserIcon className='w-4 h-4 sm:mr-2' />
+                    <span className='ml-2 sm:ml-0'>個人予定作成</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side='bottom'>
+                  <p>個人の練習予定を作成</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
       </div>
 
-      <div className='grid grid-cols-1 md:grid-cols-[2fr_1fr] lg:grid-cols-[3fr_1fr] gap-6'>
-        <div className='bg-gray-900/50 backdrop-blur-sm rounded-lg border border-gray-800/50'>
-          <div className='flex items-center justify-center border-b border-gray-800/50 p-4'>
-            <h3 className='text-xl font-semibold text-gray-100 flex items-center'>
-              <CalendarIcon className='mr-2 h-6 w-6' />
-              カレンダー
-            </h3>
-          </div>
-          <div className='p-4'>
-            <MemoizedCalendarView
-              date={date}
-              events={calendarEvents}
-              availabilities={availabilities}
-              onDateSelect={handleDateSelect}
-              onEventClick={handleEventClick}
-            />
-          </div>
+      {/* カレンダーグリッド */}
+      <div className='grid grid-cols-1 lg:grid-cols-[3fr_1fr] gap-6'>
+        <div className='bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50 p-4 sm:p-6 overflow-hidden'>
+          <MemoizedCalendarView
+            date={date}
+            events={calendarEvents}
+            availabilities={availabilities}
+            onDateSelect={handleDateSelect}
+            onEventClick={handleEventClick}
+          />
         </div>
 
-        <div className='bg-gray-900/50 backdrop-blur-sm rounded-lg border border-gray-800/50 md:max-h-full'>
-          <div className='sticky top-0 z-10 flex items-center justify-center border-b border-gray-800/50 p-4 bg-gray-900/95 backdrop-blur-sm'>
-            <h3 className='text-lg sm:text-xl font-semibold text-gray-100 flex items-center'>
-              <CrosshairIcon className='mr-2 h-5 w-5 sm:h-6 sm:w-6' />
-              今後のイベント
-            </h3>
-          </div>
-          <div className='p-4 space-y-4 max-h-[40vh] md:max-h-[calc(100vh-20rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent'>
-            {/* 未来のイベント */}
-            {events
-              .filter((event) => new Date(event.date) >= new Date())
-              .sort((a, b) => dayjs(a.date).valueOf() - dayjs(b.date).valueOf())
-              .map((event) => {
-                const joinCount = isPublicSchedule(event)
-                  ? event.participants?.filter((p) => p.reaction === 'OK')
-                      .length
-                  : 0;
+        {/* イベントリスト */}
+        <div className='bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50'>
+          <div className='lg:sticky lg:top-32 max-h-[calc(100vh-8rem)] overflow-y-auto'>
+            {/* 今後のイベント */}
+            <div className='p-4 border-b border-gray-700/50 bg-gray-800/95 backdrop-blur-sm sticky top-0 z-10'>
+              <h3 className='text-lg font-semibold text-gray-100 flex items-center gap-2'>
+                <CrosshairIcon className='w-5 h-5 text-purple-400' />
+                今後のイベント
+              </h3>
+            </div>
 
-                const isAlmostFull =
-                  isPublicSchedule(event) &&
-                  joinCount === event.recruitCount - 1;
+            <div className='p-4 space-y-3'>
+              {events
+                .filter((event) => new Date(event.date) >= new Date())
+                .sort(
+                  (a, b) => dayjs(a.date).valueOf() - dayjs(b.date).valueOf()
+                )
+                .map((event) => {
+                  const joinCount = isPublicSchedule(event)
+                    ? event.participants?.filter((p) => p.reaction === 'OK')
+                        .length
+                    : 0;
+                  const isFull =
+                    isPublicSchedule(event) && joinCount >= event.recruitCount;
 
-                const isFull =
-                  isPublicSchedule(event) && joinCount >= event.recruitCount;
-
-                return (
-                  <Button
-                    key={event.id}
-                    variant='outline'
-                    className={cn(
-                      'w-full justify-start text-left border-gray-700 hover:bg-gray-800',
-                      event.isPersonal
-                        ? 'bg-purple-900/50'
-                        : isFull
-                          ? 'bg-green-900/50'
-                          : isAlmostFull
-                            ? 'bg-yellow-900/50'
-                            : dayjs(event.date).isBefore(dayjs())
-                              ? 'bg-red-900/50'
-                              : ''
-                    )}
-                    onClick={() => handleEventClick(event)}
-                  >
-                    <div className='flex items-center w-full'>
-                      {event.isPersonal ? (
-                        <UserIcon className='mr-2 h-4 w-4 text-purple-400' />
-                      ) : (
-                        <CrosshairIcon className='mr-2 h-4 w-4 text-cyan-400' />
-                      )}
-                      <div className='flex-1'>
-                        <div className='font-medium text-gray-100'>
-                          {isPublicSchedule(event) ? event.title : event.title}
-                        </div>
-                        <div className='text-sm text-gray-400'>
-                          {dayjs(event.date).format('YYYY年MM月DD日')}
-                          {isPublicSchedule(event) && (
-                            <>
-                              - <UsersIcon className='inline h-3 w-3' />{' '}
-                              {event.participants?.filter(
-                                (p) => p.reaction === 'OK'
-                              ).length || 0}
-                              /{event.recruitCount}
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      {event.createdBy.avatar ? (
-                        <img
-                          src={`https://cdn.discordapp.com/icons/${event.createdBy.id}/${event.createdBy.avatar}.png`}
-                          alt={event.createdBy.name}
-                          className='w-6 h-6 rounded-full ml-2 border border-gray-700'
-                        />
-                      ) : (
-                        <div className='w-6 h-6 rounded-full ml-2 bg-gray-700 flex items-center justify-center'>
-                          <User className='w-3 h-3 text-gray-400' />
-                        </div>
-                      )}
-                    </div>
-                  </Button>
-                );
-              })}
-
-            {/* 過去のイベントがある場合のみ表示 */}
-            {events.some((event) => dayjs(event.date).isBefore(dayjs())) && (
-              <>
-                <div className='relative my-6'>
-                  <div className='absolute inset-0 flex items-center'>
-                    <span className='w-full border-t border-gray-700' />
-                  </div>
-                  <div className='relative flex justify-center text-xs uppercase'>
-                    <span className='bg-gray-900 px-2 text-gray-500'>
-                      過去のイベント
-                    </span>
-                  </div>
-                </div>
-
-                {events
-                  .filter((event) => dayjs(event.date).isBefore(dayjs()))
-                  .sort(
-                    (a, b) =>
-                      new Date(b.date).getTime() - new Date(a.date).getTime()
-                  )
-                  .map((event) => (
+                  return (
                     <Button
                       key={event.id}
                       variant='outline'
                       className={cn(
-                        'w-full justify-start text-left border-gray-800 hover:bg-gray-800/50',
-                        'opacity-75 bg-gray-800/30'
+                        'w-full justify-start text-left border-gray-700/50 hover:bg-gray-800/60 group relative overflow-hidden',
+                        event.isPersonal
+                          ? 'bg-purple-500/10'
+                          : isFull
+                            ? 'bg-green-500/10'
+                            : 'bg-cyan-500/10'
                       )}
                       onClick={() => handleEventClick(event)}
                     >
-                      <div className='flex items-center w-full'>
-                        {event.isPersonal ? (
-                          <UserIcon className='mr-2 h-4 w-4 text-gray-500' />
-                        ) : (
-                          <CrosshairIcon className='mr-2 h-4 w-4 text-gray-500' />
-                        )}
-                        <div className='flex-1'>
-                          <div className='font-medium text-gray-400'>
+                      <div className='absolute inset-0 bg-gradient-to-r from-purple-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity' />
+                      <div className='relative flex items-center w-full gap-3'>
+                        <div
+                          className={cn(
+                            'p-2 rounded-lg',
+                            event.isPersonal
+                              ? 'bg-purple-500/20 text-purple-400'
+                              : 'bg-cyan-500/20 text-cyan-400'
+                          )}
+                        >
+                          {event.isPersonal ? (
+                            <UserIcon className='w-4 h-4' />
+                          ) : (
+                            <CrosshairIcon className='w-4 h-4' />
+                          )}
+                        </div>
+                        <div className='flex-1 min-w-0'>
+                          <div className='font-medium text-gray-200 truncate'>
                             {isPublicSchedule(event)
                               ? event.title
                               : event.title}
                           </div>
-                          <div className='text-sm text-gray-500'>
-                            {dayjs(event.date).format('YYYY年MM月DD日')}
-                            {!event.isPersonal && isPublicSchedule(event) && (
-                              <>
-                                - <UsersIcon className='inline h-3 w-3' />{' '}
-                                {event.participants?.filter(
-                                  (p) => p.reaction === 'OK'
-                                ).length || 0}
-                                /{event.recruitCount}
-                              </>
+                          <div className='text-sm text-gray-400 flex items-center gap-2'>
+                            <span>
+                              {dayjs(event.date).format('YYYY年MM月DD日')}
+                            </span>
+                            {isPublicSchedule(event) && (
+                              <span className='flex items-center gap-1'>
+                                <UsersIcon className='w-3 h-3' />
+                                {joinCount}/{event.recruitCount}
+                              </span>
                             )}
                           </div>
                         </div>
-                        {event.createdBy.avatar ? (
-                          <img
-                            src={`https://cdn.discordapp.com/avatars/${event.createdBy.id}/${event.createdBy.avatar}.png`}
-                            alt={event.createdBy.name}
-                            className='w-6 h-6 rounded-full ml-2 border border-gray-700'
-                          />
-                        ) : (
-                          <div className='w-6 h-6 rounded-full ml-2 bg-gray-700 flex items-center justify-center'>
-                            <User className='w-3 h-3 text-gray-400' />
-                          </div>
-                        )}
                       </div>
                     </Button>
-                  ))}
-              </>
-            )}
+                  );
+                })}
+
+              {events.filter((event) => new Date(event.date) >= new Date())
+                .length === 0 && (
+                <div className='text-sm text-gray-500 text-center py-4'>
+                  予定されているイベントはありません
+                </div>
+              )}
+            </div>
+
+            {/* 過去のイベント */}
+            <div className='p-4 border-t border-b border-gray-700/50 bg-gray-800/95 backdrop-blur-sm sticky top-0 z-10'>
+              <h3 className='text-lg font-semibold text-gray-100 flex items-center gap-2'>
+                <CalendarDays className='w-5 h-5 text-gray-400' />
+                過去のイベント
+              </h3>
+            </div>
+
+            <div className='p-4 space-y-3'>
+              {events
+                .filter((event) => new Date(event.date) < new Date())
+                .sort(
+                  (a, b) => dayjs(b.date).valueOf() - dayjs(a.date).valueOf()
+                ) // 新しい順
+                .map((event) => {
+                  const joinCount = isPublicSchedule(event)
+                    ? event.participants?.filter((p) => p.reaction === 'OK')
+                        .length
+                    : 0;
+
+                  return (
+                    <Button
+                      key={event.id}
+                      variant='outline'
+                      className={cn(
+                        'w-full justify-start text-left border-gray-700/50 hover:bg-gray-800/60 group relative overflow-hidden opacity-75',
+                        event.isPersonal ? 'bg-purple-500/5' : 'bg-cyan-500/5'
+                      )}
+                      onClick={() => handleEventClick(event)}
+                    >
+                      <div className='absolute inset-0 bg-gradient-to-r from-purple-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity' />
+                      <div className='relative flex items-center w-full gap-3'>
+                        <div
+                          className={cn(
+                            'p-2 rounded-lg',
+                            event.isPersonal
+                              ? 'bg-purple-500/10 text-purple-400/75'
+                              : 'bg-cyan-500/10 text-cyan-400/75'
+                          )}
+                        >
+                          {event.isPersonal ? (
+                            <UserIcon className='w-4 h-4' />
+                          ) : (
+                            <CrosshairIcon className='w-4 h-4' />
+                          )}
+                        </div>
+                        <div className='flex-1 min-w-0'>
+                          <div className='font-medium text-gray-400 truncate'>
+                            {event.title}
+                          </div>
+                          <div className='text-sm text-gray-500 flex items-center gap-2'>
+                            <span>
+                              {dayjs(event.date).format('YYYY年MM月DD日')}
+                            </span>
+                            {isPublicSchedule(event) && (
+                              <span className='flex items-center gap-1'>
+                                <UsersIcon className='w-3 h-3' />
+                                {joinCount}/{event.recruitCount}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </Button>
+                  );
+                })}
+
+              {events.filter((event) => new Date(event.date) < new Date())
+                .length === 0 && (
+                <div className='text-sm text-gray-500 text-center py-4'>
+                  過去のイベントはありません
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
+      {/* 既存のモーダル類 */}
       {showTypeSelector && (
         <MemoizedEventTypeSelector
           onClose={() => setShowTypeSelector(false)}

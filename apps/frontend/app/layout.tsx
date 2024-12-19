@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './styles/calendar.css';
 import { ThemeProvider } from 'next-themes';
 import { Providers } from './providers';
+import { Toaster } from './components/ui/toaster';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -38,6 +39,7 @@ export default function RootLayout({
         <ThemeProvider attribute='class' defaultTheme='dark' enableSystem>
           <Providers>{children}</Providers>
         </ThemeProvider>
+        <Toaster />
       </body>
     </html>
   );

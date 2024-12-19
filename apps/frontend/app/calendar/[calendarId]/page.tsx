@@ -17,6 +17,18 @@ import {
 } from '../../components/ui/dialog';
 import { Button } from '../../components/ui/button';
 import { logger } from '../../../lib/logger';
+import {
+  ArrowLeft,
+  ServerIcon,
+  CalendarDays,
+  Settings,
+  Users,
+  Bell,
+  Calendar as CalendarIcon,
+  ChevronLeft,
+} from 'lucide-react';
+import { motion } from 'framer-motion';
+import Image from 'next/image';
 
 interface CalendarPageProps {
   params: Promise<{ calendarId: string }>;
@@ -25,16 +37,17 @@ interface CalendarPageProps {
 export default function CalendarPage({ params }: CalendarPageProps) {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
   const [showJoinDialog, setShowJoinDialog] = useState(false);
   const [calendar, setCalendar] = useState<CalendarWithRelations>();
   const { calendarId } = use(params);
 
   const fetchCalendar = useCallback(async () => {
     if (!user) return;
-
     try {
+      // カレンダー情報を取得
       const calendarResponse = await client.calendars._id(calendarId).get();
+
+      // ユーザーのサーバー一覧を取得
       const serverResponse = await client.auth.servers.get();
       const userServers = serverResponse.body.data;
 
@@ -44,9 +57,9 @@ export default function CalendarPage({ params }: CalendarPageProps) {
       );
 
       if (!hasServerAccess) {
-        setError('このカレンダーにアクセスする権限がありません');
-        setTimeout(() => router.push('/servers'), 3000);
-        return;
+        // 権限がない場合は即座にリダイレクト
+        router.replace('/error/unauthorized');
+        throw new Error('unauthorized');
       }
 
       // サーバーユーザー情報を取得
@@ -59,13 +72,16 @@ export default function CalendarPage({ params }: CalendarPageProps) {
       const isServerMember = response;
       if (!isServerMember) {
         setShowJoinDialog(true);
+        return;
       }
 
       setCalendar(calendarResponse.body);
     } catch (error) {
-      logger.error('Error fetching calendar:', error);
-      setError('カレンダーの取得に失敗しました');
-      router.push('/servers');
+      if (error instanceof Error && error.message === 'unauthorized') {
+        return; // 既にリダイレクト済みの場合は何もしない
+      }
+      // その他のエラーの場合も権限エラーとして扱う
+      router.replace('/error/unauthorized');
     }
   }, [user, calendarId, router]);
 
@@ -81,30 +97,67 @@ export default function CalendarPage({ params }: CalendarPageProps) {
     }
   }, [loading, user, router, calendarId, fetchCalendar]);
 
-  // エラー表示
-  if (error) {
+  // ローディング表示の改善
+  if (loading || !calendar) {
     return (
-      <div className='flex items-center justify-center min-h-screen'>
-        <div className='bg-red-500/10 border border-red-500/30 text-red-200 px-4 py-2 rounded-md'>
-          {error}
+      <div className='min-h-screen bg-gray-900 flex items-center justify-center'>
+        <div className='p-8 rounded-2xl bg-gray-800/50 backdrop-blur-sm border border-gray-700/50'>
+          <div className='w-12 h-12 border-4 border-violet-500/30 border-t-violet-500 rounded-full animate-spin' />
         </div>
       </div>
     );
   }
 
-  // サーバー参加確認ダイアログ
+  // サーバー参加確認ダイアログの改善
   if (showJoinDialog && calendar) {
     return (
       <Dialog open onOpenChange={() => setShowJoinDialog(false)}>
-        <DialogContent>
+        <DialogContent className='bg-gray-900/95 backdrop-blur-md border-gray-800'>
           <DialogHeader>
-            <DialogTitle>サーバーへの参加</DialogTitle>
-            <DialogDescription>
-              このカレンダーを利用するにはサーバーに参加する必要があります。参加しますか？
+            <div className='mx-auto bg-gradient-to-br from-violet-500/20 to-indigo-500/20 p-3 rounded-xl border border-violet-500/20'>
+              <ServerIcon className='h-6 w-6 text-violet-400' />
+            </div>
+            <DialogTitle className='text-xl font-bold text-center text-gray-100'>
+              サーバーへの参加
+            </DialogTitle>
+            <DialogDescription className='text-center text-gray-400'>
+              このカレンダーを利用するにはサーバーに参加する必要があります
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button variant='outline' onClick={() => router.push('/servers')}>
+
+          <div className='p-4 mt-2 rounded-xl bg-gray-800/50 border border-gray-700/50'>
+            <div className='flex items-center gap-4'>
+              {calendar.server.icon ? (
+                <div className='relative w-16 h-16 rounded-xl overflow-hidden ring-1 ring-gray-700/50'>
+                  <Image
+                    src={`https://cdn.discordapp.com/icons/${calendar.server.id}/${calendar.server.icon}.png`}
+                    alt={calendar.server.name}
+                    fill
+                    className='object-cover'
+                  />
+                </div>
+              ) : (
+                <div className='w-16 h-16 rounded-xl bg-gray-700/50 flex items-center justify-center'>
+                  <ServerIcon className='w-8 h-8 text-gray-400' />
+                </div>
+              )}
+              <div>
+                <h3 className='text-lg font-semibold text-gray-100'>
+                  {calendar.server.name}
+                </h3>
+                <p className='text-sm text-gray-400 mt-1'>
+                  サーバーに参加してカレンダーを利用しましょう
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className='gap-2 mt-6'>
+            <Button
+              variant='outline'
+              onClick={() => router.push('/servers')}
+              className='flex-1 border-gray-700 hover:bg-gray-800/60'
+            >
               キャンセル
             </Button>
             <Button
@@ -123,7 +176,9 @@ export default function CalendarPage({ params }: CalendarPageProps) {
                   logger.error('Failed to join server:', error);
                 }
               }}
+              className='flex-1 bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white shadow-lg shadow-violet-500/25 border border-violet-600/20'
             >
+              <Users className='w-4 h-4 mr-2' />
               参加する
             </Button>
           </DialogFooter>
@@ -132,20 +187,90 @@ export default function CalendarPage({ params }: CalendarPageProps) {
     );
   }
 
-  if (loading || error) {
-    return (
-      <div className='flex items-center justify-center min-h-screen'>
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-100' />
-      </div>
-    );
-  }
-
   return (
-    <div className='min-h-screen text-gray-100'>
+    <div className='min-h-screen bg-gray-900 flex flex-col'>
+      {/* 装飾的な背景要素の改善 */}
+      <div className='fixed inset-0 z-0'>
+        <div className='absolute top-0 -left-4 w-72 h-72 bg-violet-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob' />
+        <div className='absolute top-0 -right-4 w-72 h-72 bg-indigo-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-2000' />
+        <div className='absolute -bottom-8 left-20 w-72 h-72 bg-fuchsia-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-4000' />
+      </div>
+
       <Header />
-      <main className='container mx-auto p-4'>
-        {calendar && <Calendar {...calendar} />}
-      </main>
+
+      {/* メインコンテンツ */}
+      <div className='flex-1 flex flex-col mt-16'>
+        {/* カレンダーヘッダーの改善 */}
+        <div className='sticky top-0 z-30 bg-gray-900/95 backdrop-blur-md border-b border-gray-800/60'>
+          <motion.div
+            className='container mx-auto px-4 py-4'
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className='flex flex-col gap-4'>
+              {/* 上部: 戻るボタンとカレンダー情報 */}
+              <div className='flex items-center gap-4'>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  onClick={() => router.push('/servers')}
+                  className='rounded-full hover:bg-gray-800/60 group'
+                >
+                  <ChevronLeft className='w-5 h-5 text-gray-400 group-hover:text-violet-400 transition-colors' />
+                </Button>
+                <div className='min-w-0 flex-1'>
+                  <div className='flex items-center justify-between'>
+                    <div className='flex items-center gap-2.5 min-w-0'>
+                      <div className='p-2 rounded-lg bg-gradient-to-br from-violet-500/20 to-indigo-500/20 border border-violet-500/20'>
+                        <CalendarIcon className='w-5 h-5 text-violet-400' />
+                      </div>
+                      <h1 className='text-lg sm:text-xl font-bold text-gray-100 truncate'>
+                        {calendar?.name}
+                      </h1>
+                    </div>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      className='h-9 px-4 border-gray-700 hover:bg-gray-800/60 hover:border-violet-500/50 whitespace-nowrap group transition-all bg-gray-800/50'
+                    >
+                      <div className='p-1 rounded-md bg-violet-500/10 text-violet-400 group-hover:bg-violet-500/20 transition-colors'>
+                        <Settings className='w-4 h-4' />
+                      </div>
+                      <span className='ml-2 text-gray-300 group-hover:text-gray-100 transition-colors'>
+                        設定
+                      </span>
+                    </Button>
+                  </div>
+                  <div className='mt-1 flex items-center gap-3 text-sm text-gray-400'>
+                    <div className='flex items-center gap-1.5'>
+                      <div className='p-1 rounded-lg bg-gray-800/60'>
+                        <ServerIcon className='w-3.5 h-3.5' />
+                      </div>
+                      <span className='truncate'>{calendar?.server.name}</span>
+                    </div>
+                    <div className='w-1 h-1 rounded-full bg-gray-700' />
+                    <div className='flex items-center gap-1.5'>
+                      <Users className='w-3.5 h-3.5' />
+                      <span>12人</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* カレンダーコンテンツ */}
+        <motion.div
+          className='flex-1 container mx-auto p-4'
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          {calendar && <Calendar {...calendar} />}
+        </motion.div>
+      </div>
     </div>
   );
 }

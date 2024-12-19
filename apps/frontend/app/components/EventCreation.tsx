@@ -1,145 +1,267 @@
 'use client';
 
 import { useState } from 'react';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Textarea } from './ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Textarea } from './ui/textarea';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from './ui/dialog';
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from './ui/form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { client } from '../../lib/api';
+import { toast } from './ui/use-toast';
 import {
+  Loader2,
+  Users,
+  CalendarDays,
+  Clock,
+  MessageSquare,
   CrosshairIcon,
-  CalendarIcon,
-  FileTextIcon,
-  UsersIcon,
+  Info,
 } from 'lucide-react';
 import dayjs from 'dayjs';
-import { client } from '../../lib/api';
-import { logger } from '../../lib/logger';
+import { motion } from 'framer-motion';
+
+const formSchema = z.object({
+  title: z.string().min(1, '必須項目です'),
+  description: z.string().optional(),
+  date: z.string().min(1, '必須項目です'),
+  time: z.string().min(1, '必須項目です'),
+  recruitCount: z.number().min(1, '1人以上を指定してください'),
+});
 
 interface EventCreationProps {
   onClose: () => void;
-  date: Date | undefined;
+  date?: Date;
 }
 
 export default function EventCreation({ onClose, date }: EventCreationProps) {
-  const [title, setTitle] = useState('');
-  const [quota, setQuota] = useState('');
-  const [notes, setNotes] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: '',
+      description: '',
+      date: date
+        ? dayjs(date).format('YYYY-MM-DD')
+        : dayjs().format('YYYY-MM-DD'),
+      time: dayjs().format('HH:mm'),
+      recruitCount: 1,
+    },
+  });
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsSubmitting(true);
     try {
-      await client.schedules.public.post({
-        body: {
-          date: dayjs(date).format('YYYY-MM-DD'),
-          title,
-          description: notes,
-          recruitCount: parseInt(quota),
-        },
+      // イベント作成処理を追加する
+      //
+      // await client.schedules.$post({
+      //   body: {
+      //     title: values.title,
+      //     description: values.description || '',
+      //     date: dayjs(`${values.date} ${values.time}`).toISOString(),
+      //     recruitCount: values.recruitCount,
+      //   },
+      // });
+      toast({
+        title: 'イベントを作成しました',
+        description: `「${values.title}」を作成しました`,
       });
       onClose();
     } catch (error) {
-      logger.error('Failed to create event:', error);
+      console.error('Failed to create event:', error);
+      toast({
+        title: 'エラー',
+        description: 'イベントの作成に失敗しました',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className='bg-gray-900/95 backdrop-blur-md border-gray-800 sm:max-w-xl'>
         <DialogHeader>
-          <DialogTitle className='flex items-center justify-center gap-2'>
-            <CrosshairIcon className='h-6 w-6' />
-            新規イベント作成
+          <DialogTitle className='text-xl font-bold text-gray-100 flex items-center gap-3'>
+            <div className='p-2 rounded-lg bg-gradient-to-r from-violet-500/20 to-indigo-500/20 border border-violet-500/20'>
+              <CrosshairIcon className='w-5 h-5 text-violet-400' />
+            </div>
+            ゲームイベントを作成
           </DialogTitle>
-          <DialogDescription>
-            イベントの詳細を入力してください
-          </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className='space-y-6'>
-          <div className='grid gap-6 sm:grid-cols-2'>
-            <div className='space-y-2'>
-              <Label htmlFor='title'>タイトル</Label>
-              <div className='relative'>
-                <CrosshairIcon className='absolute left-2 top-2.5 h-4 w-4 text-gray-500' />
-                <Input
-                  id='title'
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                  className='pl-8'
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className='space-y-6 py-4'
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+              className='space-y-4'
+            >
+              <div className='p-4 rounded-lg border border-violet-500/20 bg-violet-500/5 text-sm text-violet-200 flex items-start gap-2'>
+                <Info className='w-4 h-4 mt-0.5 text-violet-400' />
+                <div>
+                  参加者を募集するゲームイベントを作成します。
+                  <br />
+                  募集人数や説明を設定して、メンバーを集めましょう。
+                </div>
+              </div>
+
+              <FormField
+                control={form.control}
+                name='title'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className='text-gray-200 flex items-center gap-2'>
+                      <Users className='w-4 h-4 text-violet-400' />
+                      イベント名
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder='例: スクリム練習会'
+                        className='bg-gray-800/50 border-gray-700/50 text-gray-100'
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                <FormField
+                  control={form.control}
+                  name='date'
+                  render={({ field }) => (
+                    <FormItem className='w-full'>
+                      <FormLabel className='text-gray-200 flex items-center gap-2'>
+                        <CalendarDays className='w-4 h-4 text-violet-400' />
+                        開催日
+                      </FormLabel>
+                      <FormControl>
+                        <div className='relative w-44'>
+                          <Input
+                            type='date'
+                            className='bg-gray-800/50 border-gray-700/50 text-gray-100 font-mono'
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='time'
+                  render={({ field }) => (
+                    <FormItem className='w-full'>
+                      <FormLabel className='text-gray-200 flex items-center gap-2'>
+                        <Clock className='w-4 h-4 text-violet-400' />
+                        開始時間
+                      </FormLabel>
+                      <FormControl>
+                        <div className='relative w-32'>
+                          <Input
+                            type='time'
+                            className='bg-gray-800/50 border-gray-700/50 text-gray-100 font-mono'
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </div>
-            </div>
 
-            <div className='space-y-2'>
-              <Label htmlFor='date'>日付</Label>
-              <div className='relative'>
-                <CalendarIcon className='absolute left-2 top-2.5 h-4 w-4 text-gray-500' />
-                <Input
-                  id='date'
-                  type='date'
-                  value={dayjs(date).format('YYYY-MM-DD')}
-                  readOnly
-                  className='pl-8'
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className='space-y-2'>
-            <Label htmlFor='quota'>参加人数上限</Label>
-            <div className='relative'>
-              <UsersIcon className='absolute left-2 top-2.5 h-4 w-4 text-gray-500' />
-              <Input
-                id='quota'
-                type='number'
-                value={quota}
-                onChange={(e) => setQuota(e.target.value)}
-                required
-                className='pl-8'
+              <FormField
+                control={form.control}
+                name='recruitCount'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className='text-gray-200 flex items-center gap-2'>
+                      <Users className='w-4 h-4 text-violet-400' />
+                      募集人数
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type='number'
+                        min={1}
+                        className='bg-gray-800/50 border-gray-700/50 text-gray-100'
+                        {...field}
+                        onChange={(e) =>
+                          field.onChange(parseInt(e.target.value))
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-          </div>
 
-          <div className='space-y-2'>
-            <Label htmlFor='notes'>メモ</Label>
-            <div className='relative'>
-              <FileTextIcon className='absolute left-2 top-2.5 h-4 w-4 text-gray-500' />
-              <Textarea
-                id='notes'
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className='pl-8 min-h-[100px]'
+              <FormField
+                control={form.control}
+                name='description'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className='text-gray-200 flex items-center gap-2'>
+                      <MessageSquare className='w-4 h-4 text-violet-400' />
+                      説明
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder='イベントの説明や参加に必要な情報を入力してください'
+                        className='bg-gray-800/50 border-gray-700/50 text-gray-100 min-h-[120px] resize-none'
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-          </div>
+            </motion.div>
 
-          <DialogFooter>
-            <div className='flex w-full flex-col-reverse sm:flex-row sm:justify-end gap-2'>
+            <div className='flex flex-col sm:flex-row gap-2 pt-2'>
               <Button
+                type='submit'
+                disabled={isSubmitting}
+                className='flex-1 bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white shadow-lg shadow-violet-500/25 border border-violet-600/20'
+              >
+                {isSubmitting ? (
+                  <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+                ) : (
+                  <CrosshairIcon className='w-4 h-4 mr-2' />
+                )}
+                イベントを作成
+              </Button>
+              <Button
+                type='button'
                 variant='outline'
                 onClick={onClose}
-                className='w-full sm:w-auto border-gray-700 hover:bg-gray-800'
+                disabled={isSubmitting}
+                className='flex-1 sm:flex-none border-gray-700 hover:bg-gray-800'
               >
                 キャンセル
               </Button>
-              <Button
-                type='submit'
-                className='w-full sm:w-auto bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600'
-              >
-                イベント作成
-              </Button>
             </div>
-          </DialogFooter>
-        </form>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

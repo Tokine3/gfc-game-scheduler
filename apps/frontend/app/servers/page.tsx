@@ -1,435 +1,473 @@
 'use client';
 
-import { Suspense } from 'react';
 import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../hooks/useAuth';
-import { Button } from '../components/ui/button';
+import { client } from '../../lib/api';
+import Header from '../components/Header';
+import Image from 'next/image';
+import { motion } from 'framer-motion';
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '../components/ui/card';
+  ServerIcon,
+  Plus,
+  CalendarDays,
+  Users,
+  ArrowRight,
+} from 'lucide-react';
+import { Button } from '../components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from '../components/ui/dialog';
-import { CalendarIcon, Plus, ServerIcon, X } from 'lucide-react';
-import { client } from '../../lib/api';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../components/ui/select';
-import Header from '../components/Header';
-import { Calendar, ServerWithRelations } from '../../apis/@types';
 import { Input } from '../components/ui/input';
-import {
-  Toast,
-  ToastDescription,
-  ToastProvider,
-  ToastTitle,
-  ToastViewport,
-} from '../components/ui/toast';
-import { logger } from '../../lib/logger';
-import { LoadingSpinner } from '../components/ui/loading-spinner';
-import { Server } from '../../apis/@types';
+import { Label } from '../components/ui/label';
+import { HeartCheckbox } from '../components/ui/heart-checkbox';
+import { toast } from '../components/ui/use-toast';
 
-function ServersContent() {
+interface Server {
+  id: string;
+  name: string;
+  icon: string | null;
+  calendars: Array<{
+    id: string;
+    name: string;
+  }>;
+  isJoined?: boolean;
+}
+
+export default function ServersPage() {
   const { user, loading } = useAuth();
-  const [servers, setServers] = useState<ServerWithRelations[]>([]);
-  const [selectedServer, setSelectedServer] =
-    useState<ServerWithRelations | null>(null);
-  const [showCalendarDialog, setShowCalendarDialog] = useState(false);
-  const [selectedCalendarId, setSelectedCalendarId] = useState<string>();
-  const [isServerMember, setIsServerMember] = useState<Boolean>();
-  const [showCreateCalendarForm, setShowCreateCalendarForm] = useState(false);
-  const [newCalendarName, setNewCalendarName] = useState('');
-  const [showJoinServerDialog, setShowJoinServerDialog] = useState(false);
   const router = useRouter();
-  const [toast, setToast] = useState<{
-    title: string;
-    description: string;
-    show: boolean;
-    variant: 'default' | 'success' | 'error';
-  }>({ title: '', description: '', show: false, variant: 'default' });
-  const searchParams = useSearchParams();
-  const [isLoading, setIsLoading] = useState(false);
+  const [servers, setServers] = useState<Server[]>([]);
+  const [showCreateCalendarDialog, setShowCreateCalendarDialog] =
+    useState(false);
+  const [showJoinDialog, setShowJoinDialog] = useState(false);
+  const [selectedServer, setSelectedServer] = useState<Server | null>(null);
+  const [selectedServerId, setSelectedServerId] = useState<string>('');
+  const [newCalendarName, setNewCalendarName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/login');
+      router.replace('/login');
     }
   }, [loading, user, router]);
 
   useEffect(() => {
     const fetchServers = async () => {
+      if (!user) return;
       try {
-        const discordId = localStorage.getItem('discord_id');
-        if (!discordId) {
-          logger.error('Discord ID not found');
-          router.push('/login');
-          return;
-        }
-
         const response = await client.auth.servers.get();
-        setServers(response.body.data);
-      } catch (error: any) {
-        logger.error('Failed to fetch servers:', error);
-        if (error.response?.status === 401) {
-          router.push('/login');
-        }
-      } finally {
-        setIsLoading(false);
+        const serversData = response.body.data;
+
+        const serversWithJoinStatus = await Promise.all(
+          serversData.map(async (server) => {
+            try {
+              const response = await client.servers.me.server_user.$get({
+                query: { serverId: server.id },
+              });
+              return { ...server, isJoined: !!response };
+            } catch {
+              return { ...server, isJoined: false };
+            }
+          })
+        );
+
+        setServers(serversWithJoinStatus);
+      } catch (error) {
+        console.error('Failed to fetch servers:', error);
       }
     };
 
-    if (user) {
-      fetchServers();
-    }
-  }, [user, router]);
+    fetchServers();
+  }, [user]);
 
-  useEffect(() => {
-    if (searchParams.get('status') === 'success') {
-      setToast({
-        title: '認証成功',
-        description: 'ログインに成功しました',
-        show: true,
-        variant: 'success',
-      });
-      setTimeout(() => {
-        setToast({
-          title: '',
-          description: '',
-          show: false,
-          variant: 'default',
-        });
-      }, 3000);
-    }
-  }, [searchParams]);
+  const handleCreateCalendar = async (serverId: string) => {
+    setSelectedServerId(serverId);
+    setShowCreateCalendarDialog(true);
+  };
 
-  const handleServerSelect = async (server: ServerWithRelations) => {
+  const handleJoinServer = (server: Server) => {
     setSelectedServer(server);
-    try {
-      const response = await client.servers.me.server_user.$get({
-        query: {
-          serverId: server.id,
-        },
-      });
-
-      console.log('response', response);
-
-      // responseがtrueの場合はメンバー、それ以外は非メンバー
-      if (response === true) {
-        setShowCalendarDialog(true);
-      } else {
-        setShowJoinServerDialog(true);
-      }
-    } catch (error) {
-      console.error('Server membership check error:', error);
-      setShowJoinServerDialog(true);
-    }
+    setShowJoinDialog(true);
   };
 
-  const handleCalendarSelect = async (calendarId: string) => {
-    setIsLoading(true);
-    try {
-      router.push(`/calendar/${calendarId}`);
-    } catch (error) {
-      setToast({
+  const renderServerActions = (server: Server) => {
+    if (!server.isJoined) {
+      return (
+        <Button
+          className='w-full bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white shadow-lg shadow-violet-500/25 border border-violet-600/20'
+          onClick={() => handleJoinServer(server)}
+        >
+          <Users className='w-4 h-4 mr-2' />
+          サーバーに参加
+        </Button>
+      );
+    }
+
+    return (
+      <div className='space-y-3'>
+        {server.calendars.length > 0 && (
+          <div className='space-y-2'>
+            <div className='flex items-center gap-2 px-1'>
+              <CalendarDays className='w-4 h-4 text-purple-400' />
+              <span className='text-sm font-medium text-gray-300'>
+                作成済みカレンダー
+              </span>
+            </div>
+            <div className='space-y-1.5'>
+              {server.calendars.map((calendar) => (
+                <Button
+                  key={calendar.id}
+                  variant='outline'
+                  className='w-full justify-start border-gray-700 hover:bg-gray-700/50 group relative overflow-hidden'
+                  onClick={() => router.push(`/calendar/${calendar.id}`)}
+                >
+                  <div className='absolute inset-0 bg-gradient-to-r from-purple-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity' />
+                  <div className='relative flex items-center w-full'>
+                    <div className='flex items-center gap-2 min-w-0'>
+                      <div className='p-1 rounded-md bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20 transition-colors'>
+                        <CalendarDays className='w-4 h-4' />
+                      </div>
+                      <span className='truncate text-gray-300 group-hover:text-gray-100 transition-colors'>
+                        {calendar.name}
+                      </span>
+                    </div>
+                    <div className='ml-auto pl-3'>
+                      <div className='p-1 rounded-full hover:bg-gray-700/50 text-gray-400 opacity-0 group-hover:opacity-100 transition-all'>
+                        <ArrowRight className='w-3 h-3' />
+                      </div>
+                    </div>
+                  </div>
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <Button
+          variant='outline'
+          className='w-full justify-start border-gray-700 hover:bg-gray-700/50 hover:text-purple-400 transition-colors group'
+          onClick={() => handleCreateCalendar(server.id)}
+        >
+          <div className='p-1 rounded-md bg-gray-800/50 text-gray-400 group-hover:bg-purple-500/10 group-hover:text-purple-400 transition-colors'>
+            <Plus className='w-4 h-4' />
+          </div>
+          <span className='ml-1'>新しいカレンダーを作成</span>
+        </Button>
+      </div>
+    );
+  };
+
+  const handleCreateCalendarSubmit = async () => {
+    if (!newCalendarName.trim()) {
+      toast({
         title: 'エラー',
-        description: 'カレンダーの読み込みに失敗しました',
-        show: true,
-        variant: 'error',
+        description: 'カレンダー名を入力してください',
+        variant: 'destructive',
       });
+      return;
     }
-  };
 
-  const handleCalendarConfirm = () => {
-    if (selectedCalendarId) {
-      router.push(`/calendar/${selectedCalendarId}`);
-    }
-  };
-
-  const handleCreateCalendar = async () => {
+    setIsSubmitting(true);
     try {
-      logger.log('handleCreateCalendar');
-      if (!showCreateCalendarForm) {
-        setShowCreateCalendarForm(true);
-        return;
-      }
-
-      if (!newCalendarName.trim()) {
-        return;
-      }
-
-      logger.log('create calendar');
-      const response = await client.calendars.$post({
+      await client.calendars.$post({
         body: {
           name: newCalendarName,
-          serverId: selectedServer?.id || '',
+          serverId: selectedServerId,
           serverName: selectedServer?.name || '',
           icon: selectedServer?.icon || null,
         },
       });
-      logger.log('response', response.id);
-      setToast({
-        title: 'カレンダー作成完了',
-        description: `${newCalendarName}を作成しました`,
-        show: true,
-        variant: 'success',
+      setShowCreateCalendarDialog(false);
+      toast({
+        title: '作成完了',
+        description: 'カレンダーを作成しました',
       });
-
-      setShowCalendarDialog(false);
-      setShowCreateCalendarForm(false);
-      setNewCalendarName('');
-      router.push(`/calendar/${response.id}`);
+      window.location.reload();
     } catch (error) {
-      setToast({
+      console.error('Failed to create calendar:', error);
+      toast({
         title: 'エラー',
         description: 'カレンダーの作成に失敗しました',
-        show: true,
-        variant: 'error',
+        variant: 'destructive',
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleJoinServer = async () => {
-    if (!selectedServer) return;
-
-    try {
-      await client.servers.join.$post({
-        body: {
-          serverId: selectedServer.id,
-          serverName: selectedServer.name,
-          serverIcon: selectedServer.icon || '',
-        },
-      });
-
-      setShowJoinServerDialog(false);
-      setShowCalendarDialog(true);
-
-      setToast({
-        title: 'サーバー参加完了',
-        description: `${selectedServer.name}に参加しました`,
-        show: true,
-        variant: 'success',
-      });
-    } catch (error) {
-      setToast({
-        title: 'エラー',
-        description: 'サーバーへの参加に失敗しました',
-        show: true,
-        variant: 'error',
-      });
-    }
-  };
-
-  const handleCloseCalendarDialog = () => {
-    setShowCalendarDialog(false);
-    setSelectedServer(null);
-    setShowCreateCalendarForm(false);
-    setNewCalendarName('');
-  };
-
-  if (isLoading) {
-    return <LoadingSpinner message='カレンダーを読み込んでいます...' />;
-  }
+  const totalServers = servers.length;
+  const joinedServers = servers.filter((server) => server.isJoined).length;
 
   return (
-    <>
-      <div className='min-h-screen bg-gray-900 text-gray-100'>
-        <Header />
-        <main className='container mx-auto p-4'>
-          <h1 className='text-2xl sm:text-3xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600 flex items-center'>
-            <ServerIcon className='mr-2 h-6 w-6 sm:h-8 sm:w-8 text-purple-400' />
-            サーバーを選択
-          </h1>
-
-          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
-            {servers.map((server) => (
-              <Card
-                key={server.id}
-                className='bg-gray-900/50 border-gray-800 hover:bg-gray-800/50 transition-colors cursor-pointer h-[280px] flex flex-col'
-                onClick={() => handleServerSelect(server)}
-              >
-                <CardHeader className='text-center flex-1 flex flex-col items-center justify-center pt-8 pb-4'>
-                  <div className='w-24 h-24 rounded-full bg-gray-800 border-4 border-gray-700 flex items-center justify-center overflow-hidden mb-4'>
-                    {server.icon ? (
-                      <img
-                        src={server.icon}
-                        alt={server.name}
-                        className='w-full h-full object-cover'
-                      />
-                    ) : (
-                      <ServerIcon className='w-12 h-12 text-gray-400' />
-                    )}
-                  </div>
-                  <CardTitle className='text-xl'>{server.name}</CardTitle>
-                </CardHeader>
-                <CardContent className='text-center pb-8 border-t border-gray-800 pt-4'>
-                  <div className='flex items-center justify-center text-sm text-gray-400'>
-                    <CalendarIcon className='w-4 h-4 mr-1' />
-                    {server.calendars?.length ?? 0}個のカレンダー
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {showCalendarDialog && selectedServer && (
-            <Dialog open onOpenChange={handleCloseCalendarDialog}>
-              <DialogContent className='sm:max-w-[425px]'>
-                <DialogHeader>
-                  <DialogTitle className='text-xl'>
-                    カレンダーを選択
-                  </DialogTitle>
-                  <DialogDescription>
-                    既存のカレンダーを選択するか、新しいカレンダーを作成できます
-                  </DialogDescription>
-                </DialogHeader>
-
-                <div className='space-y-6 my-4'>
-                  {selectedServer.calendars.length > 0 && (
-                    <Select
-                      onValueChange={handleCalendarSelect}
-                      value={selectedCalendarId}
-                    >
-                      <SelectTrigger className='w-full'>
-                        <SelectValue placeholder='カレンダーを選択してください' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {selectedServer.calendars?.map((calendar: Calendar) => (
-                          <SelectItem key={calendar.id} value={calendar.id}>
-                            <div className='flex items-center'>
-                              <CalendarIcon className='mr-2 h-4 w-4' />
-                              {calendar.name}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-
-                  {showCreateCalendarForm ? (
-                    <div className='space-y-4'>
-                      <Input
-                        placeholder='カレンダー名を入力'
-                        value={newCalendarName}
-                        onChange={(e) => setNewCalendarName(e.target.value)}
-                      />
-                    </div>
-                  ) : (
-                    <Button
-                      className='w-full bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600'
-                      onClick={handleCreateCalendar}
-                    >
-                      <Plus className='mr-2 h-4 w-4' />
-                      新しいカレンダーを作成
-                    </Button>
-                  )}
-                </div>
-
-                <DialogFooter className='flex flex-col sm:flex-row gap-2'>
-                  <Button
-                    variant='outline'
-                    onClick={handleCloseCalendarDialog}
-                    className='w-full sm:w-auto border-gray-700 hover:bg-gray-800'
-                  >
-                    キャンセル
-                  </Button>
-                  {showCreateCalendarForm ? (
-                    <Button
-                      onClick={handleCreateCalendar}
-                      disabled={!newCalendarName.trim()}
-                      className='w-full sm:w-auto bg-gradient-to-r from-purple-400 to-pink-600 hover:from-purple-500 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed'
-                    >
-                      作成
-                    </Button>
-                  ) : (
-                    selectedServer.calendars.length > 0 && (
-                      <Button
-                        onClick={handleCalendarConfirm}
-                        disabled={!selectedCalendarId}
-                        className='w-full sm:w-auto bg-gradient-to-r from-purple-400 to-pink-600 hover:from-purple-500 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed'
-                      >
-                        選択
-                      </Button>
-                    )
-                  )}
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          )}
-
-          {showJoinServerDialog && selectedServer && (
-            <Dialog open onOpenChange={() => setShowJoinServerDialog(false)}>
-              <DialogContent className='sm:max-w-[425px]'>
-                <DialogHeader>
-                  <DialogTitle className='text-xl'>サーバーに参加</DialogTitle>
-                  <DialogDescription>
-                    このサーバーのカレンダーには参加していません。参加しますか？
-                  </DialogDescription>
-                </DialogHeader>
-
-                <DialogFooter className='flex flex-col sm:flex-row gap-2'>
-                  <Button
-                    variant='outline'
-                    onClick={() => setShowJoinServerDialog(false)}
-                    className='w-full sm:w-auto border-gray-700 hover:bg-gray-800'
-                  >
-                    キャンセル
-                  </Button>
-                  <Button
-                    onClick={handleJoinServer}
-                    className='w-full sm:w-auto bg-gradient-to-r from-purple-400 to-pink-600 hover:from-purple-500 hover:to-pink-700'
-                  >
-                    参加
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          )}
-        </main>
+    <div className='min-h-screen bg-gray-900 flex flex-col'>
+      <div className='fixed inset-0 z-0'>
+        <div className='absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob' />
+        <div className='absolute top-0 -right-4 w-72 h-72 bg-cyan-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-2000' />
+        <div className='absolute -bottom-8 left-20 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-4000' />
       </div>
 
-      <ToastProvider>
-        {toast.show && (
-          <Toast
-            variant={toast.variant}
-            onOpenChange={(open) => {
-              if (!open) setToast({ ...toast, show: false });
-            }}
-          >
-            <div className='grid gap-1'>
-              <ToastTitle>{toast.title}</ToastTitle>
-              <ToastDescription>{toast.description}</ToastDescription>
-            </div>
-          </Toast>
-        )}
-        <ToastViewport />
-      </ToastProvider>
-    </>
-  );
-}
+      <Header />
 
-export default function ServersPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className='flex items-center justify-center min-h-screen'>
-          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-100' />
+      <main className='flex-1 container mx-auto px-4 pt-24'>
+        <motion.div
+          className='space-y-8'
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className='space-y-4'>
+            <h1 className='text-3xl font-bold text-gray-100'>サーバーを選択</h1>
+            <div className='flex items-center gap-2 text-sm text-gray-400'>
+              <Users className='w-4 h-4' />
+              <span>接続中のサーバー: {totalServers}</span>
+              <span className='mx-2'>•</span>
+              <span>参加済み: {joinedServers}</span>
+            </div>
+            <p className='text-gray-400'>
+              カレンダーを管理したいDiscordサーバーを選択してください
+            </p>
+          </div>
+
+          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
+            {servers.map((server) => (
+              <motion.div
+                key={server.id}
+                className='group relative'
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <div className='absolute -inset-0.5 bg-gradient-to-r from-purple-500/20 to-cyan-500/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-300' />
+                <div className='relative p-6 bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl hover:bg-gray-800/70 transition-colors'>
+                  <div className='flex items-start gap-4'>
+                    {server.icon ? (
+                      <div className='relative w-12 h-12 rounded-xl overflow-hidden ring-1 ring-gray-700/50'>
+                        <Image
+                          src={`https://cdn.discordapp.com/icons/${server.id}/${server.icon}.png`}
+                          alt={server.name}
+                          fill
+                          className='object-cover'
+                        />
+                      </div>
+                    ) : (
+                      <div className='w-12 h-12 rounded-xl bg-gray-700/50 flex items-center justify-center'>
+                        <ServerIcon className='w-6 h-6 text-gray-400' />
+                      </div>
+                    )}
+                    <div className='flex-1 min-w-0'>
+                      <div className='flex items-center justify-between gap-2'>
+                        <div className='flex-1 min-w-0'>
+                          <h3 className='text-lg font-semibold text-gray-100 truncate'>
+                            {server.name}
+                          </h3>
+                          {server.isJoined && (
+                            <div className='mt-1.5 inline-flex items-center'>
+                              <div className='px-2.5 py-1 rounded-full bg-gradient-to-r from-purple-500/20 to-cyan-500/20 border border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.15)] group-hover:shadow-[0_0_20px_rgba(168,85,247,0.25)] group-hover:border-purple-500/40 transition-all'>
+                                <div className='flex items-center gap-1.5'>
+                                  <div className='w-1.5 h-1.5 rounded-full bg-gradient-to-r from-purple-400 to-cyan-400 animate-pulse' />
+                                  <span className='text-xs font-semibold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent'>
+                                    参加済み
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <HeartCheckbox
+                          className='text-gray-400 hover:text-pink-400 shrink-0'
+                          checked={false}
+                          onChange={() => {
+                            /* お気に入り処理 */
+                          }}
+                        />
+                      </div>
+                      <div className='flex items-center gap-3 mt-1.5'>
+                        <div className='flex items-center gap-1 text-sm text-gray-400'>
+                          <CalendarDays className='w-4 h-4' />
+                          <span>{server.calendars.length}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className='mt-4 space-y-2'>
+                    {!server.isJoined ? (
+                      <Button
+                        className='w-full bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white shadow-lg shadow-violet-500/25 border border-violet-600/20'
+                        onClick={() => handleJoinServer(server)}
+                      >
+                        <Users className='w-4 h-4 mr-2' />
+                        サーバーに参加
+                      </Button>
+                    ) : (
+                      renderServerActions(server)
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      </main>
+
+      {showCreateCalendarDialog && (
+        <Dialog open onOpenChange={() => setShowCreateCalendarDialog(false)}>
+          <DialogContent className='bg-gray-900/95 backdrop-blur-md border-gray-800'>
+            <DialogHeader>
+              <DialogTitle className='text-xl font-bold text-gray-100'>
+                カレンダーの作成
+              </DialogTitle>
+              <DialogDescription className='text-gray-400'>
+                新しいカレンダーを作成します。
+              </DialogDescription>
+            </DialogHeader>
+            <div className='space-y-6 py-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='calendar-name' className='text-gray-200'>
+                  カレンダー名
+                </Label>
+                <Input
+                  id='calendar-name'
+                  placeholder='例: レイドイベント'
+                  value={newCalendarName}
+                  onChange={(e) => setNewCalendarName(e.target.value)}
+                  className='bg-gray-800/50 border-gray-700 text-gray-100 placeholder:text-gray-500 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500'
+                />
+              </div>
+            </div>
+            <DialogFooter className='gap-2'>
+              <Button
+                variant='outline'
+                onClick={() => setShowCreateCalendarDialog(false)}
+                className='border-gray-700 hover:bg-gray-800/60'
+                disabled={isSubmitting}
+              >
+                キャンセル
+              </Button>
+              <Button
+                onClick={handleCreateCalendarSubmit}
+                className='bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600 text-white shadow-lg shadow-purple-500/20'
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <div className='flex items-center gap-2'>
+                    <div className='w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin' />
+                    作成中...
+                  </div>
+                ) : (
+                  '作成する'
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {showJoinDialog && selectedServer && (
+        <Dialog open onOpenChange={() => setShowJoinDialog(false)}>
+          <DialogContent className='bg-gray-900/95 backdrop-blur-md border-gray-800 sm:max-w-md'>
+            <DialogHeader>
+              <DialogTitle className='text-xl font-bold text-gray-100'>
+                サーバーへの参加
+              </DialogTitle>
+              <DialogDescription className='text-gray-400'>
+                以下のサーバーに参加してカレンダーを利用しましょう
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className='p-4 mt-2 rounded-xl bg-gray-800/50 border border-gray-700/50'>
+              <div className='flex items-center gap-4'>
+                {selectedServer.icon ? (
+                  <div className='relative w-16 h-16 rounded-xl overflow-hidden ring-1 ring-gray-700/50'>
+                    <Image
+                      src={`https://cdn.discordapp.com/icons/${selectedServer.id}/${selectedServer.icon}.png`}
+                      alt={selectedServer.name}
+                      fill
+                      className='object-cover'
+                    />
+                  </div>
+                ) : (
+                  <div className='w-16 h-16 rounded-xl bg-gray-700/50 flex items-center justify-center'>
+                    <ServerIcon className='w-8 h-8 text-gray-400' />
+                  </div>
+                )}
+                <div className='flex-1 min-w-0'>
+                  <h3 className='text-lg font-semibold text-gray-100 truncate'>
+                    {selectedServer.name}
+                  </h3>
+                  <div className='flex items-center gap-3 mt-1'>
+                    <div className='flex items-center gap-1.5 text-sm text-gray-400'>
+                      <CalendarDays className='w-4 h-4' />
+                      <span>{selectedServer.calendars.length} カレンダー</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className='mt-4 p-3 rounded-lg bg-indigo-500/10 border border-indigo-500/20'>
+              <p className='text-sm text-indigo-300 flex items-start gap-2'>
+                <Users className='w-4 h-4 mt-0.5 shrink-0' />
+                <span>
+                  サーバーに参加すると、メンバーとカレンダーを共有できるようになります。
+                </span>
+              </p>
+            </div>
+
+            <DialogFooter className='gap-2 mt-6'>
+              <Button
+                variant='outline'
+                onClick={() => setShowJoinDialog(false)}
+                className='border-gray-700 hover:bg-gray-800/60'
+              >
+                キャンセル
+              </Button>
+              <Button
+                onClick={async () => {
+                  try {
+                    await client.servers.join.$post({
+                      body: {
+                        serverId: selectedServer.id,
+                        serverName: selectedServer.name,
+                        serverIcon: selectedServer.icon || '',
+                      },
+                    });
+                    toast({
+                      title: '参加完了',
+                      description: `${selectedServer.name} に参加しました`,
+                    });
+                    setShowJoinDialog(false);
+                    window.location.reload();
+                  } catch (error) {
+                    console.error('Failed to join server:', error);
+                    toast({
+                      title: 'エラー',
+                      description: 'サーバーへの参加に失敗しました',
+                      variant: 'destructive',
+                    });
+                  }
+                }}
+                className='bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white shadow-lg shadow-violet-500/25 border border-violet-600/20 min-w-[100px]'
+              >
+                <Users className='w-4 h-4 mr-2' />
+                参加する
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      <footer className='relative z-10 border-t border-gray-800/60 bg-gray-900/95 backdrop-blur-md py-8 mt-12'>
+        <div className='container mx-auto px-4'>
+          <p className='text-center text-sm text-gray-500'>
+            © 2024 GFC Scheduler. All rights reserved.
+          </p>
         </div>
-      }
-    >
-      <ServersContent />
-    </Suspense>
+      </footer>
+    </div>
   );
 }
