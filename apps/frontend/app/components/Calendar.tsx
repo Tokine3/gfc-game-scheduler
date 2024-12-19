@@ -53,6 +53,8 @@ export type Availability = {
     id: string;
     name: string;
     avatar: string | null;
+    isAvailable: boolean;
+    isJoined: boolean;
   }>;
 };
 
@@ -135,6 +137,8 @@ export default memo(function Calendar(props: CalendarWithRelations) {
           id: schedule.user.id,
           name: schedule.user.name,
           avatar: schedule.user.avatar,
+          isAvailable: schedule.isFree,
+          isJoined: false,
         });
         return acc;
       },

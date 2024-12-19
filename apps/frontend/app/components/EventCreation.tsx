@@ -62,14 +62,16 @@ export default function EventCreation({ onClose, date }: EventCreationProps) {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     try {
-      await client.schedules.$post({
-        body: {
-          title: values.title,
-          description: values.description || '',
-          date: dayjs(`${values.date} ${values.time}`).toISOString(),
-          recruitCount: values.recruitCount,
-        },
-      });
+      // イベント作成処理を追加する
+      //
+      // await client.schedules.$post({
+      //   body: {
+      //     title: values.title,
+      //     description: values.description || '',
+      //     date: dayjs(`${values.date} ${values.time}`).toISOString(),
+      //     recruitCount: values.recruitCount,
+      //   },
+      // });
       toast({
         title: 'イベントを作成しました',
         description: `「${values.title}」を作成しました`,

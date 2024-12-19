@@ -12,9 +12,13 @@ import {
   ArrowRight,
   Github,
   Twitter,
+  LogIn,
+  Share2,
+  Copy,
 } from 'lucide-react';
 import { TermsModal } from '../components/TermsModal';
 import { PrivacyPolicyModal } from '../components/PrivacyPolicyModal';
+import { toast } from '../components/ui/use-toast';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -172,8 +176,13 @@ export default function LoginPage() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <div className='p-8 rounded-2xl bg-gray-800/50 border border-gray-700/50 backdrop-blur-sm'>
-              <div className='text-center space-y-4 mb-8'>
+            <div className='p-6 rounded-2xl bg-gray-800/50 border border-gray-700/50 backdrop-blur-sm'>
+              <div className='text-center space-y-4 mb-6'>
+                <div className='flex items-center justify-center gap-3 mb-2'>
+                  <div className='w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500/20 to-indigo-500/20 flex items-center justify-center ring-1 ring-violet-500/30'>
+                    <LogIn className='w-6 h-6 text-violet-400' />
+                  </div>
+                </div>
                 <h2 className='text-2xl font-bold text-gray-100'>
                   ログインして始める
                 </h2>
@@ -199,6 +208,66 @@ export default function LoginPage() {
                 <span>Discord でログイン</span>
                 <ArrowRight className='w-4 h-4 ml-2' />
               </Button>
+
+              <div className='mt-6 pt-6 border-t border-gray-700/50'>
+                <div className='flex flex-col items-center gap-3 mb-4'>
+                  <div className='w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-emerald-500/20 flex items-center justify-center ring-1 ring-cyan-500/30'>
+                    <Share2 className='w-4 h-4 text-cyan-400' />
+                  </div>
+                  <p className='text-lg text-gray-400'>友達に教える</p>
+                </div>
+
+                <div className='flex gap-2'>
+                  <Button
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(window.location.href);
+                      toast({
+                        title: 'URLをコピーしました',
+                        description: (
+                          <div className='flex items-center gap-2'>
+                            <div className='w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-emerald-500/20 flex items-center justify-center ring-1 ring-cyan-500/30'>
+                              <Copy className='w-4 h-4 text-cyan-400' />
+                            </div>
+                            <span>クリップボードにコピーされました</span>
+                          </div>
+                        ),
+                        className:
+                          'bg-gray-900/95 border border-gray-800/60 backdrop-blur-md',
+                        duration: 2000,
+                        style: {
+                          animation: 'slide-in-from-top 0.3s ease-out',
+                        },
+                      });
+                    }}
+                    variant='outline'
+                    size='sm'
+                    className='flex-1 border-gray-700 hover:bg-gray-800/60'
+                  >
+                    <Copy className='w-4 h-4 mr-2' />
+                    URLをコピー
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      const tweetText = encodeURIComponent(
+                        'ゲーマーのためのスケジュール管理ツール「GFC Scheduler」を使ってみませんか？\n\n'
+                      );
+                      const tweetUrl = encodeURIComponent(window.location.href);
+                      const intent = `https://twitter.com/intent/tweet?text=${tweetText}&url=${tweetUrl}`;
+
+                      window.open(
+                        intent,
+                        '_blank',
+                        'width=550,height=420,scrollbars=yes'
+                      );
+                    }}
+                    size='sm'
+                    className='flex-1 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-600 hover:to-emerald-600 text-white'
+                  >
+                    <Twitter className='w-4 h-4 mr-2' />
+                    共有する
+                  </Button>
+                </div>
+              </div>
 
               <p className='mt-4 text-center text-sm text-gray-500'>
                 ログインすることで、

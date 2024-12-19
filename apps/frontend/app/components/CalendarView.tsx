@@ -274,6 +274,8 @@ export function CalendarView({
                 id: user.id,
                 name: user.name,
                 avatar: user.avatar,
+                isAvailable: user.isAvailable,
+                isJoined: user.isJoined,
               })),
             });
           }

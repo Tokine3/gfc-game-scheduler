@@ -35,9 +35,10 @@ export default function EventDetail({ event, onClose }: EventDetailProps) {
 
     setIsSubmitting(true);
     try {
-      await client.schedules._scheduleId(event.id).reaction.$post({
-        body: { reaction },
-      });
+      // 参加状況更新処理を追加する
+      // await client.schedules._scheduleId(event.id).reaction.$post({
+      //   body: { reaction },
+      // });
       toast({
         title: '参加状況を更新しました',
         description: `イベント「${event.title}」の参加状況を更新しました`,

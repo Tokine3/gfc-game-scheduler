@@ -175,10 +175,12 @@ export default function ServersPage() {
 
     setIsSubmitting(true);
     try {
-      await client.calendars.create.$post({
+      await client.calendars.$post({
         body: {
           name: newCalendarName,
           serverId: selectedServerId,
+          serverName: selectedServer?.name || '',
+          icon: selectedServer?.icon || null,
         },
       });
       setShowCreateCalendarDialog(false);
