@@ -1,132 +1,190 @@
 'use client';
 
-import { Suspense } from 'react';
-import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '../hooks/useAuth';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '../components/ui/button';
 import Image from 'next/image';
-import { Gamepad2Icon } from 'lucide-react';
-import { cn } from '../../lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Gamepad2,
+  CalendarDays,
+  Users,
+  ArrowRight,
+  Github,
+  Twitter,
+} from 'lucide-react';
 
-function LoginContent() {
-  const { user, loading } = useAuth();
+export default function LoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const error = searchParams.get('error');
-
-  const [errorMessage, setErrorMessage] = useState<string>('');
 
   useEffect(() => {
-    if (error === 'auth_cancelled') {
-      setErrorMessage('認証がキャンセルされました');
-      setTimeout(() => setErrorMessage(''), 3000);
-    } else if (error === 'auth_failed') {
-      setErrorMessage('認証に失敗しました');
-      setTimeout(() => setErrorMessage(''), 3000);
-    } else if (searchParams.get('status') === 'success') {
-      setErrorMessage('認証に成功しました');
-      setTimeout(() => setErrorMessage(''), 3000);
+    const token = localStorage.getItem('token');
+    if (token) {
+      const redirectPath = sessionStorage.getItem('redirectPath') || '/servers';
+      sessionStorage.removeItem('redirectPath');
+      router.push(redirectPath);
     }
-  }, [error, searchParams]);
-
-  useEffect(() => {
-    const redirectPath = sessionStorage.getItem('redirectPath');
-    if (!loading && user) {
-      if (redirectPath) {
-        sessionStorage.removeItem('redirectPath');
-        router.push(redirectPath);
-      } else {
-        router.push('/servers');
-      }
-    }
-  }, [loading, user, router]);
-
-  if (loading) {
-    return (
-      <div className='flex items-center justify-center min-h-screen'>
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-100' />
-      </div>
-    );
-  }
+  }, [router]);
 
   const handleLogin = () => {
-    const currentPath = window.location.pathname;
-    const currentSearch = window.location.search;
-    const fullPath = currentPath + currentSearch;
-
-    if (currentPath !== '/login') {
-      sessionStorage.setItem('redirectPath', fullPath);
-    }
-
     const DISCORD_CLIENT_ID = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID;
     const REDIRECT_URI = encodeURIComponent(
       `${process.env.NEXT_PUBLIC_API_URL}/auth/discord/callback`
     );
-
-    const redirectPath = sessionStorage.getItem('redirectPath');
-    const redirectQuery = redirectPath
-      ? `&redirect=${encodeURIComponent(redirectPath)}`
-      : '';
-
-    const DISCORD_AUTH_URL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=identify+guilds+guilds.members.read${redirectQuery}`;
+    const DISCORD_AUTH_URL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=identify%20guilds`;
 
     window.location.href = DISCORD_AUTH_URL;
   };
 
   return (
-    <div className='min-h-screen flex flex-col'>
-      <header className='border-b border-gray-800'>
-        <div className='container mx-auto px-4 py-3'>
-          <div className='flex items-center space-x-2'>
-            <div className='w-8 h-8 relative'>
+    <div className='min-h-screen bg-gray-900 flex flex-col'>
+      {/* 装飾的な背景要素 */}
+      <div className='fixed inset-0 z-0'>
+        <div className='absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob' />
+        <div className='absolute top-0 -right-4 w-72 h-72 bg-cyan-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-2000' />
+        <div className='absolute -bottom-8 left-20 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-4000' />
+      </div>
+
+      {/* ヘッダー */}
+      <header className='fixed top-0 left-0 right-0 h-16 z-50 bg-gray-900/95 backdrop-blur-md border-b border-gray-800/60'>
+        <div className='container mx-auto px-4 h-full flex items-center'>
+          <motion.div
+            className='flex items-center gap-3'
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className='relative w-8 h-8 rounded-lg overflow-hidden ring-1 ring-gray-800/60 group'>
+              <div className='absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20 group-hover:opacity-100 opacity-0 transition-opacity' />
               <Image
                 src='/GFC.png'
                 alt='Logo'
                 fill
-                className='object-contain'
-                priority
+                className='object-cover relative z-10'
               />
             </div>
-            <h1 className='text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600'>
+            <h1 className='text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600'>
               GFC Scheduler
             </h1>
-          </div>
+          </motion.div>
         </div>
       </header>
 
-      <main className='flex-1 flex items-center justify-center p-4'>
-        <div className='w-full max-w-md space-y-8'>
-          <div className='text-center space-y-4'>
-            <div className='flex justify-center'>
-              <div className='p-4 rounded-full bg-gradient-to-r from-purple-500/10 to-pink-500/10 backdrop-blur-sm'>
-                <Gamepad2Icon className='w-12 h-12 text-purple-400' />
-              </div>
+      {/* メインコンテンツ */}
+      <main className='flex-1 flex items-center justify-center p-4 mt-16 relative z-10'>
+        <div className='w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center'>
+          {/* 左側: 説明部分 */}
+          <div className='space-y-8'>
+            <div className='space-y-4'>
+              <motion.h2
+                className='text-4xl sm:text-5xl font-bold'
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <span className='bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-500 to-cyan-400'>
+                  ゲーマーのための
+                </span>
+                <br />
+                <span className='text-gray-100'>スケジュール管理ツール</span>
+              </motion.h2>
+              <motion.p
+                className='text-gray-400 text-lg leading-relaxed'
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
+                Discord サーバーと連携して、
+                <br />
+                ゲームの予定を簡単に管理できます。
+              </motion.p>
             </div>
-            <h2 className='text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600'>
-              GFCスケジューラーへようこそ
-            </h2>
-            <p className='text-gray-400'>
-              ゲームの予定を簡単に管理・共有できるプラットフォーム
-            </p>
+
+            {/* 機能一覧 */}
+            <motion.div
+              className='grid gap-4'
+              variants={{
+                hidden: { opacity: 0 },
+                show: {
+                  opacity: 1,
+                  transition: {
+                    staggerChildren: 0.1,
+                  },
+                },
+              }}
+              initial='hidden'
+              animate='show'
+            >
+              {[
+                {
+                  icon: <Gamepad2 className='w-5 h-5' />,
+                  title: 'イベント管理',
+                  description: 'ゲームイベントを簡単に作成・管理',
+                  color: 'purple',
+                },
+                {
+                  icon: <CalendarDays className='w-5 h-5' />,
+                  title: 'カレンダー共有',
+                  description: 'メンバーと予定を共有・調整',
+                  color: 'cyan',
+                },
+                {
+                  icon: <Users className='w-5 h-5' />,
+                  title: 'Discord 連携',
+                  description: 'サーバーメンバーと簡単に共有',
+                  color: 'pink',
+                },
+              ].map((feature, index) => (
+                <motion.div
+                  key={feature.title}
+                  className='group flex items-start gap-4 p-4 rounded-xl bg-gray-800/50 border border-gray-700/50 hover:bg-gray-800/70 transition-colors'
+                  variants={{
+                    hidden: { opacity: 0, x: -20 },
+                    show: { opacity: 1, x: 0 },
+                  }}
+                >
+                  <div
+                    className={`p-2.5 rounded-lg bg-${feature.color}-500/10 text-${feature.color}-400 group-hover:scale-110 transition-transform`}
+                  >
+                    {feature.icon}
+                  </div>
+                  <div>
+                    <h3 className='font-medium text-gray-200'>
+                      {feature.title}
+                    </h3>
+                    <p className='text-sm text-gray-400'>
+                      {feature.description}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
           </div>
 
-          <div className='bg-gray-900/50 backdrop-blur-sm rounded-lg border border-gray-800/50 p-6 space-y-6'>
-            <div className='space-y-4'>
-              <div className='text-center space-y-2'>
-                <h3 className='text-lg font-medium text-gray-200'>
+          {/* 右側: ログインフォーム */}
+          <motion.div
+            className='relative'
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className='p-8 rounded-2xl bg-gray-800/50 border border-gray-700/50 backdrop-blur-sm'>
+              <div className='text-center space-y-4 mb-8'>
+                <h2 className='text-2xl font-bold text-gray-100'>
                   ログインして始める
-                </h3>
-                <p className='text-sm text-gray-400'>
-                  Discordアカウントでログインして、GFCメンバーと予定を共有しましょう
+                </h2>
+                <p className='text-gray-400'>
+                  Discord アカウントでログインして、
+                  <br />
+                  サーバーのスケジュール管理を始めましょう
                 </p>
               </div>
 
               <Button
                 onClick={handleLogin}
-                className='w-full h-12 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white border-transparent transition-all duration-200'
+                className='w-full h-12 bg-[#5865F2] hover:bg-[#4752C4] transition-all flex items-center justify-center gap-3 text-white hover:scale-[1.02] active:scale-[0.98]'
               >
-                <div className='w-6 h-6 relative mr-2'>
+                <div className='w-5 h-5 relative'>
                   <Image
                     src='/discord-logo.svg'
                     alt='Discord'
@@ -134,70 +192,59 @@ function LoginContent() {
                     className='object-contain'
                   />
                 </div>
-                Discordでログイン
+                <span>Discord でログイン</span>
+                <ArrowRight className='w-4 h-4 ml-2' />
               </Button>
+
+              <p className='mt-4 text-center text-sm text-gray-500'>
+                ログインすることで、利用規約とプライバシーポリシーに同意したことになります。
+              </p>
             </div>
 
-            <div className='text-center'>
-              <p className='text-xs text-gray-500'>
-                ログインすることで、利用規約とプライバシーポリシーに同意したことになります
-              </p>
-            </div>
-          </div>
-
-          <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8'>
-            <div className='p-4 rounded-lg bg-gray-900/30 backdrop-blur-sm border border-gray-800/30'>
-              <h3 className='font-medium text-gray-200 mb-2'>簡単な予定管理</h3>
-              <p className='text-sm text-gray-400'>
-                カレンダーで直感的に予定を管理できます
-              </p>
-            </div>
-            <div className='p-4 rounded-lg bg-gray-900/30 backdrop-blur-sm border border-gray-800/30'>
-              <h3 className='font-medium text-gray-200 mb-2'>
-                リアルタイム共有
-              </h3>
-              <p className='text-sm text-gray-400'>
-                メンバーと予定をリアルタイムで共有できます
-              </p>
-            </div>
-          </div>
+            {/* 装飾的な背景要素 */}
+            <div className='absolute -inset-0.5 bg-gradient-to-r from-purple-500/20 to-cyan-500/20 rounded-2xl -z-10 blur-xl animate-pulse' />
+          </motion.div>
         </div>
       </main>
 
-      <footer className='border-t border-gray-800 py-4'>
+      {/* フッター */}
+      <footer className='relative z-10 border-t border-gray-800/60 bg-gray-900/95 backdrop-blur-md py-8'>
         <div className='container mx-auto px-4'>
-          <p className='text-center text-sm text-gray-500'>
-            © 2024 GFC Scheduler. All rights reserved.
-          </p>
+          <div className='flex flex-col sm:flex-row justify-between items-center gap-4'>
+            <div className='flex items-center gap-2'>
+              <div className='relative w-6 h-6 rounded-lg overflow-hidden'>
+                <Image
+                  src='/GFC.png'
+                  alt='Logo'
+                  fill
+                  className='object-cover'
+                />
+              </div>
+              <p className='text-sm text-gray-400'>
+                © 2024 GFC Scheduler. All rights reserved.
+              </p>
+            </div>
+            <div className='flex items-center gap-4'>
+              <a
+                href='https://github.com/yourusername'
+                target='_blank'
+                rel='noopener noreferrer'
+                className='text-gray-400 hover:text-gray-300 transition-colors'
+              >
+                <Github className='w-5 h-5' />
+              </a>
+              <a
+                href='https://twitter.com/yourusername'
+                target='_blank'
+                rel='noopener noreferrer'
+                className='text-gray-400 hover:text-gray-300 transition-colors'
+              >
+                <Twitter className='w-5 h-5' />
+              </a>
+            </div>
+          </div>
         </div>
       </footer>
-
-      {errorMessage && (
-        <div
-          className={cn(
-            'fixed top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-md transition-opacity duration-300',
-            error
-              ? 'bg-red-500/10 border border-red-500/30 text-red-200'
-              : 'bg-green-500/10 border border-green-500/30 text-green-200'
-          )}
-        >
-          {errorMessage}
-        </div>
-      )}
     </div>
-  );
-}
-
-export default function LoginPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className='flex items-center justify-center min-h-screen'>
-          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-100' />
-        </div>
-      }
-    >
-      <LoginContent />
-    </Suspense>
   );
 }

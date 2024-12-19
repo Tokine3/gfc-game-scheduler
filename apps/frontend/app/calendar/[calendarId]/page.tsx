@@ -27,6 +27,7 @@ import {
   Calendar as CalendarIcon,
   ChevronLeft,
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface CalendarPageProps {
   params: Promise<{ calendarId: string }>;
@@ -145,34 +146,50 @@ export default function CalendarPage({ params }: CalendarPageProps) {
   }
 
   return (
-    <div className='flex flex-col min-h-screen bg-gray-900'>
+    <div className='min-h-screen bg-gray-900 flex flex-col'>
+      {/* 装飾的な背景要素 */}
+      <div className='fixed inset-0 z-0'>
+        <div className='absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob' />
+        <div className='absolute top-0 -right-4 w-72 h-72 bg-cyan-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-2000' />
+        <div className='absolute -bottom-8 left-20 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-4000' />
+      </div>
+
       <Header />
 
       {/* メインコンテンツ */}
       <div className='flex-1 flex flex-col mt-16'>
-        {' '}
-        {/* Header の高さ分だけ margin-top を設定 */}
         {/* カレンダーヘッダー */}
         <div className='sticky top-0 z-30 bg-gray-900/95 backdrop-blur-md border-b border-gray-800/60'>
-          <div className='container mx-auto px-4 py-3'>
+          <motion.div
+            className='container mx-auto px-4 py-3'
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
             <div className='flex flex-col gap-3'>
               {/* 上部: 戻るボタンとカレンダー情報 */}
               <div className='flex items-center gap-3'>
-                <button
+                <Button
+                  variant='ghost'
+                  size='icon'
                   onClick={() => router.push('/servers')}
-                  className='p-1.5 rounded-full hover:bg-gray-800/60 transition-colors shrink-0'
+                  className='rounded-full hover:bg-gray-800/60'
                 >
                   <ChevronLeft className='w-5 h-5 text-gray-400' />
-                </button>
+                </Button>
                 <div className='min-w-0'>
                   <h1 className='text-lg sm:text-xl font-bold text-gray-100 flex items-center gap-2 truncate'>
-                    <CalendarIcon className='w-5 h-5 text-purple-400 shrink-0' />
+                    <div className='p-1.5 rounded-lg bg-purple-500/10'>
+                      <CalendarIcon className='w-5 h-5 text-purple-400' />
+                    </div>
                     <span className='truncate'>{calendar?.name}</span>
                   </h1>
-                  <p className='text-xs text-gray-400 flex items-center gap-1.5 truncate'>
-                    <Users className='w-3.5 h-3.5 shrink-0' />
+                  <div className='text-sm text-gray-400 flex items-center gap-1.5 truncate'>
+                    <div className='p-1 rounded-lg bg-gray-800/60'>
+                      <Users className='w-3.5 h-3.5' />
+                    </div>
                     <span className='truncate'>{calendar?.server.name}</span>
-                  </p>
+                  </div>
                 </div>
               </div>
 
@@ -181,30 +198,79 @@ export default function CalendarPage({ params }: CalendarPageProps) {
                 <Button
                   variant='outline'
                   size='sm'
-                  className='h-8 border-gray-700 hover:bg-gray-800 whitespace-nowrap text-sm'
+                  className='h-9 border-gray-700 hover:bg-gray-800/60 whitespace-nowrap group transition-all'
                 >
-                  <Bell className='w-3.5 h-3.5 sm:mr-2' />
-                  <span className='ml-1.5 sm:ml-0'>通知</span>
+                  <Bell className='w-4 h-4 mr-2 group-hover:text-cyan-400 transition-colors' />
+                  通知設定
                 </Button>
                 <Button
                   variant='outline'
                   size='sm'
-                  className='h-8 border-gray-700 hover:bg-gray-800 whitespace-nowrap text-sm'
+                  className='h-9 border-gray-700 hover:bg-gray-800/60 whitespace-nowrap group transition-all'
                 >
-                  <Settings className='w-3.5 h-3.5 sm:mr-2' />
-                  <span className='ml-1.5 sm:ml-0'>設定</span>
+                  <Settings className='w-4 h-4 mr-2 group-hover:text-cyan-400 transition-colors' />
+                  カレンダー設定
                 </Button>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
+
         {/* カレンダーコンテンツ */}
-        <div className='flex-1'>
-          <main className='container mx-auto p-4'>
-            {calendar && <Calendar {...calendar} />}
-          </main>
-        </div>
+        <motion.div
+          className='flex-1 container mx-auto p-4'
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          {calendar && <Calendar {...calendar} />}
+        </motion.div>
       </div>
+
+      {/* モーダル類 */}
+      {showJoinDialog && calendar && (
+        <Dialog open onOpenChange={() => setShowJoinDialog(false)}>
+          <DialogContent className='bg-gray-900/95 backdrop-blur-md border-gray-800'>
+            <DialogHeader>
+              <DialogTitle className='text-xl font-bold text-gray-100'>
+                サーバーへの参加
+              </DialogTitle>
+              <DialogDescription className='text-gray-400'>
+                このカレンダーを利用するにはサーバーに参加する必要があります。参加しますか？
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className='gap-2'>
+              <Button
+                variant='outline'
+                onClick={() => router.push('/servers')}
+                className='border-gray-700 hover:bg-gray-800/60'
+              >
+                キャンセル
+              </Button>
+              <Button
+                onClick={async () => {
+                  try {
+                    await client.servers.join.$post({
+                      body: {
+                        serverId: calendar.serverId,
+                        serverName: calendar.server.name,
+                        serverIcon: calendar.server.icon || '',
+                      },
+                    });
+                    setShowJoinDialog(false);
+                    window.location.reload();
+                  } catch (error) {
+                    logger.error('Failed to join server:', error);
+                  }
+                }}
+                className='bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white shadow-lg shadow-cyan-500/20'
+              >
+                参加する
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

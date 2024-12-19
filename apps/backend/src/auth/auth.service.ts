@@ -95,9 +95,7 @@ export class AuthService {
         return {
           id: guild.id,
           name: guild.name,
-          icon: guild.icon
-            ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`
-            : null,
+          icon: guild.icon ? guild.icon : null,
           calendars: serverData?.calendars || [],
           serverUsers: serverData?.serverUsers || [],
         };

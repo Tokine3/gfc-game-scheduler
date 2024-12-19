@@ -1,213 +1,228 @@
 'use client';
 
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Button } from './ui/button';
 import {
-  CheckIcon,
-  XIcon,
-  HelpCircleIcon,
-  CalendarIcon,
+  CalendarDays,
   Users,
   User,
-  Crosshair,
+  MessageSquare,
+  Clock,
+  CrosshairIcon,
+  CheckCircle,
+  XCircle,
+  HelpCircle,
 } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from './ui/dialog';
-import { Progress } from './ui/progress';
-import { Button } from './ui/button';
-import dayjs from 'dayjs';
 import { cn } from '../../lib/utils';
-import { isPublicSchedule, type CalendarEvent } from './Calendar';
-import { Participant } from '../../apis/@types';
-import { logger } from '../../lib/logger';
+import { client } from '../../lib/api';
+import { toast } from './ui/use-toast';
+import { CalendarEvent, isPublicSchedule } from './Calendar';
+import dayjs from 'dayjs';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Separator } from './ui/separator';
 
-type EventDetailProps = {
+interface EventDetailProps {
   event: CalendarEvent;
   onClose: () => void;
-};
-
-// 参加状態に応じたバッジコンポーネント
-function StatusBadge({ status }: { status: Participant['reaction'] }) {
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
-        status === 'OK' &&
-          'bg-green-500/20 text-green-200 border border-green-500/30',
-        status === 'UNDECIDED' &&
-          'bg-yellow-500/20 text-yellow-200 border border-yellow-500/30',
-        status === 'NG' && 'bg-red-500/20 text-red-200 border border-red-500/30'
-      )}
-    >
-      {status === 'OK' && '参加'}
-      {status === 'UNDECIDED' && '未定'}
-      {status === 'NG' && '不参加'}
-    </span>
-  );
 }
 
 export default function EventDetail({ event, onClose }: EventDetailProps) {
-  const handleReaction = (reaction: string) => {
-    logger.log(`反応: ${reaction}`);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleReaction = async (reaction: 'OK' | 'NG' | 'PENDING') => {
+    if (!isPublicSchedule(event)) return;
+
+    setIsSubmitting(true);
+    try {
+      await client.schedules._scheduleId(event.id).reaction.$post({
+        body: { reaction },
+      });
+      toast({
+        title: '参加状況を更新しました',
+        description: `イベント「${event.title}」の参加状況を更新しました`,
+      });
+      onClose();
+    } catch (error) {
+      console.error('Failed to update reaction:', error);
+      toast({
+        title: 'エラー',
+        description: '参加状況の更新に失敗しました',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className='sm:max-w-[500px] max-h-[90vh] overflow-y-auto'>
+      <DialogContent className='bg-gray-900/95 backdrop-blur-md border-gray-800 sm:max-w-xl'>
         <DialogHeader>
-          <DialogTitle className='flex items-center justify-center gap-2 text-lg sm:text-xl'>
-            {event.isPersonal ? (
-              <User className='h-5 w-5 sm:h-6 sm:w-6' />
-            ) : (
-              <Crosshair className='h-5 w-5 sm:h-6 sm:w-6' />
-            )}
+          <DialogTitle className='text-xl font-bold text-gray-100 flex items-center gap-3'>
+            <div
+              className={cn(
+                'p-2 rounded-lg',
+                event.isPersonal
+                  ? 'bg-purple-500/20 text-purple-400'
+                  : 'bg-cyan-500/20 text-cyan-400'
+              )}
+            >
+              {event.isPersonal ? (
+                <User className='w-5 h-5' />
+              ) : (
+                <CrosshairIcon className='w-5 h-5' />
+              )}
+            </div>
             {event.title}
           </DialogTitle>
-          <DialogDescription className='text-center text-sm sm:text-base'>
-            {event.isPersonal ? '個人予定の詳細' : 'イベントの詳細'}
-          </DialogDescription>
-          <div className='flex items-center justify-center gap-2 mt-2'>
-            {event.createdBy.avatar ? (
-              <img
-                src={`https://cdn.discordapp.com/avatars/${event.createdBy.id}/${event.createdBy.avatar}.png`}
-                alt={event.createdBy.name}
-                className='w-6 h-6 rounded-full border border-gray-700'
-              />
-            ) : (
-              <div className='w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center'>
-                <User className='w-3 h-3 text-gray-400' />
-              </div>
-            )}
-            <span className='text-sm text-gray-400'>
-              作成者: {event.createdBy.name}
-            </span>
-          </div>
         </DialogHeader>
 
-        <div className='space-y-6'>
-          {isPublicSchedule(event) &&
-            event.participants &&
-            event.recruitCount && (
-              <>
-                <div className='flex items-center justify-between text-gray-300'>
-                  <div className='flex items-center space-x-2'>
-                    <Users className='h-4 w-4' />
-                    <p>
-                      参加人数：{event.participants.length} /{' '}
-                      {event.recruitCount}
-                    </p>
+        <div className='space-y-6 py-4'>
+          {/* イベント情報 */}
+          <div className='space-y-4'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+              <div className='flex items-center gap-3 p-3 rounded-lg bg-gray-800/50 border border-gray-700/50'>
+                <CalendarDays className='w-5 h-5 text-purple-400' />
+                <div>
+                  <div className='text-sm font-medium text-gray-300'>
+                    開催日
                   </div>
-                  <div className='flex items-center space-x-2 text-sm'>
-                    <span className='text-green-400'>
+                  <div className='text-gray-400'>
+                    {dayjs(event.date).format('YYYY年MM月DD日')}
+                  </div>
+                </div>
+              </div>
+
+              <div className='flex items-center gap-3 p-3 rounded-lg bg-gray-800/50 border border-gray-700/50'>
+                <Clock className='w-5 h-5 text-cyan-400' />
+                <div>
+                  <div className='text-sm font-medium text-gray-300'>時間</div>
+                  <div className='text-gray-400'>
+                    {dayjs(event.date).format('HH:mm')}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {isPublicSchedule(event) && (
+              <>
+                <div className='p-4 rounded-lg bg-gray-800/50 border border-gray-700/50'>
+                  <div className='flex items-center gap-2 mb-3'>
+                    <MessageSquare className='w-5 h-5 text-indigo-400' />
+                    <span className='font-medium text-gray-300'>説明</span>
+                  </div>
+                  <p className='text-gray-400 whitespace-pre-wrap'>
+                    {event.description || '説明はありません'}
+                  </p>
+                </div>
+
+                <div className='p-4 rounded-lg bg-gray-800/50 border border-gray-700/50'>
+                  <div className='flex items-center justify-between mb-3'>
+                    <div className='flex items-center gap-2'>
+                      <Users className='w-5 h-5 text-emerald-400' />
+                      <span className='font-medium text-gray-300'>参加者</span>
+                    </div>
+                    <div className='text-sm text-gray-400'>
                       {
                         event.participants.filter((p) => p.reaction === 'OK')
                           .length
-                      }{' '}
-                      参加
-                    </span>
-                    <span className='text-yellow-400'>
-                      {
-                        event.participants.filter(
-                          (p) => p.reaction === 'UNDECIDED'
-                        ).length
-                      }{' '}
-                      未定
-                    </span>
-                    <span className='text-red-400'>
-                      {
-                        event.participants.filter((p) => p.reaction === 'NG')
-                          .length
-                      }{' '}
-                      不参加
-                    </span>
+                      }
+                      /{event.recruitCount}
+                    </div>
                   </div>
-                </div>
 
-                <Progress
-                  value={(event.participants.length / event.recruitCount) * 100}
-                  className='w-full h-2 rounded-full overflow-hidden bg-gray-800/30'
-                  style={{
-                    background: 'transparent',
-                  }}
-                  indicatorStyle={{
-                    background: 'linear-gradient(to right, #22C55E, #4ADE80)',
-                    boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.1)',
-                  }}
-                />
+                  <div className='space-y-4'>
+                    {['OK', 'PENDING', 'NG'].map((status) => {
+                      const participants = event.participants.filter(
+                        (p) => p.reaction === status
+                      );
+                      if (participants.length === 0) return null;
 
-                <div className='border border-gray-800 rounded-lg overflow-hidden'>
-                  <div className='p-3 bg-gray-900/50 border-b border-gray-800'>
-                    <h4 className='text-sm font-medium text-gray-200'>
-                      参加者一覧
-                    </h4>
-                  </div>
-                  <div className='divide-y divide-gray-800 max-h-[40vh] overflow-y-auto'>
-                    {event.participants?.map((participant) => (
-                      <div
-                        key={participant.userId}
-                        className='flex items-center justify-between p-3 hover:bg-gray-800/50'
-                      >
-                        <div className='flex items-center space-x-3 min-w-0'>
-                          {participant.userId ? (
-                            <img
-                              src={`https://cdn.discordapp.com/avatars/${event.createdBy.id}/${event.createdBy.avatar}.png`}
-                              alt={participant.name}
-                              className='w-8 h-8 rounded-full flex-shrink-0'
-                            />
-                          ) : (
-                            <div className='w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0'>
-                              <User className='w-4 h-4 text-gray-400' />
-                            </div>
-                          )}
-                          <span className='text-sm text-gray-200 truncate'>
-                            {participant.name}
-                          </span>
+                      return (
+                        <div key={status} className='space-y-2'>
+                          <div className='flex items-center gap-2 text-sm'>
+                            {status === 'OK' && (
+                              <CheckCircle className='w-4 h-4 text-emerald-400' />
+                            )}
+                            {status === 'PENDING' && (
+                              <HelpCircle className='w-4 h-4 text-amber-400' />
+                            )}
+                            {status === 'NG' && (
+                              <XCircle className='w-4 h-4 text-red-400' />
+                            )}
+                            <span className='text-gray-400'>
+                              {status === 'OK' && '参加'}
+                              {status === 'UNDECIDED' && '未回答'}
+                              {status === 'NG' && '不参加'}（
+                              {participants.length}）
+                            </span>
+                          </div>
+                          <div className='flex flex-wrap gap-2'>
+                            {participants.map((participant) => (
+                              <div
+                                key={participant.userId}
+                                className='flex items-center gap-2 p-2 rounded-lg bg-gray-800/50'
+                              >
+                                <Avatar className='w-6 h-6'>
+                                  <AvatarImage
+                                    src={undefined}
+                                    alt={participant.name}
+                                  />
+                                  <AvatarFallback>
+                                    {participant.name}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className='text-sm text-gray-300'>
+                                  {participant.name}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                        <StatusBadge status={participant.reaction} />
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
-                </div>
-
-                <div className='flex flex-col sm:flex-row gap-2'>
-                  <Button
-                    onClick={() => handleReaction('join')}
-                    className='w-full sm:flex-1 bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600'
-                  >
-                    <CheckIcon className='mr-2 h-4 w-4' /> 参加
-                  </Button>
-                  <Button
-                    variant='outline'
-                    onClick={() => handleReaction('maybe')}
-                    className='w-full sm:flex-1 border-gray-700 hover:bg-gray-800'
-                  >
-                    <HelpCircleIcon className='mr-2 h-4 w-4' /> 未定
-                  </Button>
-                  <Button
-                    variant='outline'
-                    onClick={() => handleReaction('decline')}
-                    className='w-full sm:flex-1 border-gray-700 hover:bg-gray-800'
-                  >
-                    <XIcon className='mr-2 h-4 w-4' /> 不参加
-                  </Button>
                 </div>
               </>
             )}
-        </div>
+          </div>
 
-        <DialogFooter className='sm:mt-6'>
-          <Button
-            variant='outline'
-            onClick={onClose}
-            className='w-full sm:w-auto border-gray-700 hover:bg-gray-800'
-          >
-            閉じる
-          </Button>
-        </DialogFooter>
+          {/* アクションボタン */}
+          {isPublicSchedule(event) && (
+            <>
+              <Separator className='bg-gray-800' />
+              <div className='flex flex-col sm:flex-row gap-2'>
+                <Button
+                  className='flex-1 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white'
+                  onClick={() => handleReaction('OK')}
+                  disabled={isSubmitting}
+                >
+                  <CheckCircle className='w-4 h-4 mr-2' />
+                  参加する
+                </Button>
+                <Button
+                  variant='outline'
+                  className='flex-1 border-amber-500/30 text-amber-200 hover:bg-amber-500/10'
+                  onClick={() => handleReaction('PENDING')}
+                  disabled={isSubmitting}
+                >
+                  <HelpCircle className='w-4 h-4 mr-2' />
+                  未定
+                </Button>
+                <Button
+                  variant='outline'
+                  className='flex-1 border-red-500/30 text-red-200 hover:bg-red-500/10'
+                  onClick={() => handleReaction('NG')}
+                  disabled={isSubmitting}
+                >
+                  <XCircle className='w-4 h-4 mr-2' />
+                  不参加
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );

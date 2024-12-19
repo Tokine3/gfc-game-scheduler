@@ -1,5 +1,6 @@
-import * as React from 'react';
+'use client';
 
+import * as React from 'react';
 import type { ToastActionElement, ToastProps } from './toast';
 
 const TOAST_LIMIT = 1;
@@ -107,6 +108,7 @@ export const reducer = (state: State, action: Action): State => {
         ),
       };
     }
+
     case 'REMOVE_TOAST':
       if (action.toastId === undefined) {
         return {

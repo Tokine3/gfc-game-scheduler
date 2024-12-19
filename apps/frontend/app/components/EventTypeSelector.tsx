@@ -1,89 +1,129 @@
 'use client';
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
-import { CrosshairIcon, UserIcon, CalendarDays } from 'lucide-react';
+import { CrosshairIcon, UserIcon, Gamepad2, Users } from 'lucide-react';
+import { cn } from '../../lib/utils';
+import { motion } from 'framer-motion';
 
 interface EventTypeSelectorProps {
   onClose: () => void;
-  onSelectPersonal: () => void;
   onSelectEvent: () => void;
+  onSelectPersonal: () => void;
 }
 
 export default function EventTypeSelector({
   onClose,
-  onSelectPersonal,
   onSelectEvent,
+  onSelectPersonal,
 }: EventTypeSelectorProps) {
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className='sm:max-w-[500px] bg-gray-900/95 backdrop-blur-md border-gray-800'>
-        <DialogHeader className='space-y-4'>
-          <div className='mx-auto bg-gradient-to-br from-purple-500/20 to-pink-500/20 p-3 rounded-xl border border-purple-500/20'>
-            <CalendarDays className='h-6 w-6 text-purple-400' />
-          </div>
-          <DialogTitle className='text-xl font-bold text-center text-gray-100'>
-            予定の種類を選択
+      <DialogContent className='bg-gray-900/95 backdrop-blur-md border-gray-800 sm:max-w-md'>
+        <DialogHeader>
+          <DialogTitle className='text-xl font-bold text-gray-100 flex items-center gap-3'>
+            <div className='p-2 rounded-lg bg-gradient-to-r from-violet-500/20 to-indigo-500/20 border border-violet-500/20'>
+              <Gamepad2 className='w-5 h-5 text-violet-400' />
+            </div>
+            イベントの種類を選択
           </DialogTitle>
-          <DialogDescription className='text-center text-gray-400'>
-            作成する予定の種類を選択してください
-          </DialogDescription>
         </DialogHeader>
 
-        <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6'>
-          <button
-            onClick={onSelectEvent}
-            className='group relative overflow-hidden rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 p-6 transition-all hover:shadow-lg hover:shadow-purple-500/10 hover:-translate-y-1'
+        <div className='grid gap-4 py-4'>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
           >
-            <div className='relative z-10 flex flex-col items-center gap-4'>
-              <div className='p-3 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500'>
-                <CrosshairIcon className='h-6 w-6 text-white' />
+            <Button
+              variant='outline'
+              onClick={onSelectEvent}
+              className={cn(
+                'w-full h-auto p-4',
+                'bg-gradient-to-r from-gray-900/50 to-gray-800/50',
+                'hover:from-violet-500/10 hover:to-indigo-500/10',
+                'border border-violet-500/20 hover:border-violet-500/30',
+                'group relative overflow-hidden transition-all'
+              )}
+            >
+              <div className='absolute inset-0 bg-gradient-to-r from-violet-500 to-indigo-500 opacity-0 group-hover:opacity-5 transition-opacity' />
+              <div className='flex items-start gap-4'>
+                <div className='relative'>
+                  <div className='p-3 rounded-lg bg-violet-500/10 text-violet-400 group-hover:bg-violet-500/20 group-hover:text-violet-300 transition-colors'>
+                    <CrosshairIcon className='w-6 h-6' />
+                  </div>
+                  <div className='absolute -bottom-1 -right-1 p-1.5 rounded-md bg-violet-500 text-white shadow-lg shadow-violet-500/20'>
+                    <Users className='w-3 h-3' />
+                  </div>
+                </div>
+                <div className='text-left'>
+                  <div className='font-semibold text-gray-100 group-hover:text-violet-100 mb-1'>
+                    ゲームイベント
+                  </div>
+                  <div className='text-sm text-gray-400 group-hover:text-gray-300'>
+                    参加者を募集して一緒にプレイするイベントを作成します。
+                    募集人数や説明を設定できます。
+                  </div>
+                  <div className='flex items-center gap-2 mt-3 text-xs text-violet-400/75'>
+                    <div className='px-2 py-1 rounded-md bg-violet-500/10 border border-violet-500/20'>
+                      参加者募集
+                    </div>
+                    <div className='px-2 py-1 rounded-md bg-violet-500/10 border border-violet-500/20'>
+                      チーム練習
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className='text-center'>
-                <h3 className='text-lg font-semibold text-gray-100 mb-1'>
-                  イベント作成
-                </h3>
-                <p className='text-sm text-gray-400'>みんなで参加できる予定</p>
-              </div>
-            </div>
-            <div className='absolute inset-0 bg-gradient-to-br from-purple-500/0 to-pink-500/0 transition-all group-hover:from-purple-500/5 group-hover:to-pink-500/5' />
-          </button>
+            </Button>
+          </motion.div>
 
-          <button
-            onClick={onSelectPersonal}
-            className='group relative overflow-hidden rounded-xl bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 p-6 transition-all hover:shadow-lg hover:shadow-cyan-500/10 hover:-translate-y-1'
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, delay: 0.1 }}
           >
-            <div className='relative z-10 flex flex-col items-center gap-4'>
-              <div className='p-3 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500'>
-                <UserIcon className='h-6 w-6 text-white' />
+            <Button
+              variant='outline'
+              onClick={onSelectPersonal}
+              className={cn(
+                'w-full h-auto p-4',
+                'bg-gradient-to-r from-gray-900/50 to-gray-800/50',
+                'hover:from-purple-500/10 hover:to-pink-500/10',
+                'border border-purple-500/20 hover:border-purple-500/30',
+                'group relative overflow-hidden transition-all'
+              )}
+            >
+              <div className='absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 opacity-0 group-hover:opacity-5 transition-opacity' />
+              <div className='flex items-start gap-4'>
+                <div className='relative'>
+                  <div className='p-3 rounded-lg bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20 group-hover:text-purple-300 transition-colors'>
+                    <UserIcon className='w-6 h-6' />
+                  </div>
+                  <div className='absolute -bottom-1 -right-1 p-1.5 rounded-md bg-purple-500 text-white shadow-lg shadow-purple-500/20'>
+                    <Gamepad2 className='w-3 h-3' />
+                  </div>
+                </div>
+                <div className='text-left'>
+                  <div className='font-semibold text-gray-100 group-hover:text-purple-100 mb-1'>
+                    個人予定
+                  </div>
+                  <div className='text-sm text-gray-400 group-hover:text-gray-300'>
+                    自分の練習予定や空き時間を登録します。
+                    他のメンバーに予定を共有できます。
+                  </div>
+                  <div className='flex items-center gap-2 mt-3 text-xs text-purple-400/75'>
+                    <div className='px-2 py-1 rounded-md bg-purple-500/10 border border-purple-500/20'>
+                      個人練習
+                    </div>
+                    <div className='px-2 py-1 rounded-md bg-purple-500/10 border border-purple-500/20'>
+                      空き時間
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className='text-center'>
-                <h3 className='text-lg font-semibold text-gray-100 mb-1'>
-                  個人予定作成
-                </h3>
-                <p className='text-sm text-gray-400'>自分だけの予定</p>
-              </div>
-            </div>
-            <div className='absolute inset-0 bg-gradient-to-br from-cyan-500/0 to-blue-500/0 transition-all group-hover:from-cyan-500/5 group-hover:to-blue-500/5' />
-          </button>
+            </Button>
+          </motion.div>
         </div>
-
-        <DialogFooter>
-          <Button
-            variant='outline'
-            onClick={onClose}
-            className='w-full sm:w-auto border-gray-700 hover:bg-gray-800 text-gray-300'
-          >
-            キャンセル
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
