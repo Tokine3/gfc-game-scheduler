@@ -12,6 +12,7 @@ export const useAuth = (skipInitialCheck: boolean = false) => {
     const checkAuth = async () => {
       try {
         console.log('checkAuth');
+        console.log('設定されているCookieの確認', document.cookie);
         const response = await client.user.login.$get();
         console.log('response', response);
         setUser(response);

@@ -26,6 +26,9 @@ async function bootstrap() {
   app.enableCors({
     origin: process.env.FRONTEND_URL,
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Accept', 'Authorization', 'X-Discord-Id'],
+    exposedHeaders: ['Set-Cookie'],
   });
 
   // Railwayが提供するPORTを使用

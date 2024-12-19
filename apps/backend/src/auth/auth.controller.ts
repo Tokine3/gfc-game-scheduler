@@ -54,6 +54,7 @@ export class AuthController {
     type: 'string',
     description: 'Discord認証コード',
   })
+  @UseGuards(AuthGuard('discord'))
   @Get('discord/callback')
   async discordAuthCallback(
     @Req() req: RequestWithUser,
@@ -69,10 +70,6 @@ export class AuthController {
     }
 
     try {
-      // 認証ガードのインスタンスを作成して実行
-      const guard = new (AuthGuard('discord'))();
-      await guard.canActivate(this.createExecutionContext(req, res));
-
       const { access_token } = await this.authService.login(req.user);
 
       // アクセストークンがundefinedでないことを確認
@@ -80,43 +77,52 @@ export class AuthController {
 
       // JWTトークンをクッキーに設定
       console.log('Setting cookies with token:', {
-        token: access_token ? 'exists' : 'null',
-        secure: true,
-        sameSite: 'lax',
+        token: access_token ? `exists ${access_token}` : 'null',
+        secure: process.env.NODE_ENV === 'development',
+        path: '/',
+        maxAge: '24 * 60 * 60 * 1000',
+        sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
       });
 
       res.cookie('token', access_token, {
         httpOnly: true,
-        secure: true,
-        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'development',
         path: '/',
         maxAge: 24 * 60 * 60 * 1000,
-        domain: new URL(process.env.FRONTEND_URL).hostname,
+        sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
       });
 
       // Discordアクセストークンをクッキーに設定
       res.cookie('discord_token', req.user.accessToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'lax',
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'development',
         path: '/',
         maxAge: 24 * 60 * 60 * 1000,
-        domain: new URL(process.env.FRONTEND_URL).hostname,
+        sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
       });
 
       // Discord IDをクッキーに設定
       res.cookie('discord_id', req.user.id, {
         httpOnly: true,
-        secure: true,
-        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'development',
         path: '/',
         maxAge: 24 * 60 * 60 * 1000,
-        domain: new URL(process.env.FRONTEND_URL).hostname,
+        sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
+      });
+      // クッキーの設定後に確認
+      const cookies = req.cookies;
+      console.log('Cookies after setting:', {
+        token: cookies.token ? 'exists' : 'null',
+        discord_id: cookies.discord_id ? 'exists' : 'null',
+        discord_token: cookies.discord_token ? 'exists' : 'null',
       });
 
       const redirectPath = redirect
         ? `/auth/callback?status=success&redirect=${encodeURIComponent(redirect)}`
         : '/auth/callback?status=success';
+
+      console.log('NODE_ENV', process.env.NODE_ENV);
+      console.log('FRONTEND_URL', process.env.FRONTEND_URL);
 
       res.redirect(`${process.env.FRONTEND_URL}${redirectPath}`);
     } catch (error) {
