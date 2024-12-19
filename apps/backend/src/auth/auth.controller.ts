@@ -6,6 +6,7 @@ import {
   Res,
   Query,
   Request,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -21,11 +22,18 @@ import {
 import { RequestWithUser } from '../types/request.types';
 import { GetUserServersResponse } from './entities/server.entity';
 import { logger } from 'src/utils/logger';
+import axios from 'axios';
+import * as admin from 'firebase-admin';
+import { PrismaService } from '../prisma/prisma.service';
+import { DiscordAuthGuard } from './discord-auth.guard';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private prisma: PrismaService
+  ) {}
 
   @ApiOperation({ summary: 'Discordログイン開始' })
   @ApiResponse({
@@ -56,99 +64,66 @@ export class AuthController {
   })
   @UseGuards(AuthGuard('discord'))
   @Get('discord/callback')
-  async discordAuthCallback(
-    @Req() req: RequestWithUser,
-    @Res() res: Response,
-    @Query('error') error?: string,
-    @Query('redirect') redirect?: string
-  ) {
-    if (error) {
-      logger.error('Auth callback error:', error);
-      return res.redirect(
-        `${process.env.FRONTEND_URL}/login?error=auth_cancelled`
-      );
-    }
-
+  async discordAuthCallback(@Req() req: RequestWithUser, @Res() res: Response) {
     try {
-      const { access_token } = await this.authService.login(req.user);
+      // Discord認証からアクセストークンを取得
+      const discordToken = req.user.accessToken; // DiscordStrategyから渡されるアクセストークン
+      const firebaseToken = await this.createFirebaseToken(req.user);
 
-      // アクセストークンがundefinedでないことを確認
-      logger.log('Auth Controller - req.user:', req.user);
+      // URLパラメータとしてトークンを渡す
+      const redirectUrl = new URL('/auth/callback', process.env.FRONTEND_URL);
+      redirectUrl.searchParams.set('status', 'success');
+      redirectUrl.searchParams.set('firebaseToken', firebaseToken);
+      redirectUrl.searchParams.set('discordId', req.user.id);
+      redirectUrl.searchParams.set('discordToken', discordToken); // JWTではなくDiscordのアクセストークン
 
-      // JWTトークンをクッキーに設定
-      console.log('Setting cookies with token:', {
-        token: access_token ? `exists ${access_token}` : 'null',
-        secure: process.env.NODE_ENV === 'development',
-        path: '/',
-        maxAge: '24 * 60 * 60 * 1000',
-        sameSite: process.env.NODE_ENV === 'development' ? 'none' : 'lax',
-      });
-
-      res.cookie('token', access_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'development',
-        path: '/',
-        maxAge: 24 * 60 * 60 * 1000,
-        sameSite: process.env.NODE_ENV === 'development' ? 'none' : 'lax',
-      });
-
-      // Discordアクセストークンをクッキーに設定
-      res.cookie('discord_token', req.user.accessToken, {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === 'development',
-        path: '/',
-        maxAge: 24 * 60 * 60 * 1000,
-        sameSite: process.env.NODE_ENV === 'development' ? 'none' : 'lax',
-      });
-
-      // Discord IDをクッキーに設定
-      res.cookie('discord_id', req.user.id, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'development',
-        path: '/',
-        maxAge: 24 * 60 * 60 * 1000,
-        sameSite: process.env.NODE_ENV === 'development' ? 'none' : 'lax',
-      });
-      // クッキーの設定後に確認
-      const cookies = req.cookies;
-      console.log('Cookies after setting:', {
-        token: cookies.token ? 'exists' : 'null',
-        discord_id: cookies.discord_id ? 'exists' : 'null',
-        discord_token: cookies.discord_token ? 'exists' : 'null',
-      });
-
-      const redirectPath = redirect
-        ? `/auth/callback?status=success&redirect=${encodeURIComponent(redirect)}`
-        : '/auth/callback?status=success';
-
-      console.log('NODE_ENV', process.env.NODE_ENV);
-      console.log('FRONTEND_URL', process.env.FRONTEND_URL);
-
-      res.redirect(`${process.env.FRONTEND_URL}${redirectPath}`);
+      res.redirect(redirectUrl.toString());
     } catch (error) {
       logger.error('Auth callback error:', error);
-
-      // レート制限エラーの場合
-      if (error.message?.includes('rate limited')) {
-        return res.redirect(
-          `${process.env.FRONTEND_URL}/login?error=rate_limit`
-        );
-      }
-
-      return res.redirect(
-        `${process.env.FRONTEND_URL}/login?error=auth_failed`
-      );
+      res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
     }
   }
 
-  // ヘルパーメソッドを追加
-  private createExecutionContext(req: any, res: any) {
-    return {
-      switchToHttp: () => ({
-        getRequest: () => req,
-        getResponse: () => res,
+  private async getDiscordAccessToken(code: string): Promise<string> {
+    const response = await axios.post(
+      'https://discord.com/api/oauth2/token',
+      new URLSearchParams({
+        client_id: process.env.DISCORD_CLIENT_ID,
+        client_secret: process.env.DISCORD_CLIENT_SECRET,
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: process.env.DISCORD_CALLBACK_URL,
       }),
-    } as any;
+      {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      }
+    );
+    return response.data.access_token;
+  }
+
+  private async createFirebaseToken(user: any): Promise<string> {
+    try {
+      const uid = String(user.id);
+      console.log('Creating Firebase token for user:', { uid });
+
+      // シスタムクレームを最小限に
+      const customClaims = {
+        provider: 'discord',
+        name: user.name,
+      };
+
+      const token = await admin.auth().createCustomToken(uid, customClaims);
+      console.log('Firebase token created:', {
+        uid,
+        hasToken: !!token,
+        projectId: admin.app().options.projectId,
+      });
+
+      return token;
+    } catch (error) {
+      console.error('Firebase token creation error:', error);
+      throw error;
+    }
   }
 
   @ApiOperation({ summary: 'JWTトークンの検証' })
@@ -169,8 +144,7 @@ export class AuthController {
   @ApiUnauthorizedResponse({ description: '無効なトークン' })
   @Get('verify')
   @UseGuards(AuthGuard('jwt'))
-  async verifyToken(@Req() req: any) {
-    console.log('verifyToken', req.user);
+  async verifyToken(@Req() req: RequestWithUser) {
     return { userId: req.user.id };
   }
 
@@ -181,8 +155,14 @@ export class AuthController {
     type: GetUserServersResponse,
   })
   @Get('servers')
-  @UseGuards(AuthGuard('jwt'))
-  async getDiscordServers(@Request() req: RequestWithUser) {
-    return this.authService.getDiscordServers(req);
+  @UseGuards(DiscordAuthGuard)
+  async getDiscordServers(@Req() req: RequestWithUser) {
+    try {
+      console.log('Getting servers for user:', req.user.id);
+      return this.authService.getDiscordServers(req);
+    } catch (error) {
+      console.error('Get servers error:', error);
+      throw error;
+    }
   }
 }

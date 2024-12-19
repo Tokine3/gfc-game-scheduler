@@ -31,6 +31,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "dayjs": "^1.11.0",
+    "firebase": "^11.1.0",
     "locales": "link:@fullcalendar/core/locales",
     "lucide-react": "0.468.0",
     "next": "15.0.3",

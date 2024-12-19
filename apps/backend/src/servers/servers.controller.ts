@@ -13,7 +13,7 @@ import {
 import { ServersService } from './servers.service';
 import { CreateServerDto } from './dto/create-server.dto';
 import { UpdateServerDto } from './dto/update-server.dto';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { DiscordAuthGuard } from '../auth/discord-auth.guard';
 import { RequestWithUser } from 'src/types/request.types';
 import { JoinServerDto } from './dto/join-server.dto';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -31,7 +31,7 @@ export class ServersController {
     type: ServerWithServerUser,
   })
   @Post('join')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(DiscordAuthGuard)
   join(@Request() req: RequestWithUser, @Body() body: JoinServerDto) {
     return this.serversService.join(req, body);
   }
@@ -43,7 +43,7 @@ export class ServersController {
     type: Boolean,
   })
   @Get('me/server-user')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(DiscordAuthGuard)
   findMeServerUser(
     @Request() req: RequestWithUser,
     @Query('serverId') serverId: string

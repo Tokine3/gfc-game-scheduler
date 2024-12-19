@@ -14,9 +14,9 @@ import { UpdateScheduleDto } from './dto/update-schedule.dto';
 import { CreatePublicScheduleDto } from './dto/create-publicSchedule.dto';
 import { CreatePersonalScheduleDto } from './dto/create-pesonalSchedule.dto';
 import { RequestWithUser } from 'src/types/request.types';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { PersonalSchedule } from './entities/schedule.entity';
+import { DiscordAuthGuard } from 'src/auth/discord-auth.guard';
 
 @Controller('schedules')
 export class SchedulesController {
@@ -27,7 +27,7 @@ export class SchedulesController {
     status: 200,
     description: '公開スケジュール作成成功',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(DiscordAuthGuard)
   @Post('public')
   createPublicSchedule(
     @Request() req: RequestWithUser,
@@ -46,7 +46,7 @@ export class SchedulesController {
     type: [CreatePersonalScheduleDto],
     description: '個人スケジュール作成リクエスト',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(DiscordAuthGuard)
   @Post('personal')
   createPersonalSchedule(
     @Request() req: RequestWithUser,

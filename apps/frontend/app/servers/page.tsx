@@ -40,6 +40,7 @@ import {
 } from '../components/ui/toast';
 import { logger } from '../../lib/logger';
 import { LoadingSpinner } from '../components/ui/loading-spinner';
+import { Server } from '../../apis/@types';
 
 function ServersContent() {
   const { user, loading } = useAuth();
@@ -71,15 +72,22 @@ function ServersContent() {
   useEffect(() => {
     const fetchServers = async () => {
       try {
-        const response = await client.auth.servers.get();
-        if (response.body.data) {
-          setServers(response.body.data);
+        const discordId = localStorage.getItem('discord_id');
+        if (!discordId) {
+          logger.error('Discord ID not found');
+          router.push('/login');
+          return;
         }
+
+        const response = await client.auth.servers.get();
+        setServers(response.body.data);
       } catch (error: any) {
         logger.error('Failed to fetch servers:', error);
-        if (error?.response?.status === 401) {
+        if (error.response?.status === 401) {
           router.push('/login');
         }
+      } finally {
+        setIsLoading(false);
       }
     };
 
