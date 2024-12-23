@@ -129,7 +129,7 @@ export default function EventDetail({ event, onClose }: EventDetailProps) {
                         event.participants.filter((p) => p.reaction === 'OK')
                           .length
                       }
-                      /{event.recruitCount}
+                      /{event.quota}
                     </div>
                   </div>
 

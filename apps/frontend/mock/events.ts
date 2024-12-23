@@ -10,20 +10,10 @@ export const mockPublicEvent: PublicScheduleWithRelations = {
   description:
     '参加者を募集中です！\n初心者歓迎、みんなで楽しく練習しましょう。\n\n持ち物：\n- ボイスチャット可能な環境\n- やる気',
   date: dayjs().add(2, 'day').hour(20).minute(0).second(0).toISOString(),
-  recruitCount: 5,
+  quota: 5,
   isPersonal: false,
-  createdBy: {
-    id: '1',
-    name: 'プレイヤー1',
-    avatar: '',
-  },
-  updatedBy: {
-    id: '1',
-    name: 'プレイヤー1',
-    avatar: '',
-  },
-  createdById: '1',
-  updatedById: '1',
+  createdBy: 'ときね',
+  updatedBy: 'tokine',
   createdAt: dayjs().toISOString(),
   updatedAt: dayjs().toISOString(),
   isRecruiting: true,
@@ -67,20 +57,10 @@ export const mockPersonalEvent: PersonalScheduleWithRelations = {
   isFree: true,
   description:
     '参加者を募集中です！\n初心者歓迎、みんなで楽しく練習しましょう。\n\n持ち物：\n- ボイスチャット可能な環境\n- やる気',
-  createdBy: {
-    id: '1',
-    name: 'プレイヤー1',
-    avatar: '',
-  },
-  updatedBy: {
-    id: '1',
-    name: 'プレイヤー1',
-    avatar: '',
-  },
+  createdBy: 'ときね',
+  updatedBy: 'tokine',
   createdAt: dayjs().toISOString(),
   updatedAt: dayjs().toISOString(),
-  createdById: '1',
-  updatedById: '1',
   isPrivate: false,
   user: {
     id: '1',
