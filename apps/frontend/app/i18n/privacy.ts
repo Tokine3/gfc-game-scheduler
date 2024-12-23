@@ -9,7 +9,7 @@ export const privacyContent = {
       sections: [
         {
           title: '1. 収集する情報',
-          icon: 'Shield',
+          icon: '',
           content: '本サービスでは、必要最小限の以下の情報を収集します：',
           list: [
             'Discordアカウント情報（ユーザーID、ユーザー名）',
@@ -185,7 +185,7 @@ export const privacyContent = {
       sections: [
         {
           title: '1. Information We Collect',
-          icon: 'Shield',
+          icon: '',
           content:
             'We collect the following minimal information necessary for the service:',
           list: [
@@ -371,7 +371,7 @@ export const privacyContent = {
       sections: [
         {
           title: '1. 收集的信息',
-          icon: 'Shield',
+          icon: '',
           content: '为了提供服务，我们收集以下必要的最小限度信息：',
           list: [
             'Discord账户信息（用户ID、用户名）',
@@ -551,7 +551,7 @@ export const privacyContent = {
       sections: [
         {
           title: '1. 수집하는 정보',
-          icon: 'Shield',
+          icon: '',
           content:
             '본 서비스는 다음과 같은 필수적인 최소한의 정보만을 수집합니다:',
           list: [

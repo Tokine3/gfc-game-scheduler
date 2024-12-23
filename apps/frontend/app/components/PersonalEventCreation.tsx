@@ -41,6 +41,7 @@ import { motion } from 'framer-motion';
 interface PersonalEventCreationProps {
   onClose: () => void;
   date?: Date;
+  calendarId: string;
 }
 
 type DaySchedule = {
@@ -62,12 +63,15 @@ const viewModeButtonStyle = (isActive: boolean) =>
 export default function PersonalEventCreation({
   onClose,
   date,
+  calendarId,
 }: PersonalEventCreationProps) {
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
   const [currentDate, setCurrentDate] = useState(dayjs(date || new Date()));
   const [schedules, setSchedules] = useState<DaySchedule[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  console.log('PersonalEventCreation', calendarId ?? 'Nothing');
 
   // 表示する日付の範囲を取得
   const getDaysInRange = () => {
@@ -188,13 +192,14 @@ export default function PersonalEventCreation({
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log('handleSubmit', calendarId);
     e.preventDefault();
     setIsSubmitting(true);
     try {
       // 空き予定がある日のみを抽出してAPIリクエストを作成
       const schedulesToSubmit = schedules.map((schedule) => ({
         date: dayjs(schedule.date).format('YYYY-MM-DD'),
-        title: schedule.description || '予定あり',
+        title: schedule.description,
         description: schedule.description,
         isPrivate: schedule.isPrivate,
         isFree: schedule.isFree, // 空き予定として登録
@@ -202,7 +207,7 @@ export default function PersonalEventCreation({
 
       if (schedulesToSubmit.length > 0) {
         logger.log('Submitting schedules:', schedulesToSubmit); // デバッグ用
-        await client.schedules.personal.post({
+        await client.schedules._calendarId(calendarId).personal.$post({
           body: schedulesToSubmit,
         });
         onClose();

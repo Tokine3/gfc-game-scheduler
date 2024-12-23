@@ -27,6 +27,12 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { HeartCheckbox } from '../components/ui/heart-checkbox';
 import { toast } from '../components/ui/use-toast';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../components/ui/tooltip';
 
 interface Server {
   id: string;
@@ -37,6 +43,8 @@ interface Server {
     name: string;
   }>;
   isJoined?: boolean;
+  isFavorite?: boolean;
+  updatedAt?: string;
 }
 
 export default function ServersPage() {
@@ -50,6 +58,9 @@ export default function ServersPage() {
   const [selectedServerId, setSelectedServerId] = useState<string>('');
   const [newCalendarName, setNewCalendarName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [favoriteStates, setFavoriteStates] = useState<{
+    [key: string]: boolean;
+  }>({});
 
   useEffect(() => {
     if (!loading && !user) {
@@ -61,23 +72,42 @@ export default function ServersPage() {
     const fetchServers = async () => {
       if (!user) return;
       try {
+        console.log('fetchServers');
         const response = await client.auth.servers.get();
         const serversData = response.body.data;
 
-        const serversWithJoinStatus = await Promise.all(
-          serversData.map(async (server) => {
-            try {
-              const response = await client.servers.me.server_user.$get({
-                query: { serverId: server.id },
-              });
-              return { ...server, isJoined: !!response };
-            } catch {
-              return { ...server, isJoined: false };
-            }
-          })
-        );
+        // サーバー情報を整形
+        const serversWithJoinStatus = serversData.map((server) => {
+          const serverUser = server.serverUsers[0]; // ユーザーごとのサーバー情報
+          return {
+            ...server,
+            isJoined: server.serverUsers.length > 0,
+            isFavorite: serverUser?.isFavorite || false,
+            updatedAt: serverUser?.updatedAt || new Date(0).toISOString(),
+          };
+        });
 
-        setServers(serversWithJoinStatus);
+        // お気に入りと更新日時でソート
+        const sortedServers = serversWithJoinStatus.sort((a, b) => {
+          if (a.isFavorite !== b.isFavorite) {
+            return b.isFavorite ? 1 : -1;
+          }
+          return (
+            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+          );
+        });
+
+        setServers(sortedServers);
+
+        // お気に入り状態を初期化
+        const initialFavoriteStates = sortedServers.reduce(
+          (acc, server) => ({
+            ...acc,
+            [server.id]: server.isFavorite,
+          }),
+          {}
+        );
+        setFavoriteStates(initialFavoriteStates);
       } catch (error) {
         console.error('Failed to fetch servers:', error);
       }
@@ -91,9 +121,96 @@ export default function ServersPage() {
     setShowCreateCalendarDialog(true);
   };
 
-  const handleJoinServer = (server: Server) => {
-    setSelectedServer(server);
-    setShowJoinDialog(true);
+  const handleFavoriteChange = async (
+    serverId: string,
+    isFavorite: boolean
+  ) => {
+    try {
+      await client.servers.fav._id(serverId).$patch({
+        body: {
+          isFavorite,
+        },
+      });
+
+      setFavoriteStates((prev) => ({
+        ...prev,
+        [serverId]: isFavorite,
+      }));
+
+      toast({
+        title: isFavorite ? 'お気に入りに追加' : 'お気に入りから削除',
+        description: (
+          <div className='flex items-center gap-2'>
+            <div className='w-8 h-8 rounded-lg bg-gradient-to-br from-pink-500/20 to-rose-500/20 flex items-center justify-center ring-1 ring-pink-500/30'>
+              <HeartCheckbox
+                className='w-4 h-4 text-pink-400'
+                checked={isFavorite}
+                readOnly
+              />
+            </div>
+            <span>
+              {isFavorite
+                ? 'お気に入りに追加しました'
+                : 'お気に入りから削除しました'}
+            </span>
+          </div>
+        ),
+        className:
+          'bg-gray-900/95 border border-gray-800/60 backdrop-blur-md fixed top-4 left-1/2 transform -translate-x-1/2',
+      });
+    } catch (error) {
+      console.error('Failed to update favorite:', error);
+      toast({
+        title: 'エラー',
+        description: 'お気に入りの更新に失敗しました',
+        variant: 'destructive',
+        className:
+          'bg-gray-900/95 border border-gray-800/60 backdrop-blur-md fixed top-4 left-1/2 transform -translate-x-1/2',
+      });
+    }
+  };
+
+  const handleJoinServer = async (server: Server) => {
+    try {
+      await client.servers.join.$post({
+        body: {
+          serverId: server.id,
+          serverName: server.name,
+          serverIcon: server.icon || '',
+        },
+      });
+
+      setServers((prevServers) =>
+        prevServers.map((s) =>
+          s.id === server.id ? { ...s, isJoined: true } : s
+        )
+      );
+
+      toast({
+        title: '参加完了',
+        description: (
+          <div className='flex items-center gap-2'>
+            <div className='w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 flex items-center justify-center ring-1 ring-emerald-500/30'>
+              <Users className='w-4 h-4 text-emerald-400' />
+            </div>
+            <span>{server.name} に参加しました</span>
+          </div>
+        ),
+        className:
+          'bg-gray-900/95 border border-gray-800/60 backdrop-blur-md fixed top-4 left-1/2 transform -translate-x-1/2',
+      });
+
+      setShowJoinDialog(false);
+    } catch (error) {
+      console.error('Failed to join server:', error);
+      toast({
+        title: 'エラー',
+        description: 'サーバーへの参加に失敗しました',
+        variant: 'destructive',
+        className:
+          'bg-gray-900/95 border border-gray-800/60 backdrop-blur-md fixed top-4 left-1/2 transform -translate-x-1/2',
+      });
+    }
   };
 
   const renderServerActions = (server: Server) => {
@@ -111,54 +228,69 @@ export default function ServersPage() {
 
     return (
       <div className='space-y-3'>
-        {server.calendars.length > 0 && (
-          <div className='space-y-2'>
-            <div className='flex items-center gap-2 px-1'>
-              <CalendarDays className='w-4 h-4 text-purple-400' />
-              <span className='text-sm font-medium text-gray-300'>
-                作成済みカレンダー
-              </span>
-            </div>
-            <div className='space-y-1.5'>
-              {server.calendars.map((calendar) => (
+        <div className='flex items-center justify-between px-1'>
+          <div className='flex items-center gap-2'>
+            <CalendarDays className='w-4 h-4 text-purple-400' />
+            <span className='text-sm font-medium text-gray-300'>
+              作成済みカレンダー
+            </span>
+          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
                 <Button
-                  key={calendar.id}
-                  variant='outline'
-                  className='w-full justify-start border-gray-700 hover:bg-gray-700/50 group relative overflow-hidden'
-                  onClick={() => router.push(`/calendar/${calendar.id}`)}
+                  variant='ghost'
+                  size='icon'
+                  className='h-8 w-8 hover:bg-gray-700/50 hover:text-purple-400 transition-colors'
+                  onClick={() => handleCreateCalendar(server.id)}
                 >
-                  <div className='absolute inset-0 bg-gradient-to-r from-purple-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity' />
-                  <div className='relative flex items-center w-full'>
-                    <div className='flex items-center gap-2 min-w-0'>
-                      <div className='p-1 rounded-md bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20 transition-colors'>
-                        <CalendarDays className='w-4 h-4' />
-                      </div>
-                      <span className='truncate text-gray-300 group-hover:text-gray-100 transition-colors'>
-                        {calendar.name}
-                      </span>
+                  <Plus className='w-4 h-4' />
+                  <span className='sr-only'>新規作成</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent
+                side='top'
+                className='bg-gray-800 border-gray-700'
+              >
+                <p>新規作成</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+
+        <div className='space-y-1.5'>
+          {server.calendars.length > 0 ? (
+            server.calendars.map((calendar) => (
+              <Button
+                key={calendar.id}
+                variant='outline'
+                className='w-full justify-start border-gray-700 hover:bg-gray-700/50 group relative overflow-hidden'
+                onClick={() => router.push(`/calendar/${calendar.id}`)}
+              >
+                <div className='absolute inset-0 bg-gradient-to-r from-purple-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity' />
+                <div className='relative flex items-center w-full'>
+                  <div className='flex items-center gap-2 min-w-0'>
+                    <div className='p-1 rounded-md bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20 transition-colors'>
+                      <CalendarDays className='w-4 h-4' />
                     </div>
-                    <div className='ml-auto pl-3'>
-                      <div className='p-1 rounded-full hover:bg-gray-700/50 text-gray-400 opacity-0 group-hover:opacity-100 transition-all'>
-                        <ArrowRight className='w-3 h-3' />
-                      </div>
+                    <span className='truncate text-gray-300 group-hover:text-gray-100 transition-colors'>
+                      {calendar.name}
+                    </span>
+                  </div>
+                  <div className='ml-auto pl-3'>
+                    <div className='p-1 rounded-full hover:bg-gray-700/50 text-gray-400 opacity-0 group-hover:opacity-100 transition-all'>
+                      <ArrowRight className='w-3 h-3' />
                     </div>
                   </div>
-                </Button>
-              ))}
+                </div>
+              </Button>
+            ))
+          ) : (
+            <div className='text-sm text-gray-500 text-center py-2'>
+              カレンダーがありません
             </div>
-          </div>
-        )}
-
-        <Button
-          variant='outline'
-          className='w-full justify-start border-gray-700 hover:bg-gray-700/50 hover:text-purple-400 transition-colors group'
-          onClick={() => handleCreateCalendar(server.id)}
-        >
-          <div className='p-1 rounded-md bg-gray-800/50 text-gray-400 group-hover:bg-purple-500/10 group-hover:text-purple-400 transition-colors'>
-            <Plus className='w-4 h-4' />
-          </div>
-          <span className='ml-1'>新しいカレンダーを作成</span>
-        </Button>
+          )}
+        </div>
       </div>
     );
   };
@@ -266,10 +398,10 @@ export default function ServersPage() {
                           </h3>
                           {server.isJoined && (
                             <div className='mt-1.5 inline-flex items-center'>
-                              <div className='px-2.5 py-1 rounded-full bg-gradient-to-r from-purple-500/20 to-cyan-500/20 border border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.15)] group-hover:shadow-[0_0_20px_rgba(168,85,247,0.25)] group-hover:border-purple-500/40 transition-all'>
+                              <div className='px-2.5 py-1 rounded-full bg-gradient-to-r from-purple-500/20 to-cyan-500/20 border border-emerald-500/30 shadow-[0_0_15px_rgba(168,85,247,0.15)] group-hover:shadow-[0_0_20px_rgba(168,85,247,0.25)] group-hover:border-emerald-500/40 transition-all'>
                                 <div className='flex items-center gap-1.5'>
-                                  <div className='w-1.5 h-1.5 rounded-full bg-gradient-to-r from-purple-400 to-cyan-400 animate-pulse' />
-                                  <span className='text-xs font-semibold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent'>
+                                  <div className='w-1.5 h-1.5 rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 animate-pulse' />
+                                  <span className='text-xs font-semibold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent'>
                                     参加済み
                                   </span>
                                 </div>
@@ -279,10 +411,10 @@ export default function ServersPage() {
                         </div>
                         <HeartCheckbox
                           className='text-gray-400 hover:text-pink-400 shrink-0'
-                          checked={false}
-                          onChange={() => {
-                            /* お気に入り処理 */
-                          }}
+                          checked={favoriteStates[server.id] || false}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            handleFavoriteChange(server.id, e.target.checked)
+                          }
                         />
                       </div>
                       <div className='flex items-center gap-3 mt-1.5'>
@@ -427,30 +559,7 @@ export default function ServersPage() {
                 キャンセル
               </Button>
               <Button
-                onClick={async () => {
-                  try {
-                    await client.servers.join.$post({
-                      body: {
-                        serverId: selectedServer.id,
-                        serverName: selectedServer.name,
-                        serverIcon: selectedServer.icon || '',
-                      },
-                    });
-                    toast({
-                      title: '参加完了',
-                      description: `${selectedServer.name} に参加しました`,
-                    });
-                    setShowJoinDialog(false);
-                    window.location.reload();
-                  } catch (error) {
-                    console.error('Failed to join server:', error);
-                    toast({
-                      title: 'エラー',
-                      description: 'サーバーへの参加に失敗しました',
-                      variant: 'destructive',
-                    });
-                  }
-                }}
+                onClick={() => handleJoinServer(selectedServer)}
                 className='bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white shadow-lg shadow-violet-500/25 border border-violet-600/20 min-w-[100px]'
               >
                 <Users className='w-4 h-4 mr-2' />

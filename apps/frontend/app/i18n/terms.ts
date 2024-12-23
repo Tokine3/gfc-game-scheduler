@@ -9,7 +9,7 @@ export const termsContent = {
       sections: [
         {
           title: '1. はじめに',
-          icon: 'Shield',
+          icon: '',
           content:
             '本利用規約は、個人開発サービスであるGFC Scheduler（以下「本サービス」）の利用条件を定めるものです。本サービスは、Discordサーバーのスケジュール管理を支援することを目的として提供されています。',
         },
@@ -158,7 +158,7 @@ export const termsContent = {
       sections: [
         {
           title: '1. Introduction',
-          icon: 'Shield',
+          icon: '',
           content:
             'These Terms of Service define the conditions for using GFC Scheduler (hereinafter referred to as "the Service"), a personal development service. This service is provided to support schedule management for Discord servers.',
         },
@@ -314,7 +314,7 @@ export const termsContent = {
       sections: [
         {
           title: '1. 简介',
-          icon: 'Shield',
+          icon: '',
           content:
             '本使用条款规定了GFC Scheduler（以下简称"本服务"）的使用条件。本服务是一个为Discord服务器提供日程管理支持的个人开发服务。',
         },
@@ -464,7 +464,7 @@ export const termsContent = {
       sections: [
         {
           title: '1. 소개',
-          icon: 'Shield',
+          icon: '',
           content:
             '본 이용약관은 GFC Scheduler(이하 "본 서비스")의 이용 조건을 정합니다. 본 서비스는 Discord 서버의 일정 관리를 지원하는 개인 개발 서비스입니다.',
         },

@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from './hooks/useAuth';
 
 export default function Home() {
-  const { user, loading } = useAuth(true);
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!loading) {
-      router.replace(user ? '/servers' : '/login');
+      router.replace('/login');
     }
   }, [loading, user, router]);
 

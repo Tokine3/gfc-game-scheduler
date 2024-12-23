@@ -8,6 +8,7 @@ import {
   Delete,
   Request,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { CalendarsService } from './calendars.service';
 import { CreateCalendarDto } from './dto/create-calendar.dto';
@@ -48,12 +49,19 @@ export class CalendarsController {
     return this.calendarsService.findOne(id);
   }
 
+  @ApiResponse({
+    status: 200,
+    description: 'カレンダー更新成功',
+    type: CalendarWithRelations,
+  })
+  @UseGuards(DiscordAuthGuard)
   @Patch(':id')
   update(
     @Param('id') id: string,
+    @Req() req: RequestWithUser,
     @Body() updateCalendarDto: UpdateCalendarDto
   ) {
-    return this.calendarsService.update(+id, updateCalendarDto);
+    return this.calendarsService.update(id, req, updateCalendarDto);
   }
 
   @Delete(':id')

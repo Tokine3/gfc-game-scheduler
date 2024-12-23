@@ -4,8 +4,6 @@ import type { DefineMethods } from "aspida";
 export type Methods = DefineMethods<{
   get: {
     query: {
-      error: string;
-      redirect: string;
       /** Discord認証コード */
       code: string;
     };

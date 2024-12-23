@@ -17,6 +17,8 @@ export type ServerUser = {
   userId: string;
   /** サーバーID */
   serverId: string;
+  /** お気に入りかどうか */
+  isFavorite: boolean;
   /** 参加日時 */
   createdAt: string;
   /** 更新日時 */
@@ -91,14 +93,7 @@ export type ServerWithServerUser = {
   serverUser: ServerUser;
 };
 
-export type UpdateServerDto = {
-  /** サーバー名 */
-  name?: string | undefined;
-  /** サーバーアイコン */
-  icon?: string | undefined;
-  /** サーバーID */
-  serverId?: string | undefined;
-};
+export type AddFavServerDto = {};
 
 export type CreateCalendarDto = {
   /** カレンダー名 */
@@ -120,22 +115,13 @@ export type Server = {
   icon: string | null;
 };
 
-export type ScheduleUserInfo = {
-  /** ユーザーID */
-  id: string;
-  /** ユーザー名 */
-  name: string;
-  /** アバターURL */
-  avatar: string;
-};
-
 export type Participant = {
   /** 参加者ID */
   userId: string;
   /** 参加者名 */
   name: string;
   /** 参加者反応 */
-  reaction: 'OK' | 'UNDECIDED' | 'NG';
+  reaction: "OK" | "UNDECIDED" | "NG";
   /** 参加者反応日 */
   createdAt: string;
   /** 参加者反応更新日 */
@@ -151,23 +137,16 @@ export type PublicScheduleWithRelations = {
   title: string;
   /** 説明 */
   description: string;
-
-  /** 作成者情報 */
-  createdBy: ScheduleUserInfo;
-
-  /** 更新者情報 */
-  updatedBy: ScheduleUserInfo;
-
-  /** 作成者ID */
-  createdById: string;
-  /** 更新者ID */
-  updatedById: string;
+  /** 作成者名 */
+  createdBy: string;
+  /** 更新者名 */
+  updatedBy: string;
   /** 作成日 */
   createdAt: string;
   /** 更新日 */
   updatedAt: string;
   /** 募集人数 */
-  recruitCount: number;
+  quota: number;
   /** 募集状況 */
   isRecruiting: boolean;
   /** 個人予定フラグ */
@@ -185,17 +164,10 @@ export type PersonalScheduleWithRelations = {
   title: string;
   /** 説明 */
   description: string;
-
-  /** 作成者情報 */
-  createdBy: ScheduleUserInfo;
-
-  /** 更新者情報 */
-  updatedBy: ScheduleUserInfo;
-
-  /** 作成者ID */
-  createdById: string;
-  /** 更新者ID */
-  updatedById: string;
+  /** 作成者名 */
+  createdBy: string;
+  /** 更新者名 */
+  updatedBy: string;
   /** 作成日 */
   createdAt: string;
   /** 更新日 */
@@ -234,13 +206,7 @@ export type CalendarWithRelations = {
 
 export type UpdateCalendarDto = {
   /** カレンダー名 */
-  name?: string | undefined;
-  /** サーバーID */
-  serverId?: string | undefined;
-  /** サーバー名 */
-  serverName?: string | undefined;
-  /** サーバーアイコンURL */
-  icon?: string | null | undefined;
+  name: string;
 };
 
 export type CreatePublicScheduleDto = {
@@ -249,22 +215,22 @@ export type CreatePublicScheduleDto = {
   /** タイトル */
   title: string;
   /** 説明 */
-  description: string;
+  description?: string | undefined;
   /** 募集人数 */
-  recruitCount: number;
+  quota?: number | undefined;
 };
 
 export type CreatePersonalScheduleDto = {
   /** 日付 */
   date: string;
   /** タイトル */
-  title: string;
+  title?: string | undefined;
   /** 説明 */
-  description: string;
+  description?: string | undefined;
   /** 非公開フラグ */
-  isPrivate: boolean;
-  /** 無料フラグ */
-  isFree: boolean;
+  isPrivate?: boolean | undefined;
+  /** 空きフラグ */
+  isFree?: boolean | undefined;
 };
 
 export type PersonalSchedule = {
@@ -276,17 +242,10 @@ export type PersonalSchedule = {
   title: string;
   /** 説明 */
   description: string;
-
-  /** 作成者情報 */
-  createdBy: ScheduleUserInfo;
-
-  /** 更新者情報 */
-  updatedBy: ScheduleUserInfo;
-
-  /** 作成者ID */
-  createdById: string;
-  /** 更新者ID */
-  updatedById: string;
+  /** 作成者名 */
+  createdBy: string;
+  /** 更新者名 */
+  updatedBy: string;
   /** 作成日 */
   createdAt: string;
   /** 更新日 */
@@ -297,9 +256,40 @@ export type PersonalSchedule = {
   isFree: boolean;
   /** 個人予定フラグ */
   isPersonal: boolean;
+};
 
-  /** 作成したユーザ */
-  user: User;
+export type PublicSchedule = {
+  /** ID */
+  id: string;
+  /** 日付 */
+  date: string;
+  /** タイトル */
+  title: string;
+  /** 説明 */
+  description: string;
+  /** 作成者名 */
+  createdBy: string;
+  /** 更新者名 */
+  updatedBy: string;
+  /** 作成日 */
+  createdAt: string;
+  /** 更新日 */
+  updatedAt: string;
+  /** 募集人数 */
+  quota: number;
+  /** 募集状況 */
+  isRecruiting: boolean;
+  /** 個人予定フラグ */
+  isPersonal: boolean;
+  /** 参加者 */
+  participants: Participant[];
+};
+
+export type AllUserSchedules = {
+  /** 個人スケジュール */
+  personalSchedules: PersonalSchedule[];
+  /** 公開スケジュール */
+  publicSchedules: PublicSchedule[];
 };
 
 export type UpdateScheduleDto = {};

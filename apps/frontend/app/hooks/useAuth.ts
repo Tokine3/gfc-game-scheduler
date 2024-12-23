@@ -1,14 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
-import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, User, signOut } from 'firebase/auth';
 
-export const useAuth = (skipInitialCheck: boolean = false) => {
+export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const pathname = usePathname();
 
   useEffect(() => {
-    if (skipInitialCheck || pathname === '/login') {
+    if (pathname === '/login') {
       setLoading(false);
       return;
     }
@@ -20,7 +20,22 @@ export const useAuth = (skipInitialCheck: boolean = false) => {
     });
 
     return () => unsubscribe();
-  }, [skipInitialCheck, pathname]);
+  }, [pathname]);
 
-  return { user, loading };
+  const logout = useCallback(async () => {
+    try {
+      const auth = getAuth();
+      await signOut(auth);
+      setUser(null);
+    } catch (error) {
+      console.error('Firebase logout error:', error);
+      throw error;
+    }
+  }, []);
+
+  return {
+    user,
+    logout,
+    loading,
+  };
 };

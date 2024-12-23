@@ -6,12 +6,15 @@ import type { Methods as Methods_19zxzpn } from "./auth/servers";
 import type { Methods as Methods_10yceks } from "./auth/verify";
 import type { Methods as Methods_1nhtobh } from "./calendars";
 import type { Methods as Methods_14m84y3 } from "./calendars/_id@string";
+import type { Methods as Methods_18qsrps } from "./health";
 import type { Methods as Methods_lxn7j8 } from "./schedules";
+import type { Methods as Methods_xb80kx } from "./schedules/_calendarId@string/all-schedules";
+import type { Methods as Methods_zxijjv } from "./schedules/_calendarId@string/personal";
+import type { Methods as Methods_1ti6346 } from "./schedules/_calendarId@string/public";
 import type { Methods as Methods_11i9wjc } from "./schedules/_id@string";
-import type { Methods as Methods_nxm3d5 } from "./schedules/personal";
-import type { Methods as Methods_hqdgs } from "./schedules/public";
 import type { Methods as Methods_1r95pbu } from "./servers";
 import type { Methods as Methods_11eh2yq } from "./servers/_id@string";
+import type { Methods as Methods_fh3uxg } from "./servers/fav/_id@string";
 import type { Methods as Methods_dvs1gv } from "./servers/join";
 import type { Methods as Methods_m3tpez } from "./servers/me/server-user";
 import type { Methods as Methods_tli9od } from "./user";
@@ -25,14 +28,17 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
   const PATH2 = "/auth/servers";
   const PATH3 = "/auth/verify";
   const PATH4 = "/calendars";
-  const PATH5 = "/schedules";
-  const PATH6 = "/schedules/personal";
-  const PATH7 = "/schedules/public";
-  const PATH8 = "/servers";
-  const PATH9 = "/servers/join";
-  const PATH10 = "/servers/me/server-user";
-  const PATH11 = "/user";
-  const PATH12 = "/user/login";
+  const PATH5 = "/health";
+  const PATH6 = "/schedules";
+  const PATH7 = "/all-schedules";
+  const PATH8 = "/personal";
+  const PATH9 = "/public";
+  const PATH10 = "/servers";
+  const PATH11 = "/servers/fav";
+  const PATH12 = "/servers/join";
+  const PATH13 = "/servers/me/server-user";
+  const PATH14 = "/user";
+  const PATH15 = "/user/login";
   const GET = "GET";
   const POST = "POST";
   const DELETE = "DELETE";
@@ -168,27 +174,31 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
             >(prefix, prefix1, GET, option)
               .json()
               .then((r) => r.body),
+          /**
+           * @returns カレンダー更新成功
+           */
           patch: (option: {
             body: Methods_14m84y3["patch"]["reqBody"];
             config?: T | undefined;
           }) =>
-            fetch<void, BasicHeaders, Methods_14m84y3["patch"]["status"]>(
-              prefix,
-              prefix1,
-              PATCH,
-              option,
-            ).send(),
+            fetch<
+              Methods_14m84y3["patch"]["resBody"],
+              BasicHeaders,
+              Methods_14m84y3["patch"]["status"]
+            >(prefix, prefix1, PATCH, option).json(),
+          /**
+           * @returns カレンダー更新成功
+           */
           $patch: (option: {
             body: Methods_14m84y3["patch"]["reqBody"];
             config?: T | undefined;
           }) =>
-            fetch<void, BasicHeaders, Methods_14m84y3["patch"]["status"]>(
-              prefix,
-              prefix1,
-              PATCH,
-              option,
-            )
-              .send()
+            fetch<
+              Methods_14m84y3["patch"]["resBody"],
+              BasicHeaders,
+              Methods_14m84y3["patch"]["status"]
+            >(prefix, prefix1, PATCH, option)
+              .json()
               .then((r) => r.body),
           delete: (option?: { config?: T | undefined } | undefined) =>
             fetch<void, BasicHeaders, Methods_14m84y3["delete"]["status"]>(
@@ -253,133 +263,16 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
           .then((r) => r.body),
       $path: () => `${prefix}${PATH4}`,
     },
-    schedules: {
-      _id: (val1: string) => {
-        const prefix1 = `${PATH5}/${val1}`;
-
-        return {
-          get: (option?: { config?: T | undefined } | undefined) =>
-            fetch<void, BasicHeaders, Methods_11i9wjc["get"]["status"]>(
-              prefix,
-              prefix1,
-              GET,
-              option,
-            ).send(),
-          $get: (option?: { config?: T | undefined } | undefined) =>
-            fetch<void, BasicHeaders, Methods_11i9wjc["get"]["status"]>(
-              prefix,
-              prefix1,
-              GET,
-              option,
-            )
-              .send()
-              .then((r) => r.body),
-          patch: (option: {
-            body: Methods_11i9wjc["patch"]["reqBody"];
-            config?: T | undefined;
-          }) =>
-            fetch<void, BasicHeaders, Methods_11i9wjc["patch"]["status"]>(
-              prefix,
-              prefix1,
-              PATCH,
-              option,
-            ).send(),
-          $patch: (option: {
-            body: Methods_11i9wjc["patch"]["reqBody"];
-            config?: T | undefined;
-          }) =>
-            fetch<void, BasicHeaders, Methods_11i9wjc["patch"]["status"]>(
-              prefix,
-              prefix1,
-              PATCH,
-              option,
-            )
-              .send()
-              .then((r) => r.body),
-          delete: (option?: { config?: T | undefined } | undefined) =>
-            fetch<void, BasicHeaders, Methods_11i9wjc["delete"]["status"]>(
-              prefix,
-              prefix1,
-              DELETE,
-              option,
-            ).send(),
-          $delete: (option?: { config?: T | undefined } | undefined) =>
-            fetch<void, BasicHeaders, Methods_11i9wjc["delete"]["status"]>(
-              prefix,
-              prefix1,
-              DELETE,
-              option,
-            )
-              .send()
-              .then((r) => r.body),
-          $path: () => `${prefix}${prefix1}`,
-        };
-      },
-      personal: {
-        /**
-         * @param option.body - 個人スケジュール作成リクエスト
-         * @returns 個人スケジュール作成成功
-         */
-        post: (option: {
-          body: Methods_nxm3d5["post"]["reqBody"];
-          config?: T | undefined;
-        }) =>
-          fetch<
-            Methods_nxm3d5["post"]["resBody"],
-            BasicHeaders,
-            Methods_nxm3d5["post"]["status"]
-          >(prefix, PATH6, POST, option).json(),
-        /**
-         * @param option.body - 個人スケジュール作成リクエスト
-         * @returns 個人スケジュール作成成功
-         */
-        $post: (option: {
-          body: Methods_nxm3d5["post"]["reqBody"];
-          config?: T | undefined;
-        }) =>
-          fetch<
-            Methods_nxm3d5["post"]["resBody"],
-            BasicHeaders,
-            Methods_nxm3d5["post"]["status"]
-          >(prefix, PATH6, POST, option)
-            .json()
-            .then((r) => r.body),
-        $path: () => `${prefix}${PATH6}`,
-      },
-      public: {
-        post: (option: {
-          body: Methods_hqdgs["post"]["reqBody"];
-          config?: T | undefined;
-        }) =>
-          fetch<void, BasicHeaders, Methods_hqdgs["post"]["status"]>(
-            prefix,
-            PATH7,
-            POST,
-            option,
-          ).send(),
-        $post: (option: {
-          body: Methods_hqdgs["post"]["reqBody"];
-          config?: T | undefined;
-        }) =>
-          fetch<void, BasicHeaders, Methods_hqdgs["post"]["status"]>(
-            prefix,
-            PATH7,
-            POST,
-            option,
-          )
-            .send()
-            .then((r) => r.body),
-        $path: () => `${prefix}${PATH7}`,
-      },
+    health: {
       get: (option?: { config?: T | undefined } | undefined) =>
-        fetch<void, BasicHeaders, Methods_lxn7j8["get"]["status"]>(
+        fetch<void, BasicHeaders, Methods_18qsrps["get"]["status"]>(
           prefix,
           PATH5,
           GET,
           option,
         ).send(),
       $get: (option?: { config?: T | undefined } | undefined) =>
-        fetch<void, BasicHeaders, Methods_lxn7j8["get"]["status"]>(
+        fetch<void, BasicHeaders, Methods_18qsrps["get"]["status"]>(
           prefix,
           PATH5,
           GET,
@@ -389,9 +282,194 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
           .then((r) => r.body),
       $path: () => `${prefix}${PATH5}`,
     },
+    schedules: {
+      _calendarId: (val1: string) => {
+        const prefix1 = `${PATH6}/${val1}`;
+
+        return {
+          all_schedules: {
+            /**
+             * @returns ユーザーのスケジュール取得成功
+             */
+            get: (option: {
+              query: Methods_xb80kx["get"]["query"];
+              config?: T | undefined;
+            }) =>
+              fetch<
+                Methods_xb80kx["get"]["resBody"],
+                BasicHeaders,
+                Methods_xb80kx["get"]["status"]
+              >(prefix, `${prefix1}${PATH7}`, GET, option).json(),
+            /**
+             * @returns ユーザーのスケジュール取得成功
+             */
+            $get: (option: {
+              query: Methods_xb80kx["get"]["query"];
+              config?: T | undefined;
+            }) =>
+              fetch<
+                Methods_xb80kx["get"]["resBody"],
+                BasicHeaders,
+                Methods_xb80kx["get"]["status"]
+              >(prefix, `${prefix1}${PATH7}`, GET, option)
+                .json()
+                .then((r) => r.body),
+            $path: (
+              option?:
+                | {
+                    method?: "get" | undefined;
+                    query: Methods_xb80kx["get"]["query"];
+                  }
+                | undefined,
+            ) =>
+              `${prefix}${prefix1}${PATH7}${option && option.query ? `?${dataToURLString(option.query)}` : ""}`,
+          },
+          personal: {
+            /**
+             * @param option.body - 個人スケジュール作成リクエスト
+             * @returns 個人スケジュール作成成功
+             */
+            post: (option: {
+              body: Methods_zxijjv["post"]["reqBody"];
+              config?: T | undefined;
+            }) =>
+              fetch<
+                Methods_zxijjv["post"]["resBody"],
+                BasicHeaders,
+                Methods_zxijjv["post"]["status"]
+              >(prefix, `${prefix1}${PATH8}`, POST, option).json(),
+            /**
+             * @param option.body - 個人スケジュール作成リクエスト
+             * @returns 個人スケジュール作成成功
+             */
+            $post: (option: {
+              body: Methods_zxijjv["post"]["reqBody"];
+              config?: T | undefined;
+            }) =>
+              fetch<
+                Methods_zxijjv["post"]["resBody"],
+                BasicHeaders,
+                Methods_zxijjv["post"]["status"]
+              >(prefix, `${prefix1}${PATH8}`, POST, option)
+                .json()
+                .then((r) => r.body),
+            $path: () => `${prefix}${prefix1}${PATH8}`,
+          },
+          public: {
+            /**
+             * @param option.body - 公開スケジュール作成リクエスト
+             */
+            post: (option: {
+              body: Methods_1ti6346["post"]["reqBody"];
+              config?: T | undefined;
+            }) =>
+              fetch<void, BasicHeaders, Methods_1ti6346["post"]["status"]>(
+                prefix,
+                `${prefix1}${PATH9}`,
+                POST,
+                option,
+              ).send(),
+            /**
+             * @param option.body - 公開スケジュール作成リクエスト
+             */
+            $post: (option: {
+              body: Methods_1ti6346["post"]["reqBody"];
+              config?: T | undefined;
+            }) =>
+              fetch<void, BasicHeaders, Methods_1ti6346["post"]["status"]>(
+                prefix,
+                `${prefix1}${PATH9}`,
+                POST,
+                option,
+              )
+                .send()
+                .then((r) => r.body),
+            $path: () => `${prefix}${prefix1}${PATH9}`,
+          },
+        };
+      },
+      _id: (val1: string) => {
+        const prefix1 = `${PATH6}/${val1}`;
+
+        return {
+          get: (option?: { config?: T | undefined } | undefined) =>
+            fetch<void, BasicHeaders, Methods_11i9wjc["get"]["status"]>(
+              prefix,
+              prefix1,
+              GET,
+              option,
+            ).send(),
+          $get: (option?: { config?: T | undefined } | undefined) =>
+            fetch<void, BasicHeaders, Methods_11i9wjc["get"]["status"]>(
+              prefix,
+              prefix1,
+              GET,
+              option,
+            )
+              .send()
+              .then((r) => r.body),
+          patch: (option: {
+            body: Methods_11i9wjc["patch"]["reqBody"];
+            config?: T | undefined;
+          }) =>
+            fetch<void, BasicHeaders, Methods_11i9wjc["patch"]["status"]>(
+              prefix,
+              prefix1,
+              PATCH,
+              option,
+            ).send(),
+          $patch: (option: {
+            body: Methods_11i9wjc["patch"]["reqBody"];
+            config?: T | undefined;
+          }) =>
+            fetch<void, BasicHeaders, Methods_11i9wjc["patch"]["status"]>(
+              prefix,
+              prefix1,
+              PATCH,
+              option,
+            )
+              .send()
+              .then((r) => r.body),
+          delete: (option?: { config?: T | undefined } | undefined) =>
+            fetch<void, BasicHeaders, Methods_11i9wjc["delete"]["status"]>(
+              prefix,
+              prefix1,
+              DELETE,
+              option,
+            ).send(),
+          $delete: (option?: { config?: T | undefined } | undefined) =>
+            fetch<void, BasicHeaders, Methods_11i9wjc["delete"]["status"]>(
+              prefix,
+              prefix1,
+              DELETE,
+              option,
+            )
+              .send()
+              .then((r) => r.body),
+          $path: () => `${prefix}${prefix1}`,
+        };
+      },
+      get: (option?: { config?: T | undefined } | undefined) =>
+        fetch<void, BasicHeaders, Methods_lxn7j8["get"]["status"]>(
+          prefix,
+          PATH6,
+          GET,
+          option,
+        ).send(),
+      $get: (option?: { config?: T | undefined } | undefined) =>
+        fetch<void, BasicHeaders, Methods_lxn7j8["get"]["status"]>(
+          prefix,
+          PATH6,
+          GET,
+          option,
+        )
+          .send()
+          .then((r) => r.body),
+      $path: () => `${prefix}${PATH6}`,
+    },
     servers: {
       _id: (val1: string) => {
-        const prefix1 = `${PATH8}/${val1}`;
+        const prefix1 = `${PATH10}/${val1}`;
 
         return {
           get: (option?: { config?: T | undefined } | undefined) =>
@@ -406,28 +484,6 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
               prefix,
               prefix1,
               GET,
-              option,
-            )
-              .send()
-              .then((r) => r.body),
-          patch: (option: {
-            body: Methods_11eh2yq["patch"]["reqBody"];
-            config?: T | undefined;
-          }) =>
-            fetch<void, BasicHeaders, Methods_11eh2yq["patch"]["status"]>(
-              prefix,
-              prefix1,
-              PATCH,
-              option,
-            ).send(),
-          $patch: (option: {
-            body: Methods_11eh2yq["patch"]["reqBody"];
-            config?: T | undefined;
-          }) =>
-            fetch<void, BasicHeaders, Methods_11eh2yq["patch"]["status"]>(
-              prefix,
-              prefix1,
-              PATCH,
               option,
             )
               .send()
@@ -450,6 +506,41 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
               .then((r) => r.body),
           $path: () => `${prefix}${prefix1}`,
         };
+      },
+      fav: {
+        _id: (val2: string) => {
+          const prefix2 = `${PATH11}/${val2}`;
+
+          return {
+            /**
+             * @returns サーバーをお気に入りに追加しました
+             */
+            patch: (option: {
+              body: Methods_fh3uxg["patch"]["reqBody"];
+              config?: T | undefined;
+            }) =>
+              fetch<
+                Methods_fh3uxg["patch"]["resBody"],
+                BasicHeaders,
+                Methods_fh3uxg["patch"]["status"]
+              >(prefix, prefix2, PATCH, option).json(),
+            /**
+             * @returns サーバーをお気に入りに追加しました
+             */
+            $patch: (option: {
+              body: Methods_fh3uxg["patch"]["reqBody"];
+              config?: T | undefined;
+            }) =>
+              fetch<
+                Methods_fh3uxg["patch"]["resBody"],
+                BasicHeaders,
+                Methods_fh3uxg["patch"]["status"]
+              >(prefix, prefix2, PATCH, option)
+                .json()
+                .then((r) => r.body),
+            $path: () => `${prefix}${prefix2}`,
+          };
+        },
       },
       join: {
         /**
@@ -463,7 +554,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
             Methods_dvs1gv["post"]["resBody"],
             BasicHeaders,
             Methods_dvs1gv["post"]["status"]
-          >(prefix, PATH9, POST, option).json(),
+          >(prefix, PATH12, POST, option).json(),
         /**
          * @returns サーバーに参加しました
          */
@@ -475,10 +566,10 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
             Methods_dvs1gv["post"]["resBody"],
             BasicHeaders,
             Methods_dvs1gv["post"]["status"]
-          >(prefix, PATH9, POST, option)
+          >(prefix, PATH12, POST, option)
             .json()
             .then((r) => r.body),
-        $path: () => `${prefix}${PATH9}`,
+        $path: () => `${prefix}${PATH12}`,
       },
       me: {
         server_user: {
@@ -493,7 +584,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
               Methods_m3tpez["get"]["resBody"],
               BasicHeaders,
               Methods_m3tpez["get"]["status"]
-            >(prefix, PATH10, GET, option).json(),
+            >(prefix, PATH13, GET, option).json(),
           /**
            * @returns サーバーに参加しているかどうか
            */
@@ -505,7 +596,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
               Methods_m3tpez["get"]["resBody"],
               BasicHeaders,
               Methods_m3tpez["get"]["status"]
-            >(prefix, PATH10, GET, option)
+            >(prefix, PATH13, GET, option)
               .json()
               .then((r) => r.body),
           $path: (
@@ -516,30 +607,30 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
                 }
               | undefined,
           ) =>
-            `${prefix}${PATH10}${option && option.query ? `?${dataToURLString(option.query)}` : ""}`,
+            `${prefix}${PATH13}${option && option.query ? `?${dataToURLString(option.query)}` : ""}`,
         },
       },
       get: (option?: { config?: T | undefined } | undefined) =>
         fetch<void, BasicHeaders, Methods_1r95pbu["get"]["status"]>(
           prefix,
-          PATH8,
+          PATH10,
           GET,
           option,
         ).send(),
       $get: (option?: { config?: T | undefined } | undefined) =>
         fetch<void, BasicHeaders, Methods_1r95pbu["get"]["status"]>(
           prefix,
-          PATH8,
+          PATH10,
           GET,
           option,
         )
           .send()
           .then((r) => r.body),
-      $path: () => `${prefix}${PATH8}`,
+      $path: () => `${prefix}${PATH10}`,
     },
     user: {
       _id: (val1: string) => {
-        const prefix1 = `${PATH11}/${val1}`;
+        const prefix1 = `${PATH14}/${val1}`;
 
         return {
           /**
@@ -616,7 +707,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
             Methods_1904ovn["get"]["resBody"],
             BasicHeaders,
             Methods_1904ovn["get"]["status"]
-          >(prefix, PATH12, GET, option).json(),
+          >(prefix, PATH15, GET, option).json(),
         /**
          * @returns 最終ログイン時間の更新と自身のデータ取得成功
          */
@@ -625,10 +716,10 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
             Methods_1904ovn["get"]["resBody"],
             BasicHeaders,
             Methods_1904ovn["get"]["status"]
-          >(prefix, PATH12, GET, option)
+          >(prefix, PATH15, GET, option)
             .json()
             .then((r) => r.body),
-        $path: () => `${prefix}${PATH12}`,
+        $path: () => `${prefix}${PATH15}`,
       },
       /**
        * @returns 検索条件に当てはまるユーザの取得成功
@@ -645,7 +736,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
           Methods_tli9od["get"]["resBody"],
           BasicHeaders,
           Methods_tli9od["get"]["status"]
-        >(prefix, PATH11, GET, option).json(),
+        >(prefix, PATH14, GET, option).json(),
       /**
        * @returns 検索条件に当てはまるユーザの取得成功
        */
@@ -661,7 +752,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
           Methods_tli9od["get"]["resBody"],
           BasicHeaders,
           Methods_tli9od["get"]["status"]
-        >(prefix, PATH11, GET, option)
+        >(prefix, PATH14, GET, option)
           .json()
           .then((r) => r.body),
       $path: (
@@ -672,7 +763,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
             }
           | undefined,
       ) =>
-        `${prefix}${PATH11}${option && option.query ? `?${dataToURLString(option.query)}` : ""}`,
+        `${prefix}${PATH14}${option && option.query ? `?${dataToURLString(option.query)}` : ""}`,
     },
   };
 };

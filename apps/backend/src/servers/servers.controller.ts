@@ -9,6 +9,7 @@ import {
   UseGuards,
   Request,
   Query,
+  Req,
 } from '@nestjs/common';
 import { ServersService } from './servers.service';
 import { CreateServerDto } from './dto/create-server.dto';
@@ -17,7 +18,8 @@ import { DiscordAuthGuard } from '../auth/discord-auth.guard';
 import { RequestWithUser } from 'src/types/request.types';
 import { JoinServerDto } from './dto/join-server.dto';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ServerWithServerUser } from './entities/server.entity';
+import { ServerUser, ServerWithServerUser } from './entities/server.entity';
+import { AddFavServerDto } from './dto/addFav-server-dto';
 
 @ApiTags('Servers')
 @Controller('servers')
@@ -61,9 +63,20 @@ export class ServersController {
     return this.serversService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateServerDto: UpdateServerDto) {
-    return this.serversService.update(+id, updateServerDto);
+  @ApiOperation({ summary: 'サーバーをお気に入りに追加する' })
+  @ApiResponse({
+    status: 200,
+    description: 'サーバーをお気に入りに追加しました',
+    type: ServerUser,
+  })
+  @UseGuards(DiscordAuthGuard)
+  @Patch('fav/:id')
+  async addFavorite(
+    @Param('id') id: string,
+    @Body() addFavServerDto: AddFavServerDto,
+    @Req() req: RequestWithUser
+  ) {
+    return this.serversService.addFavorite(id, addFavServerDto, req);
   }
 
   @Delete(':id')

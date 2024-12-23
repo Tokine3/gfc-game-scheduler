@@ -5,6 +5,8 @@ import EventCreation from './EventCreation';
 import PersonalEventCreation from './PersonalEventCreation';
 import EventDetail from './EventDetail';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 import CalendarView from './CalendarView';
 import { Button } from './ui/button';
 import {
@@ -28,15 +30,22 @@ import { cn } from '../../lib/utils';
 import EventTypeSelector from './EventTypeSelector';
 import {
   CalendarWithRelations,
+  PersonalSchedule,
   PersonalScheduleWithRelations,
+  PublicSchedule,
   PublicScheduleWithRelations,
 } from '../../apis/@types';
 import { logger } from '../../lib/logger';
 import { mockPublicEvent, mockPersonalEvent } from '../../mock/events';
+import { client } from '../../lib/api';
 
-export type CalendarEvent =
-  | PublicScheduleWithRelations
-  | PersonalScheduleWithRelations;
+// プラグインを追加
+dayjs.extend(utc);
+dayjs.extend(timezone);
+// タイムゾーンを日本に設定
+dayjs.tz.setDefault('Asia/Tokyo');
+
+export type CalendarEvent = PersonalSchedule | PublicSchedule;
 
 // 型ガードの追加
 export function isPublicSchedule(
@@ -78,6 +87,13 @@ export default memo(function Calendar(props: CalendarWithRelations) {
   const [showTypeSelector, setShowTypeSelector] = useState(false);
   const [availabilities, setAvailabilities] = useState<Availability[]>([]);
 
+  // デバッグログを追加
+  console.log('Calendar props:', {
+    id: props.id,
+    name: props.name,
+    serverId: props.serverId,
+  });
+
   logger.log('calendar', props);
 
   // コールバック関数をメモ化
@@ -93,24 +109,33 @@ export default memo(function Calendar(props: CalendarWithRelations) {
     setShowEventDetail(true);
   }, []);
 
-  const handleEventTypeChange = useCallback((type: 'public' | 'personal') => {
-    if (type === 'public') {
-      setShowEventCreation(true);
-    } else {
-      setShowPersonalEventCreation(true);
-    }
-    setShowTypeSelector(false);
-  }, []);
-
   // イベントの取得をメモ化
   const fetchEvents = useCallback(async () => {
     try {
-      // 開発用にモックデータを使用
-      setEvents([mockPublicEvent, mockPersonalEvent]);
+      const currentDate = date ?? new Date();
+      const response = await client.schedules
+        ._calendarId(props.id)
+        .all_schedules.$get({
+          query: {
+            fromDate: dayjs(currentDate)
+              .startOf('month')
+              .subtract(1, 'hour')
+              .utc()
+              .format(),
+            toDate: dayjs(currentDate)
+              .endOf('month')
+              .add(1, 'hour')
+              .utc()
+              .format(),
+          },
+        });
+      logger.log('fetch personal schedules', response.personalSchedules);
+      logger.log('fetch public schedules', response.publicSchedules);
+      setEvents([...response.personalSchedules, ...response.publicSchedules]);
     } catch (error) {
       logger.error('Failed to fetch events:', error);
     }
-  }, []);
+  }, [props.id, date]);
 
   useEffect(() => {
     fetchEvents();
@@ -149,18 +174,26 @@ export default memo(function Calendar(props: CalendarWithRelations) {
   }, [props.personalSchedules]);
 
   // CalendarViewに渡すイベントデータを変換
-  const calendarEvents = events.map((event) => ({
-    id: event.id,
-    start: new Date(event.date),
-    end: new Date(event.date),
-    title: event.title,
-    extendedProps: {
-      isPersonal: event.isPersonal,
-      participants: isPublicSchedule(event) ? event.participants : undefined,
-      quota: isPublicSchedule(event) ? event.recruitCount : undefined,
-      originalEvent: event,
-    },
-  }));
+  const calendarEvents = events.map((event) => {
+    // 日付を日本時間の0時に設定
+    const eventDate = dayjs(event.date)
+      .tz('Asia/Tokyo')
+      .startOf('day')
+      .toDate();
+
+    return {
+      id: String(event.id),
+      start: eventDate,
+      end: eventDate,
+      title: event.title,
+      extendedProps: {
+        isPersonal: event.isPersonal,
+        participants: isPublicSchedule(event) ? event.participants : undefined,
+        quota: isPublicSchedule(event) ? event.quota : undefined,
+        originalEvent: event,
+      },
+    };
+  });
 
   return (
     <div className='space-y-6'>
@@ -224,11 +257,22 @@ export default memo(function Calendar(props: CalendarWithRelations) {
       <div className='grid grid-cols-1 lg:grid-cols-[3fr_1fr] gap-6'>
         <div className='bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50 p-4 sm:p-6 overflow-hidden'>
           <MemoizedCalendarView
-            date={date}
             events={calendarEvents}
-            availabilities={availabilities}
+            date={date}
             onDateSelect={handleDateSelect}
             onEventClick={handleEventClick}
+            availabilities={availabilities}
+            onMonthChange={useCallback(
+              (newDate: Date) => {
+                if (
+                  date?.getMonth() !== newDate.getMonth() ||
+                  date?.getFullYear() !== newDate.getFullYear()
+                ) {
+                  setDate(newDate);
+                }
+              },
+              [date]
+            )}
           />
         </div>
 
@@ -255,11 +299,14 @@ export default memo(function Calendar(props: CalendarWithRelations) {
                         .length
                     : 0;
                   const isFull =
-                    isPublicSchedule(event) && joinCount >= event.recruitCount;
+                    isPublicSchedule(event) && joinCount >= event.quota;
+
+                  // ユニークなキーを生成
+                  const eventKey = `upcoming-${event.isPersonal ? 'personal' : 'public'}-${event.id}`;
 
                   return (
                     <Button
-                      key={event.id}
+                      key={eventKey}
                       variant='outline'
                       className={cn(
                         'w-full justify-start text-left border-gray-700/50 hover:bg-gray-800/60 group relative overflow-hidden',
@@ -300,7 +347,7 @@ export default memo(function Calendar(props: CalendarWithRelations) {
                             {isPublicSchedule(event) && (
                               <span className='flex items-center gap-1'>
                                 <UsersIcon className='w-3 h-3' />
-                                {joinCount}/{event.recruitCount}
+                                {joinCount}/{event.quota}
                               </span>
                             )}
                           </div>
@@ -340,7 +387,7 @@ export default memo(function Calendar(props: CalendarWithRelations) {
 
                   return (
                     <Button
-                      key={event.id}
+                      key={`past-${event.isPersonal ? 'personal' : 'public'}-${event.id}`}
                       variant='outline'
                       className={cn(
                         'w-full justify-start text-left border-gray-700/50 hover:bg-gray-800/60 group relative overflow-hidden opacity-75',
@@ -375,7 +422,7 @@ export default memo(function Calendar(props: CalendarWithRelations) {
                             {isPublicSchedule(event) && (
                               <span className='flex items-center gap-1'>
                                 <UsersIcon className='w-3 h-3' />
-                                {joinCount}/{event.recruitCount}
+                                {joinCount}/{event.quota}
                               </span>
                             )}
                           </div>
@@ -415,12 +462,14 @@ export default memo(function Calendar(props: CalendarWithRelations) {
         <MemoizedEventCreation
           onClose={() => setShowEventCreation(false)}
           date={date}
+          calendarId={props.id}
         />
       )}
       {showPersonalEventCreation && (
         <MemoizedPersonalEventCreation
           onClose={() => setShowPersonalEventCreation(false)}
           date={date}
+          calendarId={props.id}
         />
       )}
       {showEventDetail && selectedEvent && (

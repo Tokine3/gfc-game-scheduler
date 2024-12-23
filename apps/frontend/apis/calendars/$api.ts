@@ -35,27 +35,31 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
           >(prefix, prefix0, GET, option)
             .json()
             .then((r) => r.body),
+        /**
+         * @returns カレンダー更新成功
+         */
         patch: (option: {
           body: Methods_2yw7dz["patch"]["reqBody"];
           config?: T | undefined;
         }) =>
-          fetch<void, BasicHeaders, Methods_2yw7dz["patch"]["status"]>(
-            prefix,
-            prefix0,
-            PATCH,
-            option,
-          ).send(),
+          fetch<
+            Methods_2yw7dz["patch"]["resBody"],
+            BasicHeaders,
+            Methods_2yw7dz["patch"]["status"]
+          >(prefix, prefix0, PATCH, option).json(),
+        /**
+         * @returns カレンダー更新成功
+         */
         $patch: (option: {
           body: Methods_2yw7dz["patch"]["reqBody"];
           config?: T | undefined;
         }) =>
-          fetch<void, BasicHeaders, Methods_2yw7dz["patch"]["status"]>(
-            prefix,
-            prefix0,
-            PATCH,
-            option,
-          )
-            .send()
+          fetch<
+            Methods_2yw7dz["patch"]["resBody"],
+            BasicHeaders,
+            Methods_2yw7dz["patch"]["status"]
+          >(prefix, prefix0, PATCH, option)
+            .json()
             .then((r) => r.body),
         delete: (option?: { config?: T | undefined } | undefined) =>
           fetch<void, BasicHeaders, Methods_2yw7dz["delete"]["status"]>(

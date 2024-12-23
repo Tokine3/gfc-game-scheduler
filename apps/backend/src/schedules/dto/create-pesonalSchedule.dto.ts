@@ -1,24 +1,28 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsDateString, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsDateString, IsOptional, IsString } from 'class-validator';
 
 export class CreatePersonalScheduleDto {
   @ApiProperty({ description: '日付' })
   @IsDateString()
   date: string;
 
-  @ApiProperty({ description: 'タイトル' })
+  @ApiPropertyOptional({ description: 'タイトル' })
   @IsString()
-  title: string;
+  @IsOptional()
+  title?: string;
 
-  @ApiProperty({ description: '説明' })
+  @ApiPropertyOptional({ description: '説明' })
   @IsString()
-  description: string;
+  @IsOptional()
+  description?: string;
 
-  @ApiProperty({ description: '非公開フラグ' })
+  @ApiPropertyOptional({ description: '非公開フラグ' })
   @IsBoolean()
-  isPrivate: boolean;
+  @IsOptional()
+  isPrivate?: boolean;
 
-  @ApiProperty({ description: '無料フラグ' })
+  @ApiPropertyOptional({ description: '空きフラグ' })
   @IsBoolean()
-  isFree: boolean;
+  @IsOptional()
+  isFree?: boolean;
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCalendarDto } from './dto/create-calendar.dto';
 import { UpdateCalendarDto } from './dto/update-calendar.dto';
 import { RequestWithUser } from '../types/request.types';
@@ -19,12 +19,8 @@ export class CalendarsService {
       data: {
         name,
         server: {
-          connectOrCreate: {
-            where: { id: serverId },
-            create: {
-              id: serverId,
-              name: serverName,
-            },
+          connect: {
+            id: serverId,
           },
         },
       },
@@ -43,46 +39,30 @@ export class CalendarsService {
         publicSchedules: {
           include: {
             participants: true,
-            createdBy: {
-              select: {
-                id: true,
-                name: true,
-                avatar: true,
-              },
-            },
-            updatedBy: {
-              select: {
-                id: true,
-                name: true,
-                avatar: true,
-              },
-            },
           },
         },
-        personalSchedules: {
-          include: {
-            createdBy: {
-              select: {
-                id: true,
-                name: true,
-                avatar: true,
-              },
-            },
-            updatedBy: {
-              select: {
-                id: true,
-                name: true,
-                avatar: true,
-              },
-            },
-          },
-        },
+        personalSchedules: true,
       },
     });
   }
 
-  update(id: number, updateCalendarDto: UpdateCalendarDto) {
-    return `This action updates a #${id} calendar`;
+  async update(id: string, req: RequestWithUser, body: UpdateCalendarDto) {
+    const { name } = body;
+
+    const calendar = await this.prisma.calendar.findUnique({
+      where: { id },
+    });
+
+    if (!calendar) {
+      throw new NotFoundException('カレンダーが見つかりません');
+    }
+
+    return this.prisma.calendar.update({
+      where: { id },
+      data: {
+        name,
+      },
+    });
   }
 
   remove(id: number) {

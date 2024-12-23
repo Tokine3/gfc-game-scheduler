@@ -11,6 +11,8 @@ export type Methods = DefineMethods<{
 
   patch: {
     status: 200;
+    /** カレンダー更新成功 */
+    resBody: Types.CalendarWithRelations;
     reqBody: Types.UpdateCalendarDto;
   };
 

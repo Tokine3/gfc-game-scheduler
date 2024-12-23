@@ -38,6 +38,7 @@ interface CalendarViewProps {
   availabilities: Availability[];
   onDateSelect: (date: Date | undefined) => void;
   onEventClick: (event: CalendarEvent) => void;
+  onMonthChange: (date: Date) => void;
 }
 
 interface Holiday {
@@ -56,6 +57,7 @@ export function CalendarView({
   availabilities,
   onDateSelect,
   onEventClick,
+  onMonthChange,
 }: CalendarViewProps) {
   const calendarRef = useRef<any>(null);
   const lastTapRef = useRef<number>(0);
@@ -357,6 +359,9 @@ export function CalendarView({
         dayHeaderClassNames='!cursor-default hover:!bg-transparent'
         eventClick={handleEventClick}
         dayCellContent={dayCellContent}
+        datesSet={(dateInfo) => {
+          onMonthChange(dateInfo.start);
+        }}
       />
       {selectedAvailability && (
         <AvailableUsers

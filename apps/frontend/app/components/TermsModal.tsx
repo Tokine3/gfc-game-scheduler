@@ -51,6 +51,7 @@ export function TermsModal({ open, onOpenChange }: TermsModalProps) {
     AlertTriangle: <AlertTriangle className='w-5 h-5 text-yellow-400' />,
     AlertCircle: <AlertCircle className='w-5 h-5 text-orange-400' />,
     Shield: <Shield className='w-5 h-5 text-violet-400' />,
+    Mail: <Mail className='w-5 h-5 text-blue-400' />,
   };
 
   return (

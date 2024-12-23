@@ -1,15 +1,22 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsNumber } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsDate, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreatePublicScheduleDto {
   @ApiProperty({ description: '日付' })
   @IsDate()
   date: Date;
+
   @ApiProperty({ description: 'タイトル' })
+  @IsString()
   title: string;
-  @ApiProperty({ description: '説明' })
-  description: string;
-  @ApiProperty({ description: '募集人数' })
+
+  @ApiPropertyOptional({ description: '説明' })
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @ApiPropertyOptional({ description: '募集人数' })
   @IsNumber()
-  recruitCount: number;
+  @IsOptional()
+  quota?: number;
 }

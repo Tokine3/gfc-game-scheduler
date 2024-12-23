@@ -15,9 +15,11 @@ import {
   LogIn,
   Share2,
   Copy,
+  LogOut,
 } from 'lucide-react';
 import { TermsModal } from '../components/TermsModal';
 import { PrivacyPolicyModal } from '../components/PrivacyPolicyModal';
+import Header from '../components/Header';
 import { toast } from '../components/ui/use-toast';
 
 export default function LoginPage() {
@@ -25,23 +27,81 @@ export default function LoginPage() {
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
 
+  // トークンチェックとログアウトメッセージの処理
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      const redirectPath = sessionStorage.getItem('redirectPath') || '/servers';
-      sessionStorage.removeItem('redirectPath');
-      router.push(redirectPath);
+    // ログアウト成功メッセージの表示
+    const logoutSuccess = sessionStorage.getItem('logoutSuccess');
+    if (logoutSuccess) {
+      toast({
+        title: 'ログアウトしました',
+        description: (
+          <div className='flex items-center gap-2'>
+            <div className='w-8 h-8 rounded-lg bg-gradient-to-br from-red-500/20 to-orange-500/20 flex items-center justify-center ring-1 ring-red-500/30'>
+              <LogOut className='w-4 h-4 text-red-400' />
+            </div>
+            <span>またのご利用をお待ちしております</span>
+          </div>
+        ),
+        className:
+          'bg-gray-900/95 border border-gray-800/60 backdrop-blur-md fixed top-4 left-1/2 transform -translate-x-1/2',
+        duration: 3000,
+      });
+      sessionStorage.removeItem('logoutSuccess');
     }
+
+    // トークンチェックは少し遅延させる
+    const checkToken = setTimeout(() => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const redirectPath =
+          sessionStorage.getItem('redirectPath') || '/servers';
+        sessionStorage.removeItem('redirectPath');
+        router.push(redirectPath);
+      }
+    }, 100);
+
+    return () => clearTimeout(checkToken);
   }, [router]);
 
   const handleLogin = () => {
-    const DISCORD_CLIENT_ID = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID;
-    const REDIRECT_URI = encodeURIComponent(
-      `${process.env.NEXT_PUBLIC_API_URL}/auth/discord/callback`
-    );
-    const DISCORD_AUTH_URL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=identify%20guilds`;
+    try {
+      const DISCORD_CLIENT_ID = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID;
+      const REDIRECT_URI = encodeURIComponent(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/discord/callback`
+      );
+      const state = Math.random().toString(36).substring(7); // ランダムな状態文字列を生成
+      localStorage.setItem('discord_state', state); // 状態を保存
 
-    window.location.href = DISCORD_AUTH_URL;
+      const DISCORD_AUTH_URL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=identify%20guilds&state=${state}`;
+
+      window.location.href = DISCORD_AUTH_URL;
+    } catch (error) {
+      toast({
+        title: 'ログインに失敗しました',
+        description: 'しばらく待ってから再度お試しください',
+        className: 'bg-gray-900/95 border border-gray-800/60 backdrop-blur-md',
+      });
+      console.error('Login error:', error);
+    }
+  };
+
+  // URLコピーボタンのクリックハンドラ
+  const handleCopyUrl = async () => {
+    await navigator.clipboard.writeText(window.location.href);
+    toast({
+      title: 'URLをコピーしました',
+      description: (
+        <div className='flex items-center gap-2'>
+          <div className='w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-emerald-500/20 flex items-center justify-center ring-1 ring-cyan-500/30'>
+            <Copy className='w-4 h-4 text-cyan-400' />
+          </div>
+          <span>クリップボードにコピーされました</span>
+        </div>
+      ),
+      className:
+        'bg-gray-900/95 border border-gray-800/60 backdrop-blur-md fixed top-4 left-1/2 transform -translate-x-1/2',
+      duration: 2000,
+    });
   };
 
   return (
@@ -53,30 +113,8 @@ export default function LoginPage() {
         <div className='absolute -bottom-8 left-20 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-4000' />
       </div>
 
-      {/* ヘッダー */}
-      <header className='fixed top-0 left-0 right-0 h-16 z-50 bg-gray-900/95 backdrop-blur-md border-b border-gray-800/60'>
-        <div className='container mx-auto px-4 h-full flex items-center'>
-          <motion.div
-            className='flex items-center gap-3'
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className='relative w-8 h-8 rounded-lg overflow-hidden ring-1 ring-gray-800/60 group'>
-              <div className='absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20 group-hover:opacity-100 opacity-0 transition-opacity' />
-              <Image
-                src='/GFC.png'
-                alt='Logo'
-                fill
-                className='object-cover relative z-10'
-              />
-            </div>
-            <h1 className='text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600'>
-              GFC Scheduler
-            </h1>
-          </motion.div>
-        </div>
-      </header>
+      {/* 既存のヘッダーを削除し、共通のHeaderコンポーネントを使用 */}
+      <Header />
 
       {/* メインコンテンツ */}
       <main className='flex-1 flex items-center justify-center p-4 mt-16 relative z-10'>
@@ -211,34 +249,15 @@ export default function LoginPage() {
 
               <div className='mt-6 pt-6 border-t border-gray-700/50'>
                 <div className='flex flex-col items-center gap-3 mb-4'>
-                  <div className='w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-emerald-500/20 flex items-center justify-center ring-1 ring-cyan-500/30'>
-                    <Share2 className='w-4 h-4 text-cyan-400' />
+                  <div className='w-12 h-12 rounded-lg bg-gradient-to-br from-cyan-500/20 to-emerald-500/20 flex items-center justify-center ring-1 ring-cyan-500/30'>
+                    <Share2 className='w-6 h-6 text-cyan-400' />
                   </div>
                   <p className='text-lg text-gray-400'>友達に教える</p>
                 </div>
 
                 <div className='flex gap-2'>
                   <Button
-                    onClick={async () => {
-                      await navigator.clipboard.writeText(window.location.href);
-                      toast({
-                        title: 'URLをコピーしました',
-                        description: (
-                          <div className='flex items-center gap-2'>
-                            <div className='w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-emerald-500/20 flex items-center justify-center ring-1 ring-cyan-500/30'>
-                              <Copy className='w-4 h-4 text-cyan-400' />
-                            </div>
-                            <span>クリップボードにコピーされました</span>
-                          </div>
-                        ),
-                        className:
-                          'bg-gray-900/95 border border-gray-800/60 backdrop-blur-md',
-                        duration: 2000,
-                        style: {
-                          animation: 'slide-in-from-top 0.3s ease-out',
-                        },
-                      });
-                    }}
+                    onClick={handleCopyUrl}
                     variant='outline'
                     size='sm'
                     className='flex-1 border-gray-700 hover:bg-gray-800/60'

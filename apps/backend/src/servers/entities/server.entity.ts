@@ -18,6 +18,9 @@ export class ServerUser {
   @ApiProperty({ description: 'サーバーID' })
   serverId: string;
 
+  @ApiProperty({ description: 'お気に入りかどうか' })
+  isFavorite: boolean;
+
   @ApiProperty({ description: '参加日時' })
   createdAt: Date;
 

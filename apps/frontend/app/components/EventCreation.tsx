@@ -35,15 +35,20 @@ const formSchema = z.object({
   description: z.string().optional(),
   date: z.string().min(1, '必須項目です'),
   time: z.string().min(1, '必須項目です'),
-  recruitCount: z.number().min(1, '1人以上を指定してください'),
+  quota: z.number().min(1, '1人以上を指定してください'),
 });
 
 interface EventCreationProps {
   onClose: () => void;
   date?: Date;
+  calendarId: string;
 }
 
-export default function EventCreation({ onClose, date }: EventCreationProps) {
+export default function EventCreation({
+  onClose,
+  date,
+  calendarId,
+}: EventCreationProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -55,23 +60,21 @@ export default function EventCreation({ onClose, date }: EventCreationProps) {
         ? dayjs(date).format('YYYY-MM-DD')
         : dayjs().format('YYYY-MM-DD'),
       time: dayjs().format('HH:mm'),
-      recruitCount: 1,
+      quota: 1,
     },
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     try {
-      // イベント作成処理を追加する
-      //
-      // await client.schedules.$post({
-      //   body: {
-      //     title: values.title,
-      //     description: values.description || '',
-      //     date: dayjs(`${values.date} ${values.time}`).toISOString(),
-      //     recruitCount: values.recruitCount,
-      //   },
-      // });
+      await client.schedules._calendarId(calendarId).public.$post({
+        body: {
+          title: values.title,
+          description: values.description || '',
+          date: dayjs(`${values.date} ${values.time}`).toISOString(),
+          quota: values.quota,
+        },
+      });
       toast({
         title: 'イベントを作成しました',
         description: `「${values.title}」を作成しました`,
@@ -192,7 +195,7 @@ export default function EventCreation({ onClose, date }: EventCreationProps) {
 
               <FormField
                 control={form.control}
-                name='recruitCount'
+                name='quota'
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className='text-gray-200 flex items-center gap-2'>

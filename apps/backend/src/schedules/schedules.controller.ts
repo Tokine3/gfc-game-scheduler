@@ -8,15 +8,18 @@ import {
   Delete,
   Request,
   UseGuards,
+  Req,
+  Query,
 } from '@nestjs/common';
 import { SchedulesService } from './schedules.service';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
 import { CreatePublicScheduleDto } from './dto/create-publicSchedule.dto';
 import { CreatePersonalScheduleDto } from './dto/create-pesonalSchedule.dto';
 import { RequestWithUser } from 'src/types/request.types';
-import { ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
-import { PersonalSchedule } from './entities/schedule.entity';
+import { ApiOperation, ApiResponse, ApiBody, ApiQuery } from '@nestjs/swagger';
+import { AllUserSchedules, PersonalSchedule } from './entities/schedule.entity';
 import { DiscordAuthGuard } from 'src/auth/discord-auth.guard';
+import { FindAllUserSchedulesSchedulesDto } from './dto/findAllUserSchedules-schedules.dto';
 
 @Controller('schedules')
 export class SchedulesController {
@@ -27,13 +30,18 @@ export class SchedulesController {
     status: 200,
     description: '公開スケジュール作成成功',
   })
+  @ApiBody({
+    type: CreatePublicScheduleDto,
+    description: '公開スケジュール作成リクエスト',
+  })
   @UseGuards(DiscordAuthGuard)
-  @Post('public')
+  @Post(':calendarId/public')
   createPublicSchedule(
     @Request() req: RequestWithUser,
+    @Param('calendarId') calendarId: string,
     @Body() body: CreatePublicScheduleDto
   ) {
-    return this.schedulesService.createPublicSchedule(req, body);
+    return this.schedulesService.createPublicSchedule(req, calendarId, body);
   }
 
   @ApiOperation({ summary: '個人スケジュール作成' })
@@ -47,17 +55,38 @@ export class SchedulesController {
     description: '個人スケジュール作成リクエスト',
   })
   @UseGuards(DiscordAuthGuard)
-  @Post('personal')
-  createPersonalSchedule(
+  @Post(':calendarId/personal')
+  createPersonalSchedules(
     @Request() req: RequestWithUser,
+    @Param('calendarId') calendarId: string,
     @Body() body: [CreatePersonalScheduleDto]
   ) {
-    return this.schedulesService.createPersonalSchedule(req, body);
+    return this.schedulesService.createPersonalSchedules(req, calendarId, body);
   }
 
   @Get()
   findAll() {
     return this.schedulesService.findAll();
+  }
+
+  @ApiOperation({ summary: 'ユーザーのスケジュール取得' })
+  @ApiResponse({
+    status: 200,
+    description: 'ユーザーのスケジュール取得成功',
+    type: AllUserSchedules,
+  })
+  @ApiQuery({
+    type: FindAllUserSchedulesSchedulesDto,
+    description: 'ユーザーのスケジュール取得リクエスト',
+  })
+  @UseGuards(DiscordAuthGuard)
+  @Get(':calendarId/all-schedules')
+  findAllUserSchedules(
+    @Req() req: RequestWithUser,
+    @Param('calendarId') calendarId: string,
+    @Query() query: FindAllUserSchedulesSchedulesDto
+  ) {
+    return this.schedulesService.findAllUserSchedules(req, calendarId, query);
   }
 
   @Get(':id')

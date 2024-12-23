@@ -56,6 +56,7 @@ export class AuthService {
   async getDiscordServers(
     req: RequestWithUser
   ): Promise<GetUserServersResponse> {
+    console.log('getDiscordServers');
     try {
       const guilds = await getUserDiscordServer(req);
 

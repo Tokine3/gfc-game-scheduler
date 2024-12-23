@@ -3,28 +3,22 @@ import type { Methods as Methods_by08hd } from ".";
 
 const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
   const prefix = (baseURL === undefined ? "" : baseURL).replace(/\/$/, "");
-  const PATH0 = "/schedules/public";
-  const POST = "POST";
+  const PATH0 = "/health";
+  const GET = "GET";
 
   return {
-    post: (option: {
-      body: Methods_by08hd["post"]["reqBody"];
-      config?: T | undefined;
-    }) =>
-      fetch<void, BasicHeaders, Methods_by08hd["post"]["status"]>(
+    get: (option?: { config?: T | undefined } | undefined) =>
+      fetch<void, BasicHeaders, Methods_by08hd["get"]["status"]>(
         prefix,
         PATH0,
-        POST,
+        GET,
         option,
       ).send(),
-    $post: (option: {
-      body: Methods_by08hd["post"]["reqBody"];
-      config?: T | undefined;
-    }) =>
-      fetch<void, BasicHeaders, Methods_by08hd["post"]["status"]>(
+    $get: (option?: { config?: T | undefined } | undefined) =>
+      fetch<void, BasicHeaders, Methods_by08hd["get"]["status"]>(
         prefix,
         PATH0,
-        POST,
+        GET,
         option,
       )
         .send()

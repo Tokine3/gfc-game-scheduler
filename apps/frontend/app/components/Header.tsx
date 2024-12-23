@@ -2,7 +2,7 @@
 
 import { CalendarDays, LogOut, Plus, ServerIcon } from 'lucide-react';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Button } from './ui/button';
 import { useRouter } from 'next/navigation';
 import { cn } from '../../lib/utils';
@@ -13,6 +13,8 @@ import {
   TooltipTrigger,
 } from './ui/tooltip';
 import { useAuth } from '../hooks/useAuth';
+import { toast } from './ui/use-toast';
+import { usePathname } from 'next/navigation';
 
 interface HeaderProps {
   className?: string;
@@ -21,7 +23,9 @@ interface HeaderProps {
 export default function Header({ className }: HeaderProps) {
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const pathname = usePathname();
+  const isLoginPage = pathname === '/login';
 
   useEffect(() => {
     setMounted(true);
@@ -37,10 +41,39 @@ export default function Header({ className }: HeaderProps) {
     window.location.href = DISCORD_AUTH_URL;
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    router.push('/');
-  };
+  /**
+   * ログアウト処理を実行する
+   * @description
+   * - Firebaseからログアウト
+   * - ローカルストレージからトークンを削除
+   * - ログアウト成功メッセージをsessionStorageに保存
+   * - ホームページへリダイレクト
+   */
+  const handleLogout = useCallback(async () => {
+    try {
+      // Firebaseからログアウト
+      await logout();
+
+      // 認証関連の状態をクリア
+      localStorage.removeItem('token');
+      localStorage.removeItem('discord_state');
+      sessionStorage.removeItem('redirectPath');
+
+      // ログアウト成功メッセージをsessionStorageに保存
+      sessionStorage.setItem('logoutSuccess', 'true');
+
+      // ログインページへリダイレクト
+      router.push('/login');
+    } catch (error) {
+      toast({
+        title: 'ログアウトに失敗しました',
+        description: 'もう一度お試しください',
+        className:
+          'bg-gray-900/95 border border-gray-800/60 backdrop-blur-md fixed top-4 left-1/2 transform -translate-x-1/2',
+      });
+      console.error('Logout error:', error);
+    }
+  }, [router, logout]);
 
   if (!mounted) {
     return null;
@@ -70,64 +103,51 @@ export default function Header({ className }: HeaderProps) {
         </button>
 
         {/* 右側のボタン群 */}
-        <div className='flex items-center gap-2'>
-          {user ? (
-            <>
-              {/* サーバー一覧ボタン */}
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => router.push('/servers')}
-                className='h-9 border-gray-700 hover:bg-gray-800/60 hover:border-violet-500/50 whitespace-nowrap group transition-all hidden sm:flex'
-              >
-                <div className='p-1 rounded-md bg-violet-500/10 text-violet-400 group-hover:bg-violet-500/20 transition-colors'>
-                  <ServerIcon className='w-4 h-4' />
-                </div>
-                <span className='ml-2 text-gray-300 group-hover:text-gray-100 transition-colors'>
-                  サーバー一覧
-                </span>
-              </Button>
+        {!isLoginPage && (
+          <div className='flex items-center gap-2'>
+            {user && (
+              <>
+                {/* サーバー一覧ボタン */}
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => router.push('/servers')}
+                  className='h-9 border-gray-700 hover:bg-gray-800/60 hover:border-violet-500/50 whitespace-nowrap group transition-all hidden sm:flex'
+                >
+                  <div className='p-1 rounded-md bg-violet-500/10 text-violet-400 group-hover:bg-violet-500/20 transition-colors'>
+                    <ServerIcon className='w-4 h-4' />
+                  </div>
+                  <span className='ml-2 text-gray-300 group-hover:text-gray-100 transition-colors'>
+                    サーバー一覧
+                  </span>
+                </Button>
 
-              {/* ログアウトボタン */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant='outline'
-                      size='icon'
-                      onClick={handleLogout}
-                      className='h-9 w-9 border-gray-700 hover:bg-gray-800/60 hover:text-red-400 hover:border-red-500/50 transition-all'
+                {/* ログアウトボタン */}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant='outline'
+                        size='icon'
+                        onClick={handleLogout}
+                        className='h-9 w-9 border-gray-700 hover:bg-gray-800/60 hover:text-red-400 hover:border-red-500/50 transition-all'
+                      >
+                        <LogOut className='h-4 w-4' />
+                        <span className='sr-only'>ログアウト</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side='bottom'
+                      className='bg-gray-800 border-gray-700'
                     >
-                      <LogOut className='h-4 w-4' />
-                      <span className='sr-only'>ログアウト</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent
-                    side='bottom'
-                    className='bg-gray-800 border-gray-700'
-                  >
-                    <p>ログアウト</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </>
-          ) : (
-            <Button
-              onClick={handleLogin}
-              className='bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white shadow-lg shadow-violet-500/25 border border-violet-600/20 transition-all'
-            >
-              <div className='w-5 h-5 relative mr-2'>
-                <Image
-                  src='/discord-logo.svg'
-                  alt='Discord'
-                  fill
-                  className='object-contain'
-                />
-              </div>
-              Login with Discord
-            </Button>
-          )}
-        </div>
+                      <p>ログアウト</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </header>
   );
