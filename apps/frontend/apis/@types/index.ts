@@ -93,7 +93,10 @@ export type ServerWithServerUser = {
   serverUser: ServerUser;
 };
 
-export type AddFavServerDto = {};
+export type AddFavServerDto = {
+  /** お気に入りフラグ */
+  isFavorite: boolean;
+};
 
 export type CreateCalendarDto = {
   /** カレンダー名 */
@@ -121,7 +124,7 @@ export type Participant = {
   /** 参加者名 */
   name: string;
   /** 参加者反応 */
-  reaction: "OK" | "UNDECIDED" | "NG";
+  reaction: 'OK' | 'UNDECIDED' | 'NG';
   /** 参加者反応日 */
   createdAt: string;
   /** 参加者反応更新日 */

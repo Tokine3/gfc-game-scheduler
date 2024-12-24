@@ -1,6 +1,5 @@
 import { FC } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import {
   ServerIcon,
   CalendarDays,
@@ -8,7 +7,6 @@ import {
   Plus,
   ArrowRight,
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 import type { Server } from '../../types';
 import { Button } from '../../../components/ui/button';
 import { HeartCheckbox } from '../../../components/ui/heart-checkbox';

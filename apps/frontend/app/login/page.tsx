@@ -248,6 +248,7 @@ export default function LoginPage() {
                     src='/discord-logo.svg'
                     alt='Discord'
                     fill
+                    sizes='20vw'
                     className='object-contain'
                   />
                 </div>
@@ -331,6 +332,7 @@ export default function LoginPage() {
                   src='/GFC.png'
                   alt='Logo'
                   fill
+                  sizes='20vw'
                   className='object-cover'
                 />
               </div>

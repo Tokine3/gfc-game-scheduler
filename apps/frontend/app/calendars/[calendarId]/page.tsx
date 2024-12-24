@@ -1,128 +1,65 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
+import { use } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { client } from '../../../lib/api';
 import { useAuth } from '../../hooks/useAuth';
-import { logger } from '../../../lib/logger';
-import { CalendarWithRelations } from '../../../apis/@types';
+import { useCalendar } from '../../../hooks/useCalendar';
+import { useServerMembership } from '../../../hooks/useServerMembership';
 import { Calendar } from './_components';
 import Header from '../../components/Header';
-import { Button } from '../../components/ui/button';
-import { Calendar as CalendarIcon, ChevronLeft } from 'lucide-react';
-import { JoinServerDialog } from '../../servers/_components/JoinServerDialog/JoinServerDialog';
 import { LoadingScreen } from '../../components/LoadingScreen';
+import { Calendar as CalendarIcon, ChevronLeft } from 'lucide-react';
+import { Button } from '../../components/ui/button';
+import { JoinServerPrompt } from '../../servers/_components/JoinServerPrompt/JoinServerPrompt';
+import { CalendarWithRelations } from '../../../apis/@types';
 
 interface Props {
   params: Promise<{ calendarId: string }>;
 }
 
 export default function CalendarPage({ params }: Props) {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [showJoinDialog, setShowJoinDialog] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [calendar, setCalendar] = useState<CalendarWithRelations>();
   const { calendarId } = use(params);
+  const {
+    calendar,
+    isLoading: calendarLoading,
+    isError,
+  } = useCalendar(!authLoading && user ? calendarId : undefined);
+  const { isMember, isLoading: membershipLoading } = useServerMembership(
+    calendar?.serverId
+  );
 
-  // 認証状態の即時チェック
-  useEffect(() => {
-    if (!loading && !user) {
-      const redirectPath = `/calendars/${calendarId}`;
-      sessionStorage.setItem('redirectPath', redirectPath);
-      router.replace('/login');
-    }
-  }, [loading, user, calendarId, router]);
+  // 認証チェック
+  if (!authLoading && !user) {
+    sessionStorage.setItem('redirectPath', `/calendars/${calendarId}`);
+    router.replace('/login');
+    return null;
+  }
 
-  // カレンダーデータの取得と権限チェック
-  useEffect(() => {
-    if (!user || loading) return;
-
-    let mounted = true;
-
-    const checkAccessAndFetchData = async () => {
-      try {
-        const [calendarData, serverData] = await Promise.all([
-          client.calendars._id(calendarId).$get(),
-          client.auth.servers.$get(),
-        ]);
-
-        if (!mounted) return;
-
-        const hasServerAccess = serverData.data.some(
-          (s) => s.id === calendarData.serverId
-        );
-
-        if (!hasServerAccess) {
-          router.replace('/error/unauthorized');
-          return;
-        }
-
-        const serverUser = await client.servers.me.server_user.$get({
-          query: { serverId: calendarData.serverId },
-        });
-
-        if (!mounted) return;
-
-        setCalendar(calendarData);
-
-        if (!serverUser) {
-          setShowJoinDialog(true);
-        }
-      } catch (error) {
-        if (!mounted) return;
-        logger.error('Failed to fetch calendar:', error);
-        router.replace('/error/unauthorized');
-      }
-    };
-
-    checkAccessAndFetchData();
-
-    return () => {
-      mounted = false;
-    };
-  }, [user, loading, calendarId, router]);
-
-  // ローディング中の表示
-  if (loading) {
+  // ローディング表示
+  if (authLoading || calendarLoading || membershipLoading) {
     return <LoadingScreen message='カレンダーを読み込んでいます...' />;
   }
 
-  // 認証前はなにも表示しない（リダイレクト処理中）
-  if (!user) return null;
+  // エラー時は権限エラーページへ
+  if (isError) {
+    router.replace('/error/unauthorized');
+    return null;
+  }
 
-  if (showJoinDialog && calendar) {
+  // サーバー未参加の場合
+  if (calendar && !isMember) {
     return (
       <div className='min-h-screen bg-gray-900 flex flex-col'>
         <Header />
-        <JoinServerDialog
-          server={calendar.server}
-          isOpen={true}
-          onClose={() => setShowJoinDialog(false)}
-          onConfirm={async (server) => {
-            setIsSubmitting(true);
-            try {
-              await client.servers.join.$post({
-                body: {
-                  serverId: server.id,
-                  serverName: server.name,
-                  serverIcon: server.icon || '',
-                },
-              });
-              window.location.reload();
-            } catch (error) {
-              logger.error('Failed to join server:', error);
-            } finally {
-              setIsSubmitting(false);
-            }
-          }}
-          isSubmitting={isSubmitting}
-        />
+        <JoinServerPrompt calendar={calendar} />
       </div>
     );
   }
 
+  // メインのカレンダー表示
   return (
     <div className='min-h-screen bg-gray-900 flex flex-col'>
       <BackgroundDecoration />

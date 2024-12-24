@@ -1,20 +1,14 @@
 'use client';
 
-import { LogOut, ServerIcon } from 'lucide-react';
+import { ServerIcon } from 'lucide-react';
 import Image from 'next/image';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from './ui/button';
 import { useRouter } from 'next/navigation';
 import { cn } from '../../lib/utils';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from './ui/tooltip';
 import { useAuth } from '../hooks/useAuth';
-import { toast } from './ui/use-toast';
 import { usePathname } from 'next/navigation';
+import { LogoutButton } from './LogoutButton';
 
 interface HeaderProps {
   className?: string;
@@ -23,7 +17,7 @@ interface HeaderProps {
 export default function Header({ className }: HeaderProps) {
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const pathname = usePathname();
   const isLoginPage = pathname === '/login';
 
@@ -31,53 +25,7 @@ export default function Header({ className }: HeaderProps) {
     setMounted(true);
   }, []);
 
-  const handleLogin = () => {
-    const DISCORD_CLIENT_ID = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID;
-    const REDIRECT_URI = encodeURIComponent(
-      `${process.env.NEXT_PUBLIC_API_URL}/auth/discord/callback`
-    );
-    const DISCORD_AUTH_URL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=identify%20guilds`;
-
-    window.location.href = DISCORD_AUTH_URL;
-  };
-
-  /**
-   * ログアウト処理を実行する
-   * @description
-   * - Firebaseからログアウト
-   * - ローカルストレージからトークンを削除
-   * - ログアウト成功メッセージをsessionStorageに保存
-   * - ホームページへリダイレクト
-   */
-  const handleLogout = useCallback(async () => {
-    try {
-      // Firebaseからログアウト
-      await logout();
-
-      // 認証関連の状態をクリア
-      localStorage.removeItem('token');
-      localStorage.removeItem('discord_state');
-      sessionStorage.removeItem('redirectPath');
-
-      // ログアウト成功メッセージをsessionStorageに保存
-      sessionStorage.setItem('logoutSuccess', 'true');
-
-      // ログインページへリダイレクト
-      router.push('/login');
-    } catch (error) {
-      toast({
-        title: 'ログアウトに失敗しました',
-        description: 'もう一度お試しください',
-        className:
-          'bg-gray-900/95 border border-gray-800/60 backdrop-blur-md fixed top-4 left-1/2 transform -translate-x-1/2',
-      });
-      console.error('Logout error:', error);
-    }
-  }, [router, logout]);
-
-  if (!mounted) {
-    return null;
-  }
+  if (!mounted) return null;
 
   return (
     <header
@@ -113,7 +61,6 @@ export default function Header({ className }: HeaderProps) {
           <div className='flex items-center gap-2'>
             {user && (
               <>
-                {/* サーバー一覧ボタン */}
                 <Button
                   variant='outline'
                   size='sm'
@@ -127,29 +74,7 @@ export default function Header({ className }: HeaderProps) {
                     サーバー一覧
                   </span>
                 </Button>
-
-                {/* ログアウトボタン */}
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant='outline'
-                        size='icon'
-                        onClick={handleLogout}
-                        className='h-9 w-9 border-gray-700 hover:bg-gray-800/60 hover:text-red-400 hover:border-red-500/50 transition-all'
-                      >
-                        <LogOut className='h-4 w-4' />
-                        <span className='sr-only'>ログアウト</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side='bottom'
-                      className='bg-gray-800 border-gray-700'
-                    >
-                      <p>ログアウト</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <LogoutButton />
               </>
             )}
           </div>

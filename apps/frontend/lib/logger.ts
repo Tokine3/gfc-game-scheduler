@@ -6,6 +6,11 @@ export const logger = {
       console.log(...args);
     }
   },
+  info: (...args: any[]) => {
+    if (isDevelopment) {
+      console.info('[INFO]', ...args);
+    }
+  },
   error: (...args: any[]) => {
     if (isDevelopment) {
       console.error(...args);

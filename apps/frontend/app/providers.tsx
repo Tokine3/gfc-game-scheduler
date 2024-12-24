@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { SWRConfig } from 'swr';
+import { ReactNode } from 'react';
 import { initializeApp } from 'firebase/app';
-import { ThemeProvider } from 'next-themes';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -14,7 +15,7 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -28,8 +29,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <ThemeProvider attribute='class' defaultTheme='dark' enableSystem>
+    <SWRConfig
+      value={{
+        revalidateOnFocus: true,
+        revalidateOnReconnect: true,
+        shouldRetryOnError: false,
+      }}
+    >
       {children}
-    </ThemeProvider>
+    </SWRConfig>
   );
 }

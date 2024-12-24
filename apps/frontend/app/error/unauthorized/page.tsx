@@ -40,6 +40,7 @@ export default function UnauthorizedPage() {
                 src='/GFC.png'
                 alt='Logo'
                 fill
+                sizes='20vw'
                 className='object-cover relative z-10'
                 priority
               />
@@ -121,7 +122,13 @@ export default function UnauthorizedPage() {
         <div className='container mx-auto px-4'>
           <div className='flex items-center justify-center gap-2'>
             <div className='relative w-6 h-6 rounded-lg overflow-hidden'>
-              <Image src='/GFC.png' alt='Logo' fill className='object-cover' />
+              <Image
+                src='/GFC.png'
+                alt='Logo'
+                fill
+                sizes='20vw'
+                className='object-cover'
+              />
             </div>
             <p className='text-sm text-gray-400'>
               © 2024 GFC Scheduler. All rights reserved.
