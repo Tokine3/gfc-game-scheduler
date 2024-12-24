@@ -25,6 +25,7 @@ type Props = {
   onFavoriteChange: (serverId: string, isFavorite: boolean) => Promise<void>;
   onJoinServer: (server: Server) => Promise<void>;
   onCreateCalendar: (serverId: string) => void;
+  onCalendarClick: (calendarId: string, serverName: string) => void;
 };
 
 export const ServerCard: FC<Props> = ({
@@ -33,9 +34,8 @@ export const ServerCard: FC<Props> = ({
   onFavoriteChange,
   onJoinServer,
   onCreateCalendar,
+  onCalendarClick,
 }) => {
-  const router = useRouter();
-
   const renderServerActions = () => {
     if (!server.isJoined) {
       return (
@@ -88,7 +88,7 @@ export const ServerCard: FC<Props> = ({
                 key={calendar.id}
                 variant='outline'
                 className='w-full justify-start border-gray-700 hover:bg-gray-700/50 group relative overflow-hidden'
-                onClick={() => router.push(`/calendar/${calendar.id}`)}
+                onClick={() => onCalendarClick(calendar.id, server.name)}
               >
                 <div className='absolute inset-0 bg-gradient-to-r from-purple-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity' />
                 <div className='relative flex items-center w-full'>
@@ -119,13 +119,9 @@ export const ServerCard: FC<Props> = ({
   };
 
   return (
-    <motion.div
-      className='group relative'
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-    >
-      <div className='absolute -inset-0.5 bg-gradient-to-r from-purple-500/20 to-cyan-500/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-300' />
-      <div className='relative p-6 bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl hover:bg-gray-800/70 transition-colors'>
+    <div className='group relative transition-transform hover:scale-[1.01] active:scale-[0.99] duration-200'>
+      <div className='absolute inset-0 bg-gradient-to-r from-purple-500/10 to-cyan-500/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300' />
+      <div className='relative p-6 bg-gray-800/50 backdrop-blur-[2px] border border-gray-700/50 rounded-xl transition-colors duration-200'>
         {/* サーバーアイコンと名前 */}
         <div className='flex items-start gap-4'>
           {server.icon ? (
@@ -134,8 +130,9 @@ export const ServerCard: FC<Props> = ({
                 src={`https://cdn.discordapp.com/icons/${server.id}/${server.icon}.png`}
                 alt={server.name}
                 fill
-                sizes='20vw'
+                sizes='48px'
                 className='object-cover'
+                loading='lazy'
               />
             </div>
           ) : (
@@ -149,8 +146,12 @@ export const ServerCard: FC<Props> = ({
                 <h3 className='text-lg font-semibold text-gray-100 truncate'>
                   {server.name}
                 </h3>
-                {server.isJoined && (
-                  <div className='mt-1.5 inline-flex items-center'>
+                <div className='flex items-center gap-3 mt-1.5'>
+                  <div className='flex items-center gap-1 text-sm text-gray-400'>
+                    <CalendarDays className='w-4 h-4' />
+                    <span>{server.calendars.length}</span>
+                  </div>
+                  {server.isJoined && (
                     <div className='px-2.5 py-1 rounded-full bg-gradient-to-r from-purple-500/20 to-cyan-500/20 border border-emerald-500/30 shadow-[0_0_15px_rgba(168,85,247,0.15)] group-hover:shadow-[0_0_20px_rgba(168,85,247,0.25)] group-hover:border-emerald-500/40 transition-all'>
                       <div className='flex items-center gap-1.5'>
                         <div className='w-1.5 h-1.5 rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 animate-pulse' />
@@ -159,8 +160,8 @@ export const ServerCard: FC<Props> = ({
                         </span>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
               <HeartCheckbox
                 className='text-gray-400 hover:text-pink-400 shrink-0'
@@ -168,17 +169,11 @@ export const ServerCard: FC<Props> = ({
                 onChange={(e) => onFavoriteChange(server.id, e.target.checked)}
               />
             </div>
-            <div className='flex items-center gap-3 mt-1.5'>
-              <div className='flex items-center gap-1 text-sm text-gray-400'>
-                <CalendarDays className='w-4 h-4' />
-                <span>{server.calendars.length}</span>
-              </div>
-            </div>
           </div>
         </div>
 
         <div className='mt-4 space-y-2'>{renderServerActions()}</div>
       </div>
-    </motion.div>
+    </div>
   );
 };

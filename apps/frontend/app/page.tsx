@@ -2,21 +2,19 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from './hooks/useAuth';
+import { LoadingScreen } from './components/LoadingScreen';
 
-export default function Home() {
-  const { user, loading } = useAuth();
+export default function Page() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading) {
+    const token = localStorage.getItem('token');
+    if (token) {
+      router.replace('/servers');
+    } else {
       router.replace('/login');
     }
-  }, [loading, user, router]);
+  }, [router]);
 
-  return (
-    <div className='flex items-center justify-center min-h-screen'>
-      <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-100' />
-    </div>
-  );
+  return <LoadingScreen message='リダイレクト中...' />;
 }

@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getAuth, signInWithCustomToken } from 'firebase/auth';
+import { LoadingScreen } from '../../components/LoadingScreen';
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -41,12 +42,5 @@ export default function AuthCallback() {
     handleAuth();
   }, [router, searchParams]);
 
-  return (
-    <div className='min-h-screen flex items-center justify-center'>
-      <div className='text-center'>
-        <div className='w-16 h-16 border-4 border-t-blue-500 border-gray-200 rounded-full animate-spin mx-auto' />
-        <p className='mt-4 text-gray-500'>認証中...</p>
-      </div>
-    </div>
-  );
+  return <LoadingScreen message='認証中...' />;
 }

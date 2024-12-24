@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import { LoadingScreen } from '../../components/LoadingScreen';
 
 interface CalendarPageProps {
   params: Promise<{ calendarId: string }>;
@@ -97,16 +98,21 @@ export default function CalendarPage({ params }: CalendarPageProps) {
     }
   }, [loading, user, router, calendarId, fetchCalendar]);
 
-  // ローディング表示の改善
-  if (loading || !calendar) {
-    return (
-      <div className='min-h-screen bg-gray-900 flex items-center justify-center'>
-        <div className='p-8 rounded-2xl bg-gray-800/50 backdrop-blur-sm border border-gray-700/50'>
-          <div className='w-12 h-12 border-4 border-violet-500/30 border-t-violet-500 rounded-full animate-spin' />
-        </div>
-      </div>
-    );
-  }
+  // // ローディング表示の改善
+  // if (loading || !calendar) {
+  //   return (
+  //     <LoadingScreen
+  //       message={
+  //         <>
+  //           <span className='text-purple-400 font-semibold'>
+  //             {calendar?.name}
+  //           </span>
+  //           <span>に移動中...</span>
+  //         </>
+  //       }
+  //     />
+  //   );
+  // }
 
   // サーバー参加確認ダイアログの改善
   if (showJoinDialog && calendar) {

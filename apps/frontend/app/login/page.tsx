@@ -21,11 +21,13 @@ import { TermsModal } from '../components/TermsModal';
 import { PrivacyPolicyModal } from '../components/PrivacyPolicyModal';
 import Header from '../components/Header';
 import { toast } from '../components/ui/use-toast';
+import { LoadingScreen } from '../components/LoadingScreen';
 
 export default function LoginPage() {
   const router = useRouter();
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
 
   // トークンチェックとログアウトメッセージの処理
   useEffect(() => {
@@ -49,7 +51,7 @@ export default function LoginPage() {
       sessionStorage.removeItem('logoutSuccess');
     }
 
-    // トークンチェックは少し遅延させる
+    // トークンチェック
     const checkToken = setTimeout(() => {
       const token = localStorage.getItem('token');
       if (token) {
@@ -57,11 +59,17 @@ export default function LoginPage() {
           sessionStorage.getItem('redirectPath') || '/servers';
         sessionStorage.removeItem('redirectPath');
         router.push(redirectPath);
+      } else {
+        setIsChecking(false);
       }
     }, 100);
 
     return () => clearTimeout(checkToken);
   }, [router]);
+
+  if (isChecking) {
+    return <LoadingScreen message='認証情報を確認中...' />;
+  }
 
   const handleLogin = () => {
     try {

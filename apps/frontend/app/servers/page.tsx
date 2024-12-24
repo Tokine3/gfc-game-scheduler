@@ -12,6 +12,10 @@ import { ServerCard } from './_components/ServerCard/ServerCard';
 import { useServers } from './_hooks/useServers';
 import { ServersHeader } from './_components/ServersHeader/ServersHeader';
 import { CreateCalendarDialog } from './_components/CreateCalendarDialog/CreateCalendarDialog';
+import { JoinServerDialog } from './_components/JoinServerDialog/JoinServerDialog';
+import { OpenCalendarDialog } from './_components/OpenCalendarDialog/OpenCalendarDialog';
+import { Calendar } from '../../apis/@types';
+import { LoadingScreen } from '../components/LoadingScreen';
 
 export default function ServersPage() {
   const { user, loading } = useAuth();
@@ -23,6 +27,14 @@ export default function ServersPage() {
   const [selectedServerId, setSelectedServerId] = useState<string>('');
   const [newCalendarName, setNewCalendarName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showJoinDialog, setShowJoinDialog] = useState(false);
+  const [selectedServer, setSelectedServer] = useState<Server | null>(null);
+  const [isJoining, setIsJoining] = useState(false);
+  const [showOpenCalendarDialog, setShowOpenCalendarDialog] = useState(false);
+  const [selectedCalendar, setSelectedCalendar] = useState<Calendar | null>(
+    null
+  );
+  const [selectedServerName, setSelectedServerName] = useState('');
 
   // 認証チェック
   useEffect(() => {
@@ -64,7 +76,14 @@ export default function ServersPage() {
     []
   );
 
+  const handleJoinClick = useCallback(async (server: Server) => {
+    setSelectedServer(server);
+    setShowJoinDialog(true);
+    return Promise.resolve();
+  }, []);
+
   const handleJoinServer = useCallback(async (server: Server) => {
+    setIsJoining(true);
     try {
       await client.servers.join.$post({
         body: {
@@ -84,6 +103,7 @@ export default function ServersPage() {
         title: '参加完了',
         description: `${server.name} に参加しました`,
       });
+      setShowJoinDialog(false);
     } catch (error) {
       console.error('Failed to join server:', error);
       toast({
@@ -91,6 +111,8 @@ export default function ServersPage() {
         description: 'サーバーへの参加に失敗しました',
         variant: 'destructive',
       });
+    } finally {
+      setIsJoining(false);
     }
   }, []);
 
@@ -153,19 +175,54 @@ export default function ServersPage() {
     }
   };
 
+  // カレンダークリック時の処理を最適化
+  const handleCalendarClick = useCallback(
+    (calendarId: string, serverName: string) => {
+      const calendar = servers
+        .flatMap((s) => s.calendars)
+        .find((c) => c.id === calendarId);
+
+      if (calendar) {
+        setSelectedCalendar({
+          ...calendar,
+          serverId:
+            servers.find((s) => s.calendars.some((c) => c.id === calendarId))
+              ?.id || '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+        setSelectedServerName(serverName);
+        setShowOpenCalendarDialog(true);
+      }
+    },
+    [servers]
+  );
+
+  // カレンダーページへの遷移
+  const handleOpenCalendar = useCallback(
+    (calendarId: string) => {
+      router.push(`/calendar/${calendarId}`);
+    },
+    [router]
+  );
+
   const totalServers = servers.length;
   const joinedServers = servers.filter((server) => server.isJoined).length;
 
+  if (loading) {
+    return <LoadingScreen message='認証情報を確認中...' />;
+  }
+
   if (isLoading) {
-    return <div>Loading...</div>; // ローディング表示を追加
+    return <LoadingScreen message='サーバー情報を読み込み中...' />;
   }
 
   return (
     <div className='min-h-screen bg-gray-900 flex flex-col'>
-      <div className='fixed inset-0 z-0'>
-        <div className='absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob' />
-        <div className='absolute top-0 -right-4 w-72 h-72 bg-cyan-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-2000' />
-        <div className='absolute -bottom-8 left-20 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-4000' />
+      <div className='fixed inset-0 z-0 opacity-50'>
+        <div className='absolute top-0 -left-4 w-64 h-64 bg-purple-500/20 rounded-full mix-blend-multiply filter blur-lg' />
+        <div className='absolute top-0 -right-4 w-64 h-64 bg-cyan-500/20 rounded-full mix-blend-multiply filter blur-lg' />
+        <div className='absolute -bottom-8 left-20 w-64 h-64 bg-pink-500/20 rounded-full mix-blend-multiply filter blur-lg' />
       </div>
 
       <Header />
@@ -184,8 +241,9 @@ export default function ServersPage() {
                 server={server}
                 isFavorite={favoriteStates[server.id] || false}
                 onFavoriteChange={handleFavoriteChange}
-                onJoinServer={handleJoinServer}
+                onJoinServer={handleJoinClick}
                 onCreateCalendar={handleCreateCalendar}
+                onCalendarClick={handleCalendarClick}
               />
             ))}
           </div>
@@ -199,6 +257,22 @@ export default function ServersPage() {
         onCalendarNameChange={setNewCalendarName}
         onSubmit={handleCreateCalendarSubmit}
         isSubmitting={isSubmitting}
+      />
+
+      <JoinServerDialog
+        isOpen={showJoinDialog}
+        onClose={() => setShowJoinDialog(false)}
+        server={selectedServer}
+        onConfirm={handleJoinServer}
+        isSubmitting={isJoining}
+      />
+
+      <OpenCalendarDialog
+        isOpen={showOpenCalendarDialog}
+        onClose={() => setShowOpenCalendarDialog(false)}
+        calendar={selectedCalendar}
+        serverName={selectedServerName}
+        onConfirm={handleOpenCalendar}
       />
 
       <footer className='relative z-10 border-t border-gray-800/60 bg-gray-900/95 backdrop-blur-md py-8 mt-12'>
