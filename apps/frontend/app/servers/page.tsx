@@ -382,7 +382,7 @@ export default function ServersPage() {
                           src={`https://cdn.discordapp.com/icons/${server.id}/${server.icon}.png`}
                           alt={server.name}
                           fill
-                          sizes='50vw'
+                          sizes='20vw'
                           className='object-cover'
                         />
                       </div>

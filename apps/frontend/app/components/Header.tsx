@@ -99,7 +99,7 @@ export default function Header({ className }: HeaderProps) {
               src='/GFC.png'
               alt='Logo'
               fill
-              sizes='50vw'
+              sizes='20vw'
               className='object-cover'
             />
           </div>
