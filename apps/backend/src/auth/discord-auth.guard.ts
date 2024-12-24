@@ -13,9 +13,10 @@ export class DiscordAuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const discordId = request.headers['x-discord-id'];
+    const discordToken = request.headers['x-discord-token'];
 
-    if (!discordId) {
-      throw new UnauthorizedException('Discord ID not provided');
+    if (!discordId || !discordToken) {
+      throw new UnauthorizedException('Discord credentials not provided');
     }
 
     const user = await this.prisma.user.findUnique({
@@ -26,8 +27,12 @@ export class DiscordAuthGuard implements CanActivate {
       throw new UnauthorizedException('User not found');
     }
 
-    // リクエストにユーザー情報を添付
-    request.user = user;
+    // リクエストにユーザー情報とトークンを添付
+    request.user = {
+      ...user,
+      accessToken: discordToken,
+    };
+
     return true;
   }
 }

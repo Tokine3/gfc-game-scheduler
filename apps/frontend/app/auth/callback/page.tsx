@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getAuth, signInWithCustomToken } from 'firebase/auth';
-import { LoadingSpinner } from '../../components/ui/loading-spinner';
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -17,34 +16,37 @@ export default function AuthCallback() {
         const discordId = searchParams.get('discordId');
         const discordToken = searchParams.get('discordToken');
 
-        if (
-          status === 'success' &&
-          firebaseToken &&
-          discordId &&
-          discordToken
-        ) {
-          // Firebaseの認証のみ実行（トークンは保存しない）
+        if (!status || !firebaseToken || !discordId || !discordToken) {
+          throw new Error('Missing required parameters');
+        }
+
+        if (status === 'success') {
           const auth = getAuth();
           await signInWithCustomToken(auth, firebaseToken);
 
-          // Discordの認証情報のみを保存
+          // LocalStorageに認証情報を保存
           localStorage.setItem('discord_id', discordId);
           localStorage.setItem('discord_token', discordToken);
 
-          router.push('/servers');
-          return;
+          router.replace('/servers');
+        } else {
+          throw new Error('Authentication failed');
         }
-
-        console.error('Missing required parameters');
-        router.push('/login?error=missing_params');
       } catch (error) {
-        console.error('Auth error:', error);
-        router.push('/login?error=auth_failed');
+        console.error('Auth callback error:', error);
+        router.replace('/login?error=auth_failed');
       }
     };
 
     handleAuth();
   }, [router, searchParams]);
 
-  return <LoadingSpinner message='認証中...' />;
+  return (
+    <div className='min-h-screen flex items-center justify-center'>
+      <div className='text-center'>
+        <div className='w-16 h-16 border-4 border-t-blue-500 border-gray-200 rounded-full animate-spin mx-auto' />
+        <p className='mt-4 text-gray-500'>認証中...</p>
+      </div>
+    </div>
+  );
 }

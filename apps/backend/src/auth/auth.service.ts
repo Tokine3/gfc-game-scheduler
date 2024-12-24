@@ -8,6 +8,7 @@ import { GetUserServersResponse } from './entities/server.entity';
 import { getUserDiscordServer } from 'utils/getDiscordServer';
 import { RequestWithUser } from 'src/types/request.types';
 import { logger } from 'src/utils/logger';
+import * as admin from 'firebase-admin';
 
 @Injectable()
 export class AuthService {
@@ -18,7 +19,7 @@ export class AuthService {
   ) {}
 
   async validateUser(discordUser: AuthUserDto) {
-    const { id, name, avatar } = discordUser;
+    const { id, name, avatar, accessToken } = discordUser;
     let user = await this.prisma.user.findUnique({
       where: { id },
     });
@@ -43,7 +44,10 @@ export class AuthService {
       });
     }
 
-    return user;
+    return {
+      ...user,
+      accessToken,
+    };
   }
 
   async login(user: any) {
@@ -115,6 +119,21 @@ export class AuthService {
         data: [],
         calendarCount: 0,
       };
+    }
+  }
+
+  async createFirebaseToken(user: any): Promise<string> {
+    try {
+      const uid = String(user.id);
+      const customClaims = {
+        provider: 'discord',
+        name: user.name,
+      };
+
+      return await admin.auth().createCustomToken(uid, customClaims);
+    } catch (error) {
+      logger.error('Firebase token creation error:', error);
+      throw error;
     }
   }
 }

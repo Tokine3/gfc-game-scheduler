@@ -1,49 +1,32 @@
+import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-discord';
-import { Injectable } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { ConfigService } from '@nestjs/config';
-import { logger } from 'src/utils/logger';
 
 @Injectable()
 export class DiscordStrategy extends PassportStrategy(Strategy, 'discord') {
-  constructor(
-    private authService: AuthService,
-    private configService: ConfigService
-  ) {
+  constructor(private authService: AuthService) {
     super({
-      clientID: configService.get('DISCORD_CLIENT_ID'),
-      clientSecret: configService.get('DISCORD_CLIENT_SECRET'),
-      callbackURL:
-        configService.get('DISCORD_CALLBACK_URL') ||
-        `${configService.get('API_URL')}/auth/discord/callback`,
-      scope: ['identify', 'guilds', 'guilds.members.read'],
+      clientID: process.env.DISCORD_CLIENT_ID,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET,
+      callbackURL: process.env.DISCORD_CALLBACK_URL,
+      scope: ['identify', 'guilds'],
     });
   }
 
   async validate(accessToken: string, refreshToken: string, profile: any) {
-    try {
-      logger.log('Discord Strategy - accessToken:', accessToken);
-      const { id, global_name, username, avatar } = profile;
-      console.log('Discord Strategy - profile:', profile);
-      const user = await this.authService.validateUser({
-        id,
-        name: global_name || username,
-        avatar,
-      });
+    const { id, username: name, avatar } = profile;
 
-      return {
-        ...user,
-        accessToken,
-      };
-    } catch (error) {
-      if (error.message?.includes('rate limited')) {
-        logger.log('Rate limit hit, waiting before retry...');
-        // 5秒待機してリトライ
-        await new Promise((resolve) => setTimeout(resolve, 5000));
-        return this.validate(accessToken, refreshToken, profile);
-      }
-      throw error;
-    }
+    const user = await this.authService.validateUser({
+      id,
+      name,
+      avatar,
+      accessToken,
+    });
+
+    return {
+      ...user,
+      accessToken,
+    };
   }
 }
