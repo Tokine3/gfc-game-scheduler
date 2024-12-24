@@ -6,20 +6,20 @@ import interactionPlugin from '@fullcalendar/interaction';
 import jaLocale from '@fullcalendar/core/locales/ja';
 import { DateSelectArg, EventContentArg } from '@fullcalendar/core';
 import { User, Crosshair } from 'lucide-react';
-import { cn } from '../../lib/utils';
+import { cn } from '../../../../../lib/utils';
 import { useRef, useMemo, useCallback, useState, useEffect } from 'react';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from './ui/tooltip';
+} from '../../../../components/ui/tooltip';
 import holidays from '@holiday-jp/holiday_jp';
 import dayjs from 'dayjs';
 import dynamic from 'next/dynamic';
-import { debounce, rafThrottle } from '../../lib/utils';
-import { Participant } from '../../apis/@types';
-import { Availability, CalendarEvent } from './Calendar';
+import { debounce, rafThrottle } from '../../../../../lib/utils';
+import { Participant } from '../../../../../apis/@types';
+import { Availability, CalendarEvent } from '../Calendar/_types/types';
 
 interface CalendarViewProps {
   date: Date | undefined;
@@ -46,10 +46,13 @@ interface Holiday {
   name: string;
 }
 
-const AvailableUsers = dynamic(() => import('./AvailableUsers'), {
-  loading: () => null,
-  ssr: false,
-});
+const AvailableUsers = dynamic(
+  () => import('../AvailableUsers/AvailableUsers'),
+  {
+    loading: () => null,
+    ssr: false,
+  }
+);
 
 export function CalendarView({
   date,

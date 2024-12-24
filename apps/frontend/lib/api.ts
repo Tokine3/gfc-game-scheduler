@@ -2,12 +2,6 @@ import aspida from '@aspida/axios';
 import axios from 'axios';
 import api from '../apis/$api';
 
-const getCookie = (name: string): string | undefined => {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop()?.split(';').shift();
-};
-
 const axiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   withCredentials: true,

@@ -2,8 +2,8 @@
 
 import { Button } from '../ui/button';
 import { useState } from 'react';
-import AvailableUsers from '../AvailableUsers';
 import { Users } from 'lucide-react';
+import AvailableUsers from '../../calendars/[calendarId]/_components/AvailableUsers/AvailableUsers';
 
 export default function AvailableUsersMock() {
   const [isOpen, setIsOpen] = useState(false);

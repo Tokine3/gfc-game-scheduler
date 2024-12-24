@@ -7,7 +7,7 @@ import { client } from '../../lib/api';
 import Header from '../components/Header';
 import { toast } from '../components/ui/use-toast';
 import { motion } from 'framer-motion';
-import type { Server } from './types';
+import type { Server, ServerMinimal } from './types';
 import { ServerCard } from './_components/ServerCard/ServerCard';
 import { useServers } from './_hooks/useServers';
 import { ServersHeader } from './_components/ServersHeader/ServersHeader';
@@ -82,7 +82,7 @@ export default function ServersPage() {
     return Promise.resolve();
   }, []);
 
-  const handleJoinServer = useCallback(async (server: Server) => {
+  const handleJoinServer = useCallback(async (server: ServerMinimal) => {
     setIsJoining(true);
     try {
       await client.servers.join.$post({
@@ -201,7 +201,7 @@ export default function ServersPage() {
   // カレンダーページへの遷移
   const handleOpenCalendar = useCallback(
     (calendarId: string) => {
-      router.push(`/calendar/${calendarId}`);
+      router.push(`/calendars/${calendarId}`);
     },
     [router]
   );

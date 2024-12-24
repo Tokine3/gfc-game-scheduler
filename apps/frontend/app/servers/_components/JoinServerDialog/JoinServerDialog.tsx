@@ -10,7 +10,7 @@ import {
 } from '../../../components/ui/dialog';
 import { ServerIcon } from 'lucide-react';
 import Image from 'next/image';
-import type { Server } from '../../types';
+import { Server } from '../../../../apis/@types';
 
 type Props = {
   isOpen: boolean;

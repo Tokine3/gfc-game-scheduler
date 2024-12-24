@@ -11,6 +11,12 @@ export type Server = {
   updatedAt?: string;
 };
 
+export type ServerMinimal = {
+  id: string;
+  name: string;
+  icon: string | null;
+};
+
 export type FavoriteStates = {
   [key: string]: boolean;
 };
