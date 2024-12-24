@@ -30,9 +30,7 @@ export const useServers = (userId: string | null) => {
           if (a.isFavorite !== b.isFavorite) {
             return b.isFavorite ? 1 : -1;
           }
-          return (
-            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-          );
+          return 0;
         });
 
         setServers(sortedServers);
