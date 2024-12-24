@@ -32,7 +32,6 @@ import {
   CalendarWithRelations,
   PersonalSchedule,
   PersonalScheduleWithRelations,
-  PublicSchedule,
   PublicScheduleWithRelations,
 } from '../../apis/@types';
 import { logger } from '../../lib/logger';
@@ -45,7 +44,9 @@ dayjs.extend(timezone);
 // タイムゾーンを日本に設定
 dayjs.tz.setDefault('Asia/Tokyo');
 
-export type CalendarEvent = PersonalSchedule | PublicSchedule;
+export type CalendarEvent =
+  | PersonalScheduleWithRelations
+  | PublicScheduleWithRelations;
 
 // 型ガードの追加
 export function isPublicSchedule(

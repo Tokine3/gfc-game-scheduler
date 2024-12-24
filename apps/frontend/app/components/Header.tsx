@@ -95,7 +95,13 @@ export default function Header({ className }: HeaderProps) {
         >
           <div className='relative w-8 h-8 rounded-lg overflow-hidden ring-1 ring-gray-800/60 transition-all group-hover:ring-violet-500/50 group-hover:scale-105'>
             <div className='absolute inset-0 bg-gradient-to-br from-violet-500/20 to-indigo-500/20 opacity-0 group-hover:opacity-100 transition-opacity' />
-            <Image src='/GFC.png' alt='Logo' fill className='object-cover' />
+            <Image
+              src='/GFC.png'
+              alt='Logo'
+              fill
+              sizes='50vw'
+              className='object-cover'
+            />
           </div>
           <h1 className='text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-indigo-600'>
             GFC Scheduler

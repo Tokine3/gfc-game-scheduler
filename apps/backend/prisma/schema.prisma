@@ -15,7 +15,6 @@ generator client {
 // ユーザー
 model User {
   serverUsers      ServerUser[]
-  personalSchedule PersonalSchedule[]
   participants     Participant[]
   gameSetting      GameSetting[]
   id               String             @id // Discord ID
@@ -38,15 +37,18 @@ model Server {
 
 // サーバーとユーザーの中間テーブル
 model ServerUser {
+  personalSchedule PersonalSchedule[]
+  publicSchedule PublicSchedule[]
   server    Server   @relation(fields: [serverId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
+  id        Int   @id @default(autoincrement())
   userId    String
   serverId  String
   isFavorite Boolean  @default(false)
   isJoined  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  @@id([userId, serverId])
+  @@unique([userId, serverId])
 }
 
 model Calendar {
@@ -64,8 +66,10 @@ model Calendar {
 model PublicSchedule {
   calendar     Calendar      @relation(fields: [calendarId], references: [id])
   participants Participant[]
+  serverUser   ServerUser    @relation(fields: [serverUserId], references: [id])
   id           Int           @id @default(autoincrement())
   calendarId   String
+  serverUserId Int
   date         DateTime
   title        String
   description  String?
@@ -81,9 +85,10 @@ model PublicSchedule {
 // 個人スケジュール
 model PersonalSchedule {
   calendar    Calendar @relation(fields: [calendarId], references: [id])
-  user        User     @relation(fields: [userId], references: [id])
+  serverUser  ServerUser @relation(fields: [serverUserId], references: [id])
   id          Int      @id @default(autoincrement())
   calendarId  String
+  serverUserId Int
   date        DateTime
   title       String
   userId      String

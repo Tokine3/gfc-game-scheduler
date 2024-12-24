@@ -3,7 +3,7 @@ import { logger } from './logger';
 
 export async function getUserDiscordServer(req: RequestWithUser) {
   try {
-    const discordToken = req.cookies['discord_token'];
+    const discordToken = req.headers['x-discord-token'];
     const response = await fetch(
       'https://discord.com/api/v10/users/@me/guilds',
       {

@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { ServerUser } from 'src/servers/entities/server.entity';
 import { User } from 'src/user/entities/user.entity';
 
 export class ScheduleUserInfo {
@@ -82,10 +83,32 @@ export class PublicSchedule extends BaseSchedule {
   participants: Participant[];
 }
 
-export class AllUserSchedules {
-  @ApiProperty({ description: '個人スケジュール', type: [PersonalSchedule] })
-  personalSchedules: PersonalSchedule[];
+export class PublicScheduleWithRelations extends PublicSchedule {
+  @ApiProperty({ description: '参加者', type: [Participant] })
+  @Type(() => Participant)
+  participants: Participant[];
 
-  @ApiProperty({ description: '公開スケジュール', type: [PublicSchedule] })
-  publicSchedules: PublicSchedule[];
+  @ApiProperty({ description: 'サーバユーザ' })
+  @Type(() => ServerUser)
+  serverUser: ServerUser;
+}
+
+export class PersonalScheduleWithRelations extends PersonalSchedule {
+  @ApiProperty({ description: 'サーバユーザ' })
+  @Type(() => ServerUser)
+  serverUser: ServerUser;
+}
+
+export class AllUserSchedules {
+  @ApiProperty({
+    description: '個人スケジュール',
+    type: [PersonalScheduleWithRelations],
+  })
+  personalSchedules: PersonalScheduleWithRelations[];
+
+  @ApiProperty({
+    description: '公開スケジュール',
+    type: [PublicScheduleWithRelations],
+  })
+  publicSchedules: PublicScheduleWithRelations[];
 }

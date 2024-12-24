@@ -35,6 +35,14 @@ export class SchedulesService {
         id: calendarId,
       },
     });
+    const serverUser = await this.prisma.serverUser.findUnique({
+      where: {
+        userId_serverId: {
+          userId,
+          serverId: calendar.serverId,
+        },
+      },
+    });
 
     if (!calendar) {
       throw new NotFoundException('カレンダーが見つかりません');
@@ -48,6 +56,11 @@ export class SchedulesService {
         quota,
         createdBy: userName,
         updatedBy: userName,
+        serverUser: {
+          connect: {
+            id: serverUser.id,
+          },
+        },
         calendar: {
           connect: {
             id: calendarId,
@@ -65,7 +78,19 @@ export class SchedulesService {
     logger.log('createPersonalSchedule', body);
     const { id: userId, name: userName } = req.user;
 
-    const [calendar, personalSchedules] = await Promise.all([
+    const [serverUser, calendar, personalSchedules] = await Promise.all([
+      this.prisma.serverUser.findFirst({
+        where: {
+          userId,
+          server: {
+            calendars: {
+              some: {
+                id: calendarId,
+              },
+            },
+          },
+        },
+      }),
       this.prisma.calendar.findUnique({
         where: {
           id: calendarId,
@@ -80,8 +105,15 @@ export class SchedulesService {
             lte: dayjs().endOf('month').toDate(),
           },
         },
+        include: {
+          serverUser: true,
+        },
       }),
     ]);
+
+    if (!serverUser) {
+      throw new NotFoundException('サーバーユーザーが見つかりません');
+    }
 
     if (!calendar) {
       throw new NotFoundException('カレンダーが見つかりません');
@@ -118,6 +150,9 @@ export class SchedulesService {
         await tx.personalSchedule.update({
           where: { id: schedule.id },
           data: schedule,
+          include: {
+            serverUser: true,
+          },
         });
       }
 
@@ -131,9 +166,10 @@ export class SchedulesService {
             isPrivate: schedule.isPrivate,
             isFree: schedule.isFree,
             calendarId,
+            serverUserId: serverUser.id,
+            userId,
             createdBy: userName,
             updatedBy: userName,
-            userId,
           })),
         });
       }
@@ -150,7 +186,7 @@ export class SchedulesService {
         },
       },
       include: {
-        user: true,
+        serverUser: true,
       },
     });
   }

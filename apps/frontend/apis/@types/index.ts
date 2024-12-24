@@ -258,38 +258,11 @@ export type PersonalSchedule = {
   isPersonal: boolean;
 };
 
-export type PublicSchedule = {
-  /** ID */
-  id: string;
-  /** 日付 */
-  date: string;
-  /** タイトル */
-  title: string;
-  /** 説明 */
-  description: string;
-  /** 作成者名 */
-  createdBy: string;
-  /** 更新者名 */
-  updatedBy: string;
-  /** 作成日 */
-  createdAt: string;
-  /** 更新日 */
-  updatedAt: string;
-  /** 募集人数 */
-  quota: number;
-  /** 募集状況 */
-  isRecruiting: boolean;
-  /** 個人予定フラグ */
-  isPersonal: boolean;
-  /** 参加者 */
-  participants: Participant[];
-};
-
 export type AllUserSchedules = {
   /** 個人スケジュール */
-  personalSchedules: PersonalSchedule[];
+  personalSchedules: PersonalScheduleWithRelations[];
   /** 公開スケジュール */
-  publicSchedules: PublicSchedule[];
+  publicSchedules: PublicScheduleWithRelations[];
 };
 
 export type UpdateScheduleDto = {};
