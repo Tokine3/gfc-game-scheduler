@@ -6,7 +6,6 @@ import {
   User as FirebaseUser,
   signOut,
 } from 'firebase/auth';
-import { client } from '../../lib/api';
 
 export type DiscordUser = {
   id: string;

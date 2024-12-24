@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarDays, LogOut, Plus, ServerIcon } from 'lucide-react';
+import { LogOut, ServerIcon } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState, useCallback } from 'react';
 import { Button } from './ui/button';

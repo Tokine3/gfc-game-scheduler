@@ -18,18 +18,14 @@ import {
 import { Button } from '../../components/ui/button';
 import { logger } from '../../../lib/logger';
 import {
-  ArrowLeft,
   ServerIcon,
-  CalendarDays,
   Settings,
   Users,
-  Bell,
   Calendar as CalendarIcon,
   ChevronLeft,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
-import { LoadingScreen } from '../../components/LoadingScreen';
 
 interface CalendarPageProps {
   params: Promise<{ calendarId: string }>;

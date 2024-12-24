@@ -9,17 +9,7 @@ import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import CalendarView from './CalendarView';
 import { Button } from './ui/button';
-import {
-  CalendarIcon,
-  CrosshairIcon,
-  Gamepad2Icon,
-  UserIcon,
-  UsersIcon,
-  User,
-  CalendarDays,
-  Settings,
-  Bell,
-} from 'lucide-react';
+import { CrosshairIcon, UserIcon, UsersIcon, CalendarDays } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -30,12 +20,10 @@ import { cn } from '../../lib/utils';
 import EventTypeSelector from './EventTypeSelector';
 import {
   CalendarWithRelations,
-  PersonalSchedule,
   PersonalScheduleWithRelations,
   PublicScheduleWithRelations,
 } from '../../apis/@types';
 import { logger } from '../../lib/logger';
-import { mockPublicEvent, mockPersonalEvent } from '../../mock/events';
 import { client } from '../../lib/api';
 
 // プラグインを追加

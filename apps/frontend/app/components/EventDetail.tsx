@@ -15,7 +15,6 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { client } from '../../lib/api';
 import { toast } from './ui/use-toast';
 import { CalendarEvent, isPublicSchedule } from './Calendar';
 import dayjs from 'dayjs';
