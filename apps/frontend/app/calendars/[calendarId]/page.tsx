@@ -1,84 +1,86 @@
 'use client';
 
-import { use } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { use } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useCalendar } from '../../../hooks/useCalendar';
 import { useServerMembership } from '../../../hooks/useServerMembership';
 import { Calendar } from './_components';
 import Header from '../../components/Header';
-import { LoadingScreen } from '../../components/LoadingScreen';
 import { Calendar as CalendarIcon, ChevronLeft } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { JoinServerPrompt } from '../../servers/_components/JoinServerPrompt/JoinServerPrompt';
-import { CalendarWithRelations } from '../../../apis/@types';
-import { useEffect, useMemo } from 'react';
+import type { CalendarWithRelations } from '../../../apis/@types';
+import { logger } from '../../../lib/logger';
 
-interface Props {
+export default function CalendarPage({
+  params,
+}: {
   params: Promise<{ calendarId: string }>;
-}
-
-export default function CalendarPage({ params }: Props) {
-  const { user, loading: authLoading } = useAuth();
+}) {
+  const resolvedParams = use(params);
   const router = useRouter();
-  const { calendarId } = use(params);
-
-  const memoizedCalendarId = useMemo(
-    () => (!authLoading && user ? calendarId : undefined),
-    [authLoading, user, calendarId]
-  );
-
+  const { user, isLoading: isAuthLoading } = useAuth();
   const {
     calendar,
-    isLoading: calendarLoading,
+    publicSchedules,
+    personalSchedules,
+    isLoading: isCalendarLoading,
     isError,
-  } = useCalendar(memoizedCalendarId);
-
-  const { isMember, isLoading: membershipLoading } = useServerMembership(
-    calendar?.serverId
-  );
+  } = useCalendar(resolvedParams.calendarId);
+  const { isMember } = useServerMembership(calendar?.serverId);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      sessionStorage.setItem('redirectPath', `/calendars/${calendarId}`);
+    logger.info('Calendar page auth state:', {
+      hasUser: !!user,
+      isAuthLoading,
+      userId: user?.id,
+      calendarId: resolvedParams.calendarId,
+      localStorageDiscordId: localStorage.getItem('discord_id'),
+      localStorageDiscordToken: !!localStorage.getItem('discord_token'),
+    });
+
+    if (!isAuthLoading && !user) {
+      logger.log('No user found in calendar page, redirecting to login');
       router.replace('/login');
+      return;
     }
-  }, [authLoading, user, calendarId, router]);
+  }, [user, isAuthLoading, router, resolvedParams.calendarId]);
 
   useEffect(() => {
+    logger.info('Calendar data state:', {
+      hasCalendar: !!calendar,
+      isCalendarLoading,
+      isError: !!isError,
+      publicSchedulesCount: publicSchedules?.length,
+      personalSchedulesCount: personalSchedules?.length,
+    });
+
     if (isError) {
-      router.replace('/error/unauthorized');
+      logger.error('Calendar fetch error:', isError);
     }
-  }, [isError, router]);
+  }, [
+    calendar,
+    isCalendarLoading,
+    isError,
+    publicSchedules,
+    personalSchedules,
+  ]);
 
-  const isLoading = useMemo(
-    () => authLoading || calendarLoading || membershipLoading,
-    [authLoading, calendarLoading, membershipLoading]
-  );
+  if (isAuthLoading || isCalendarLoading) {
+    logger.info('Calendar page loading...', {
+      isAuthLoading,
+      isCalendarLoading,
+    });
+    return null;
+  }
 
-  const loadingMessage = useMemo(
-    () => (
-      <div className='flex items-center gap-2'>
-        {!calendar ? (
-          <span>カレンダー</span>
-        ) : (
-          <span className='text-purple-400 font-semibold'>
-            {calendar?.name}
-          </span>
-        )}
-        <span>を読み込んでいます...</span>
-      </div>
-    ),
-    [calendar?.name]
-  );
-
-  if (isLoading) {
-    return (
-      <div className='min-h-screen bg-gray-900'>
-        <LoadingScreen message={loadingMessage} />
-      </div>
-    );
+  if (isError) {
+    logger.error('Error loading calendar, redirecting to login');
+    router.replace('/login');
+    return null;
   }
 
   if (calendar && !isMember) {

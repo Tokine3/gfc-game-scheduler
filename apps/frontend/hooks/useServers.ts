@@ -1,33 +1,47 @@
 import useSWR from 'swr';
 import { client } from '../lib/api';
-import { ServerWithRelations } from '../apis/@types';
+import type { ServerWithRelations } from '../apis/@types';
+import { logger } from '../lib/logger';
 
-const fetchServers = async () => {
-  const response = await client.auth.servers.get();
-  const serversData = response.body.data;
-
-  return serversData
-    .map((server, index) => {
-      const serverUser = server.serverUsers[index];
-      return {
-        ...server,
-        isJoined: serverUser?.isJoined || false,
-        isFavorite: serverUser?.isFavorite || false,
-        updatedAt: serverUser?.updatedAt || new Date(0).toISOString(),
-        calendars: server.calendars,
-      };
-    })
-    .sort((a, b) => {
-      const aFavorite = a.serverUsers[0]?.isFavorite || false;
-      const bFavorite = b.serverUsers[0]?.isFavorite || false;
-      if (aFavorite !== bFavorite) {
-        return aFavorite ? -1 : 1;
-      }
-      return 0;
-    });
+type UseServersReturn = {
+  servers: ServerWithRelations[];
+  calendarCount: number;
+  isError: Error | undefined;
+  isLoading: boolean;
+  mutate: ReturnType<typeof useSWR<ServerWithRelations[]>>['mutate'];
 };
 
-export const useServers = () => {
+/**
+ * @description サーバー一覧を取得・管理するカスタムフック
+ */
+const fetchServers = async (): Promise<ServerWithRelations[]> => {
+  try {
+    const response = await client.auth.servers.get();
+    const serversData = response.body.data;
+    return serversData
+      .map((server, index) => {
+        const serverUser = server.serverUsers[index];
+        return {
+          ...server,
+          isJoined: serverUser?.isJoined ?? false,
+          isFavorite: serverUser?.isFavorite ?? false,
+          updatedAt: serverUser?.updatedAt ?? new Date(0).toISOString(),
+          calendars: server.calendars,
+        };
+      })
+      .sort((a, b) => {
+        const aFavorite = a.serverUsers[0]?.isFavorite ?? false;
+        const bFavorite = b.serverUsers[0]?.isFavorite ?? false;
+        return aFavorite === bFavorite ? 0 : aFavorite ? -1 : 1;
+      });
+  } catch (error) {
+    // 認証エラーの場合はログに記録
+    logger.error('Failed to fetch servers:', error);
+    throw error;
+  }
+};
+
+export const useServers = (): UseServersReturn => {
   const {
     data: servers,
     error,
@@ -39,10 +53,10 @@ export const useServers = () => {
   });
 
   return {
-    servers: servers || [],
+    servers: servers ?? [],
     calendarCount:
-      servers?.reduce((acc, server) => acc + server.calendars.length, 0) || 0,
-    error,
+      servers?.reduce((acc, server) => acc + server.calendars.length, 0) ?? 0,
+    isError: error,
     isLoading,
     mutate,
   };

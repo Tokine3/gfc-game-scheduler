@@ -3,48 +3,46 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../hooks/useAuth';
-import { LoadingScreen } from '../components/LoadingScreen';
-import Header from '../components/Header';
 import { useServers } from '../../hooks/useServers';
+import { logger } from '../../lib/logger';
 import { ServerList } from './_components/ServerList/ServerList';
-import { toast } from '../components/ui/use-toast';
 
-/**
- * @description サーバー一覧ページ
- * 認証されていないユーザーはログインページにリダイレクトされる
- */
 export default function ServersPage() {
-  const { user, loading: authLoading } = useAuth();
-  const { servers, calendarCount, error, isLoading } = useServers();
   const router = useRouter();
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const {
+    servers,
+    calendarCount,
+    isLoading: isServersLoading,
+    isError,
+  } = useServers();
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    logger.info('Servers page auth state:', {
+      hasUser: !!user,
+      isAuthLoading,
+      userId: user?.id,
+      localStorageDiscordId: localStorage.getItem('discord_id'),
+    });
+
+    if (!isAuthLoading && !user) {
+      logger.log('No user found after auth loading, redirecting to login');
       router.replace('/login');
+      return;
     }
-  }, [authLoading, user, router]);
+  }, [user, isAuthLoading, router]);
 
-  useEffect(() => {
-    if (error) {
-      toast({
-        title: 'エラー',
-        description: 'サーバー一覧の取得に失敗しました',
-        variant: 'destructive',
-      });
-      router.replace('/error');
-    }
-  }, [error, router]);
-
-  if (authLoading || isLoading) {
-    return <LoadingScreen message='サーバ一覧を読み込んでいます...' />;
+  // 認証またはサーバーデータのロード中は何も表示しない
+  if (isAuthLoading || isServersLoading) {
+    return null;
   }
 
-  return (
-    <div className='min-h-screen bg-gray-900'>
-      <Header />
-      <main className='container mx-auto px-4 py-24'>
-        <ServerList servers={servers} calendarCount={calendarCount} />
-      </main>
-    </div>
-  );
+  // エラー時はログインページにリダイレクト
+  if (isError) {
+    logger.error('Error loading servers, redirecting to login');
+    router.replace('/login');
+    return null;
+  }
+
+  return <ServerList servers={servers} calendarCount={calendarCount} />;
 }
