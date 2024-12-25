@@ -2,15 +2,15 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePublicScheduleDto } from './dto/create-publicSchedule.dto';
-import { CreatePersonalScheduleDto } from './dto/create-pesonalSchedule.dto';
 import { RequestWithUser } from 'src/types/request.types';
 import { logger } from 'src/utils/logger';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import { PersonalSchedule } from '@prisma/client';
 import { FindAllUserSchedulesSchedulesDto } from './dto/findAllUserSchedules-schedules.dto';
-
+import { FindMyPersonalSchedulesScheduleDto } from './dto/findMyPersonalSchedules-schedule.dto';
+import { UpsertPersonalScheduleDto } from './dto/upsert-pesonalSchedule.dto';
+import { FindPublicSchedulesScheduleDto } from './dto/findPublicShedules-schedules.dto';
 // プラグインを追加
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -70,10 +70,10 @@ export class SchedulesService {
     });
   }
 
-  async createPersonalSchedules(
+  async upsertPersonalSchedules(
     req: RequestWithUser,
     calendarId: string,
-    body: CreatePersonalScheduleDto[]
+    body: UpsertPersonalScheduleDto[]
   ) {
     logger.log('createPersonalSchedule', body);
     const { id: userId, name: userName } = req.user;
@@ -138,8 +138,8 @@ export class SchedulesService {
         return acc;
       },
       {
-        existingSchedules: [] as (CreatePersonalScheduleDto & { id: number })[],
-        newSchedules: [] as CreatePersonalScheduleDto[],
+        existingSchedules: [] as (UpsertPersonalScheduleDto & { id: number })[],
+        newSchedules: [] as UpsertPersonalScheduleDto[],
       }
     );
 
@@ -196,6 +196,49 @@ export class SchedulesService {
         serverUser: true,
       },
     });
+  }
+
+  async findPublicSchedules(
+    req: RequestWithUser,
+    calendarId: string,
+    query: FindPublicSchedulesScheduleDto
+  ) {
+    const { fromDate, toDate } = query;
+
+    const publicSchedules = await this.prisma.publicSchedule.findMany({
+      where: {
+        calendarId,
+        date: { gte: fromDate, lte: toDate },
+      },
+      include: {
+        participants: true,
+        serverUser: { include: { user: true } },
+      },
+    });
+
+    return publicSchedules;
+  }
+
+  async findMyPersonalSchedules(
+    req: RequestWithUser,
+    calendarId: string,
+    query: FindMyPersonalSchedulesScheduleDto
+  ) {
+    const { id: userId } = req.user;
+    const { fromDate, toDate } = query;
+
+    const personalSchedules = await this.prisma.personalSchedule.findMany({
+      where: {
+        calendarId,
+        userId,
+        date: { gte: dayjs(fromDate).toDate(), lte: dayjs(toDate).toDate() },
+      },
+      include: { serverUser: { include: { user: true } } },
+    });
+
+    console.log('personalSchedules', personalSchedules);
+
+    return personalSchedules;
   }
 
   async findAllUserSchedules(

@@ -38,6 +38,13 @@ type Props = {
   onClose: () => void;
   date?: Date;
   calendarId: string;
+  initialSchedules?: {
+    date: string;
+    isFree: boolean;
+    title: string;
+    isPrivate: boolean;
+  }[];
+  onSuccess?: () => void;
 };
 
 type DaySchedule = {
@@ -57,12 +64,28 @@ export const PersonalEventCreation: FC<Props> = ({
   onClose,
   date,
   calendarId,
+  initialSchedules,
+  onSuccess,
 }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('month');
-  const [currentDate, setCurrentDate] = useState(dayjs(date || new Date()));
-  const [schedules, setSchedules] = useState<DaySchedule[]>([]);
+  const [currentDate, setCurrentDate] = useState(() =>
+    dayjs(date || new Date())
+      .tz('Asia/Tokyo')
+      .startOf('day')
+  );
+  const [schedules, setSchedules] = useState<DaySchedule[]>(() =>
+    (initialSchedules || []).map((schedule) => ({
+      date: dayjs(schedule.date).tz('Asia/Tokyo').format('YYYY-MM-DD'),
+      isFree: schedule.isFree,
+      description: schedule.title || '',
+      isPrivate: schedule.isPrivate,
+    }))
+  );
   const [hasChanges, setHasChanges] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [scheduleCache, setScheduleCache] = useState<
+    Record<string, DaySchedule[]>
+  >({});
 
   // 開発環境でのみ実行される初期化時のログ
   useEffect(() => {
@@ -71,6 +94,76 @@ export const PersonalEventCreation: FC<Props> = ({
     }
   }, [calendarId]);
 
+  // スケジュール表示部分を最適化
+  const getDaySchedule = useCallback(
+    (day: dayjs.Dayjs): DaySchedule => {
+      const dateStr = day.format('YYYY-MM-DD');
+      return (
+        schedules.find((s) => s.date === dateStr) || {
+          date: dateStr,
+          isFree: false,
+          description: '',
+          isPrivate: false,
+        }
+      );
+    },
+    [schedules]
+  );
+
+  // 初期データの取得を修正
+  useEffect(() => {
+    const fetchExistingSchedules = async () => {
+      const monthKey = currentDate.format('YYYY-MM');
+
+      // キャッシュにデータがある場合はそれを使用
+      if (scheduleCache[monthKey]) {
+        setSchedules(scheduleCache[monthKey]);
+        return;
+      }
+
+      // 初期データの月と同じ場合は初期データを使用
+      if (initialSchedules && currentDate.isSame(dayjs(date), 'month')) {
+        const initialData = initialSchedules.map((schedule) => ({
+          date: dayjs(schedule.date).tz('Asia/Tokyo').format('YYYY-MM-DD'),
+          isFree: schedule.isFree,
+          description: schedule.title || '',
+          isPrivate: schedule.isPrivate,
+        }));
+        setSchedules(initialData);
+        setScheduleCache((prev) => ({ ...prev, [monthKey]: initialData }));
+        return;
+      }
+
+      try {
+        const response = await client.schedules
+          ._calendarId(calendarId)
+          .me.personal.$get({
+            query: {
+              fromDate: currentDate.startOf(viewMode).utc().format(),
+              toDate: currentDate.endOf(viewMode).utc().format(),
+            },
+          });
+
+        const newSchedules = response.map((schedule) => ({
+          date: dayjs.utc(schedule.date).tz('Asia/Tokyo').format('YYYY-MM-DD'),
+          isFree: schedule.isFree,
+          description: schedule.title || '',
+          isPrivate: schedule.isPrivate,
+        }));
+
+        setSchedules(newSchedules);
+        setScheduleCache((prev) => ({ ...prev, [monthKey]: newSchedules }));
+        setHasChanges(false);
+      } catch (error) {
+        logger.error('Failed to fetch personal schedules:', error);
+      }
+    };
+
+    if (calendarId) {
+      fetchExistingSchedules();
+    }
+  }, [calendarId, currentDate, viewMode, initialSchedules, date]);
+
   // スケジュールの変更を処理
   const handleScheduleChange = useCallback(
     (
@@ -78,44 +171,51 @@ export const PersonalEventCreation: FC<Props> = ({
       field: 'isFree' | 'description' | 'isPrivate',
       value: boolean | string
     ) => {
+      const monthKey = currentDate.format('YYYY-MM');
       setSchedules((prev) => {
-        const existingSchedule = prev.find((s) =>
-          dayjs(s.date).isSame(day, 'day')
-        );
-        const newSchedule: DaySchedule = {
-          date: day.format('YYYY-MM-DD'),
-          isFree: existingSchedule?.isFree || false,
-          description: existingSchedule?.description || '',
-          isPrivate: existingSchedule?.isPrivate || false,
-          [field]: value,
-        };
+        const dateStr = day.format('YYYY-MM-DD');
+        const existingIndex = prev.findIndex((s) => s.date === dateStr);
+        const newSchedules = [...prev];
 
-        if (existingSchedule) {
-          return prev.map((s) =>
-            dayjs(s.date).isSame(day, 'day') ? newSchedule : s
-          );
+        if (existingIndex >= 0) {
+          newSchedules[existingIndex] = {
+            ...newSchedules[existingIndex],
+            [field]: value,
+          };
+        } else {
+          newSchedules.push({
+            date: dateStr,
+            isFree: false,
+            description: '',
+            isPrivate: false,
+            [field]: value,
+          });
         }
-        return [...prev, newSchedule];
+
+        // キャッシュも更新
+        setScheduleCache((cache) => ({
+          ...cache,
+          [monthKey]: newSchedules,
+        }));
+
+        return newSchedules;
       });
       setHasChanges(true);
     },
-    []
+    [currentDate]
   );
 
-  // 月/週の移動処理を追加
-  const handleDateChange = (direction: 'prev' | 'next') => {
-    setCurrentDate((prev) => {
-      if (viewMode === 'month') {
+  // 月/週の移動処理を最適化
+  const handleDateChange = useCallback(
+    (direction: 'prev' | 'next') => {
+      setCurrentDate((prev) => {
         return direction === 'prev'
-          ? prev.subtract(1, 'month')
-          : prev.add(1, 'month');
-      } else {
-        return direction === 'prev'
-          ? prev.subtract(1, 'week')
-          : prev.add(1, 'week');
-      }
-    });
-  };
+          ? prev.subtract(1, viewMode).startOf(viewMode)
+          : prev.add(1, viewMode).startOf(viewMode);
+      });
+    },
+    [viewMode]
+  );
 
   // 全ての予定が空きかどうかをチェックする関数
   const isAllSchedulesAvailable = () => {
@@ -125,48 +225,48 @@ export const PersonalEventCreation: FC<Props> = ({
     );
   };
 
-  // 一括チェック機能を更新
-  const handleBulkCheck = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const days = getDaysInRange(currentDate, viewMode);
-    const allChecked = isAllSchedulesAvailable();
+  // 一括チェック機能も修正
+  const handleBulkCheck = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      const days = getDaysInRange(currentDate, viewMode);
+      const allChecked = isAllSchedulesAvailable();
 
-    const newSchedules: DaySchedule[] = days.map((day) => ({
-      date: day.format('YYYY-MM-DD'),
-      isFree: !allChecked,
-      description:
-        schedules.find((s) => dayjs(s.date).isSame(day, 'day'))?.description ||
-        '',
-      isPrivate:
-        schedules.find((s) => dayjs(s.date).isSame(day, 'day'))?.isPrivate ||
-        false,
-    }));
-    setSchedules(newSchedules);
-    setHasChanges(true);
-  };
+      const newSchedules = days.map((day) => {
+        const dateStr = day.format('YYYY-MM-DD');
+        const existing = schedules.find((s) => s.date === dateStr);
+        return {
+          date: dateStr,
+          isFree: !allChecked,
+          description: existing?.description || '',
+          isPrivate: existing?.isPrivate || false,
+        };
+      });
+
+      setSchedules(newSchedules);
+      setHasChanges(true);
+    },
+    [currentDate, viewMode, schedules, isAllSchedulesAvailable]
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
-    console.log('handleSubmit', calendarId);
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      // 空き予定がある日のみを抽出してAPIリクエストを作成
       const schedulesToSubmit = schedules.map((schedule) => ({
         date: dayjs(schedule.date).format('YYYY-MM-DD'),
         title: schedule.description,
         description: schedule.description,
         isPrivate: schedule.isPrivate,
-        isFree: schedule.isFree, // 空き予定として登録
+        isFree: schedule.isFree,
       }));
 
       if (schedulesToSubmit.length > 0) {
-        logger.log('Submitting schedules:', schedulesToSubmit); // デバッグ用
         await client.schedules._calendarId(calendarId).personal.$post({
           body: schedulesToSubmit,
         });
+        onSuccess?.();
         onClose();
-      } else {
-        logger.log('No schedules to submit'); // デバッグ用
       }
     } catch (error) {
       logger.error('Failed to create personal events:', error);
@@ -178,7 +278,7 @@ export const PersonalEventCreation: FC<Props> = ({
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className='bg-gray-900/95 backdrop-blur-md border-gray-800 sm:max-w-2xl max-h-[95vh] sm:max-h-[85vh] overflow-hidden flex flex-col m-0 sm:m-4 rounded-none sm:rounded-lg border-0 sm:border'>
-        <DialogHeader>
+        <DialogHeader className='flex-shrink-0'>
           <DialogTitle className='text-lg sm:text-xl font-bold text-gray-100 flex items-center gap-2'>
             <div className='p-1 sm:p-1.5 rounded-lg bg-gradient-to-r from-violet-500/20 to-indigo-500/20 border border-violet-500/20'>
               <CalendarIcon className='w-4 h-4 sm:w-5 sm:h-5 text-violet-400' />
@@ -267,8 +367,8 @@ export const PersonalEventCreation: FC<Props> = ({
 
               {/* スケジュールリスト */}
               <div className='rounded-lg border border-gray-700/50 bg-gray-800/50 overflow-hidden'>
-                <div className='hidden sm:grid sm:grid-cols-[40px_120px_1fr_48px] items-center gap-2 p-2 border-b border-gray-700/50 bg-gray-800/50 backdrop-blur-sm'>
-                  <div className='flex justify-center'>
+                <div className='sticky top-0 z-10 hidden sm:grid sm:grid-cols-[40px_120px_1fr_48px] items-center gap-2 p-2 border-b border-gray-700/50 bg-gray-800/95 backdrop-blur-sm'>
+                  <div className='flex justify-end'>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger>
@@ -283,8 +383,12 @@ export const PersonalEventCreation: FC<Props> = ({
                       </Tooltip>
                     </TooltipProvider>
                   </div>
-                  <div className='text-gray-400 font-medium'>日付</div>
-                  <div className='text-gray-400 font-medium'>予定の内容</div>
+                  <div className='text-gray-400 font-medium text-center'>
+                    日付
+                  </div>
+                  <div className='text-gray-400 font-medium text-center'>
+                    予定の内容
+                  </div>
                   <div className='flex justify-start'>
                     <TooltipProvider>
                       <Tooltip>
@@ -302,17 +406,9 @@ export const PersonalEventCreation: FC<Props> = ({
                   </div>
                 </div>
 
-                <div className='max-h-[calc(100vh-280px)] sm:max-h-[450px] overflow-y-auto p-2 space-y-1.5'>
+                <div className='max-h-[calc(100vh-420px)] sm:max-h-[420px] overflow-y-auto p-2 space-y-1.5'>
                   {getDaysInRange(currentDate, viewMode).map((day) => {
-                    const schedule = schedules.find((s) =>
-                      dayjs(s.date).isSame(day, 'day')
-                    ) || {
-                      isFree: false,
-                      description: '',
-                      isPrivate: false,
-                      date: day.format('YYYY-MM-DD'),
-                    };
-
+                    const schedule = getDaySchedule(day);
                     return (
                       <ScheduleRow
                         key={day.format()}
@@ -328,7 +424,7 @@ export const PersonalEventCreation: FC<Props> = ({
           </div>
         </div>
 
-        <DialogFooter className='mt-1.5 sm:mt-3 gap-2 flex-shrink-0 border-t border-gray-800/60 bg-gray-900/95 backdrop-blur-md p-2 sm:p-0 sm:border-0 sm:bg-transparent'>
+        <DialogFooter className='flex-shrink-0 gap-2 border-t border-gray-800/60 bg-gray-900/95 backdrop-blur-md p-2 sm:p-0 sm:border-0 sm:bg-transparent'>
           <Button
             variant='outline'
             onClick={onClose}

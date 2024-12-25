@@ -1,4 +1,5 @@
 import type { AspidaClient, BasicHeaders } from "aspida";
+import { dataToURLString } from "aspida";
 import type { Methods as Methods_by08hd } from ".";
 import type { Methods as Methods_2yw7dz } from "./_id@string";
 
@@ -18,7 +19,14 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
         /**
          * @returns カレンダー取得成功
          */
-        get: (option?: { config?: T | undefined } | undefined) =>
+        get: (
+          option?:
+            | {
+                query?: Methods_2yw7dz["get"]["query"] | undefined;
+                config?: T | undefined;
+              }
+            | undefined,
+        ) =>
           fetch<
             Methods_2yw7dz["get"]["resBody"],
             BasicHeaders,
@@ -27,7 +35,14 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
         /**
          * @returns カレンダー取得成功
          */
-        $get: (option?: { config?: T | undefined } | undefined) =>
+        $get: (
+          option?:
+            | {
+                query?: Methods_2yw7dz["get"]["query"] | undefined;
+                config?: T | undefined;
+              }
+            | undefined,
+        ) =>
           fetch<
             Methods_2yw7dz["get"]["resBody"],
             BasicHeaders,
@@ -77,7 +92,15 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
           )
             .send()
             .then((r) => r.body),
-        $path: () => `${prefix}${prefix0}`,
+        $path: (
+          option?:
+            | {
+                method?: "get" | undefined;
+                query: Methods_2yw7dz["get"]["query"];
+              }
+            | undefined,
+        ) =>
+          `${prefix}${prefix0}${option && option.query ? `?${dataToURLString(option.query)}` : ""}`,
       };
     },
     /**

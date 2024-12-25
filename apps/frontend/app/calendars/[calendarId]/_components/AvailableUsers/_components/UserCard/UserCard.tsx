@@ -24,7 +24,7 @@ export const UserCard: FC<Props> = memo(({ user, index }) => (
     <div className='flex-shrink-0 relative'>
       {user.avatar ? (
         <img
-          src={user.avatar}
+          src={`https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`}
           alt={user.name}
           className={cn(
             'w-10 h-10 rounded-full border-2 transition-colors',

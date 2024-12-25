@@ -5,6 +5,7 @@ import { RequestWithUser } from '../types/request.types';
 import { PrismaService } from '../prisma/prisma.service';
 import { User } from '@prisma/client';
 import { logger } from 'src/utils/logger';
+import dayjs from 'dayjs';
 
 @Injectable()
 export class CalendarsService {
@@ -31,19 +32,71 @@ export class CalendarsService {
     return `This action returns all calendars`;
   }
 
-  async findOne(id: string) {
-    return this.prisma.calendar.findUnique({
+  async findOne(
+    req: RequestWithUser,
+    id: string,
+    fromDate?: string,
+    toDate?: string
+  ) {
+    const data = await this.prisma.calendar.findUnique({
       where: { id },
       include: {
         server: true,
         publicSchedules: {
+          where: {
+            date: {
+              gte:
+                dayjs(fromDate).startOf('day').toDate() ??
+                dayjs().startOf('day').toDate(),
+              lte:
+                dayjs(toDate).endOf('day').toDate() ??
+                dayjs().endOf('day').toDate(),
+            },
+          },
           include: {
-            participants: true,
+            serverUser: {
+              include: {
+                user: true,
+              },
+            },
+            participants: {
+              include: {
+                user: true,
+              },
+            },
           },
         },
-        personalSchedules: true,
+        personalSchedules: {
+          where: {
+            AND: [
+              {
+                serverUser: {
+                  userId: req.user.id,
+                },
+              },
+              {
+                date: {
+                  gte:
+                    dayjs(fromDate).startOf('day').toDate() ??
+                    dayjs().startOf('day').toDate(),
+                  lte:
+                    dayjs(toDate).endOf('day').toDate() ??
+                    dayjs().endOf('day').toDate(),
+                },
+              },
+            ],
+          },
+          include: {
+            serverUser: {
+              include: {
+                user: true,
+              },
+            },
+          },
+        },
       },
     });
+    return data;
   }
 
   async update(id: string, req: RequestWithUser, body: UpdateCalendarDto) {

@@ -246,7 +246,7 @@ export type CreatePublicScheduleDto = {
   quota?: number | undefined;
 };
 
-export type CreatePersonalScheduleDto = {
+export type UpsertPersonalScheduleDto = {
   /** 日付 */
   date: string;
   /** タイトル */

@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsDateString, IsOptional, IsString } from 'class-validator';
 
-export class CreatePersonalScheduleDto {
+export class UpsertPersonalScheduleDto {
   @ApiProperty({ description: '日付' })
   @IsDateString()
   date: string;

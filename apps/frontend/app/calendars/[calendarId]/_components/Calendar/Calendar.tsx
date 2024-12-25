@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import useSWR from 'swr';
 
 import { CalendarDays, CrosshairIcon } from 'lucide-react';
 import CalendarView from '../CalendarView/CalendarView';
@@ -17,11 +16,11 @@ import {
   PersonalScheduleWithRelations,
 } from '../../../../../apis/@types';
 import { Availability, CalendarEvent } from './_types/types';
-import { client } from '../../../../../lib/api';
-import { logger } from '../../../../../lib/logger';
 import { isPublicSchedule } from './_utils/utils';
 import { ActionBar } from './_components/ActionBar/ActionBar';
 import { EventList } from './_components/EventList/EventList';
+import { useCalendar } from '../../../../../hooks/useCalendar';
+import { toast } from '../../../../components/ui/use-toast';
 
 // プラグインを追加
 dayjs.extend(utc);
@@ -47,8 +46,38 @@ const isVisibleEvent = (event: CalendarEvent) => {
 };
 
 export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
-  // 初期状態を最適化
   const [date, setDate] = useState<Date>(() => new Date());
+  const {
+    calendar,
+    publicSchedules,
+    personalSchedules,
+    setDate: setCalendarDate,
+    refresh,
+  } = useCalendar(props.id);
+
+  // 月が変更された時
+  const handleMonthChange = useCallback(
+    (newDate: Date) => {
+      if (
+        date?.getMonth() !== newDate.getMonth() ||
+        date?.getFullYear() !== newDate.getFullYear()
+      ) {
+        setDate(newDate);
+        setCalendarDate(newDate); // これにより新しい月のデータを取得
+      }
+    },
+    [date, setCalendarDate]
+  );
+
+  // calendar.publicSchedules と publicSchedules を組み合わせて使用
+  const events = useMemo(() => {
+    if (!calendar || !publicSchedules) return [];
+
+    // 個人予定と共有イベントを結合
+    return [...publicSchedules, ...(personalSchedules || [])];
+  }, [publicSchedules, personalSchedules]);
+
+  // 初期状態を最適化
   const [showEventCreation, setShowEventCreation] = useState(false);
   const [showPersonalEventCreation, setShowPersonalEventCreation] =
     useState(false);
@@ -57,30 +86,6 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
     null
   );
   const [showTypeSelector, setShowTypeSelector] = useState(false);
-
-  // イベントの取得を最適化
-  const { data: events = [], mutate: mutateEvents } = useSWR(
-    props.id ? props.id : null,
-    async () => {
-      const response = await client.schedules
-        ._calendarId(props.id)
-        .all_schedules.$get({
-          query: {
-            fromDate: dayjs(date)
-              .startOf('month')
-              .subtract(1, 'hour')
-              .utc()
-              .format(),
-            toDate: dayjs(date).endOf('month').add(1, 'hour').utc().format(),
-          },
-        });
-      return [...response.personalSchedules, ...response.publicSchedules];
-    },
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 30000, // 30秒間キャッシュを保持
-    }
-  );
 
   // 空き予定の集計を最適化
   const availabilities = useMemo(() => {
@@ -186,17 +191,7 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
             onDateSelect={handleDateSelect}
             onEventClick={handleEventClick}
             availabilities={availabilities}
-            onMonthChange={useCallback(
-              (newDate: Date) => {
-                if (
-                  date?.getMonth() !== newDate.getMonth() ||
-                  date?.getFullYear() !== newDate.getFullYear()
-                ) {
-                  setDate(newDate);
-                }
-              },
-              [date]
-            )}
+            onMonthChange={handleMonthChange}
           />
         </div>
 
@@ -255,6 +250,13 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
           onClose={() => setShowEventCreation(false)}
           date={date}
           calendarId={props.id}
+          onSuccess={() => {
+            refresh();
+            toast({
+              title: 'イベントを作成しました',
+              description: 'カレンダーを更新しました',
+            });
+          }}
         />
       )}
       {showPersonalEventCreation && (
@@ -262,6 +264,14 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
           onClose={() => setShowPersonalEventCreation(false)}
           date={date}
           calendarId={props.id}
+          initialSchedules={personalSchedules}
+          onSuccess={() => {
+            refresh();
+            toast({
+              title: '個人予定を更新しました',
+              description: 'カレンダーを更新しました',
+            });
+          }}
         />
       )}
       {showEventDetail && selectedEvent && (

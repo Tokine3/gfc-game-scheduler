@@ -1,14 +1,8 @@
 /* eslint-disable */
 import type { DefineMethods } from "aspida";
-import type * as Types from "../../../@types";
+import type * as Types from "../../../../@types";
 
 export type Methods = DefineMethods<{
-  post: {
-    status: 200;
-    /** 公開スケジュール作成リクエスト */
-    reqBody: Types.CreatePublicScheduleDto;
-  };
-
   get: {
     query?:
       | {
@@ -20,7 +14,7 @@ export type Methods = DefineMethods<{
       | undefined;
 
     status: 200;
-    /** 公開スケジュール取得成功 */
-    resBody: Types.PublicScheduleWithRelations[];
+    /** ユーザーの個人スケジュール取得成功 */
+    resBody: Types.PersonalScheduleWithRelations[];
   };
 }>;

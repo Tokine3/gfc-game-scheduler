@@ -98,7 +98,7 @@ export function CalendarView({
   };
 
   const renderEventContent = (eventContent: EventContentArg) => {
-    const { isPersonal, participants, quota, title } =
+    const { isPersonal, participants, quota, originalEvent, title } =
       eventContent.event.extendedProps;
     const isFull =
       participants &&
@@ -106,11 +106,19 @@ export function CalendarView({
       participants.filter((p: Participant) => p.reaction === 'OK').length >=
         quota;
 
+    const handleEventClick = (e: React.MouseEvent) => {
+      e.stopPropagation(); // 日付セルのクリックイベントを防ぐ
+      if (originalEvent) {
+        onEventClick(originalEvent);
+      }
+    };
+
     return (
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <div
+              onClick={handleEventClick}
               className={cn(
                 'flex items-center gap-1.5 px-2 py-1 rounded-md',
                 'text-xs font-medium shadow-lg backdrop-blur-sm',
@@ -188,16 +196,6 @@ export function CalendarView({
         </Tooltip>
       </TooltipProvider>
     );
-  };
-
-  const handleEventClick = (clickInfo: any) => {
-    const eventId = clickInfo.event.id;
-    const originalEvent = events.find(
-      (e) => e.extendedProps.originalEvent.id === eventId
-    );
-    if (originalEvent?.extendedProps.originalEvent) {
-      onEventClick(originalEvent.extendedProps.originalEvent);
-    }
   };
 
   const holidayList = useMemo(() => {
@@ -360,7 +358,6 @@ export function CalendarView({
         initialDate={date}
         dayCellClassNames={dayCellClassNames}
         dayHeaderClassNames='!cursor-default hover:!bg-transparent'
-        eventClick={handleEventClick}
         dayCellContent={dayCellContent}
         datesSet={(dateInfo) => {
           onMonthChange(dateInfo.start);
