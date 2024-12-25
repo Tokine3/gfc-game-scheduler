@@ -5,18 +5,18 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../hooks/useAuth';
 
 export default function Home() {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading) {
+    if (!isLoading) {
       if (user) {
         router.replace('/servers');
       } else {
         router.replace('/login');
       }
     }
-  }, [loading, user, router]);
+  }, [isLoading, user, router]);
 
   return (
     <div className='flex items-center justify-center min-h-screen'>

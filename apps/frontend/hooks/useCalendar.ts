@@ -1,7 +1,7 @@
-import useSWR from 'swr';
+import { useState, useCallback, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { client } from '../lib/api';
 import { logger } from '../lib/logger';
-import { useState, useCallback, useEffect } from 'react';
 import dayjs from 'dayjs';
 import type {
   Calendar,
@@ -15,20 +15,17 @@ type UseCalendarReturn = {
   publicSchedules: PublicScheduleWithRelations[] | undefined;
   personalSchedules: PersonalScheduleWithRelations[] | undefined;
   isLoading: boolean;
-  isError: Error | undefined;
-  refresh: () => Promise<void>;
+  isError: Error | null;
+  refresh: () => void;
   setDate: (date: Date) => void;
   getPersonalScheduleKey: (
     targetDate: Date
   ) => readonly [string, { fromDate: string; toDate: string }] | null;
 };
 
-/**
- * @description カレンダーとスケジュールを管理するカスタムフック
- * @param calendarId - カレンダーID
- */
-export function useCalendar(calendarId: string | undefined): UseCalendarReturn {
+export function useCalendar(calendarId: string): UseCalendarReturn {
   const [date, setDate] = useState(() => new Date());
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     logger.info('Calendar hook initialized:', {
@@ -37,22 +34,18 @@ export function useCalendar(calendarId: string | undefined): UseCalendarReturn {
     });
   }, [calendarId, date]);
 
-  const getPublicScheduleKey = useCallback(
-    (targetDate: Date) => {
-      if (!calendarId) return null;
-      const query = {
-        fromDate: dayjs(targetDate).startOf('month').utc().format(),
-        toDate: dayjs(targetDate).endOf('month').utc().format(),
-      };
-      return [`/schedules/${calendarId}/public`, query] as const;
-    },
-    [calendarId]
-  );
+  // クエリキー
+  const calendarKey = ['calendar', calendarId];
+  const schedulesKey = ['schedules', calendarId, dayjs(date).format('YYYY-MM')];
+  const personalSchedulesKey = [
+    'personalSchedules',
+    calendarId,
+    dayjs(date).format('YYYY-MM'),
+  ];
 
   const getPersonalScheduleKey = useCallback(
     (targetDate: Date) => {
       if (!calendarId) return null;
-      // 前後1時間の余裕を持たせて取得
       const query = {
         fromDate: dayjs(targetDate)
           .startOf('month')
@@ -66,16 +59,13 @@ export function useCalendar(calendarId: string | undefined): UseCalendarReturn {
     [calendarId]
   );
 
-  const {
-    data: calendar,
-    error,
-    mutate: mutateCalendar,
-  } = useSWR(
-    calendarId ? `/calendars/${calendarId}` : null,
-    async () => {
+  // データフェッチ
+  const { data: calendar, error } = useQuery({
+    queryKey: calendarKey,
+    queryFn: async () => {
       try {
         logger.info('Fetching calendar data:', { calendarId });
-        const calendar = await client.calendars._id(calendarId!).$get({
+        const calendar = await client.calendars._id(calendarId).$get({
           query: {
             fromDate: dayjs(date)
               .startOf('month')
@@ -92,7 +82,7 @@ export function useCalendar(calendarId: string | undefined): UseCalendarReturn {
         });
 
         if (!hasServerAccess) {
-          logger.log('No server access:', { serverId: calendar.serverId });
+          logger.error('No server access:', { serverId: calendar.serverId });
           const error = new Error('unauthorized');
           error.name = 'UnauthorizedError';
           throw error;
@@ -112,73 +102,81 @@ export function useCalendar(calendarId: string | undefined): UseCalendarReturn {
         throw error;
       }
     },
-    {
-      shouldRetryOnError: false,
-    }
-  );
+    retry: false,
+  });
 
-  const { data: publicSchedules, mutate: mutatePublic } = useSWR(
-    getPublicScheduleKey(date),
-    async ([url, params]) => {
+  const { data: publicSchedules } = useQuery({
+    queryKey: schedulesKey,
+    queryFn: async () => {
       const response = await client.schedules
-        ._calendarId(calendarId!)
+        ._calendarId(calendarId)
         .public.$get({
-          query: params,
+          query: {
+            fromDate: dayjs(date)
+              .tz('Asia/Tokyo')
+              .startOf('month')
+              .utc()
+              .format(),
+            toDate: dayjs(date).tz('Asia/Tokyo').endOf('month').utc().format(),
+          },
         });
       return response;
     },
-    {
-      revalidateOnFocus: false,
-      keepPreviousData: true,
-    }
-  );
+    staleTime: 0,
+    placeholderData: (prev) => prev ?? [],
+    refetchOnWindowFocus: false,
+  });
 
-  const { data: personalSchedules, mutate: mutatePersonal } = useSWR(
-    getPersonalScheduleKey(date),
-    async ([url, params]) => {
+  const { data: personalSchedules } = useQuery({
+    queryKey: personalSchedulesKey,
+    queryFn: async () => {
       const response = await client.schedules
-        ._calendarId(calendarId!)
+        ._calendarId(calendarId)
         .me.personal.$get({
-          query: params,
+          query: {
+            fromDate: dayjs(date)
+              .tz('Asia/Tokyo')
+              .startOf('month')
+              .subtract(1, 'hour')
+              .utc()
+              .format(),
+            toDate: dayjs(date)
+              .tz('Asia/Tokyo')
+              .endOf('month')
+              .add(1, 'hour')
+              .utc()
+              .format(),
+          },
         });
       return response;
     },
-    {
-      revalidateOnFocus: false,
-      keepPreviousData: true,
-    }
-  );
+    staleTime: 0,
+    placeholderData: (prev) => prev ?? [],
+    refetchOnWindowFocus: false,
+  });
 
-  const refresh = useCallback(async () => {
-    if (!calendarId) return;
+  // 最適化されたリフレッシュ関数
+  const refresh = useCallback(() => {
+    // 即時に再フェッチを行う
+    queryClient.invalidateQueries({
+      queryKey: schedulesKey,
+      exact: true,
+    });
+    queryClient.invalidateQueries({
+      queryKey: personalSchedulesKey,
+      exact: true,
+    });
 
-    try {
-      // 即時にキャッシュを更新
-      await Promise.all([
-        mutateCalendar(undefined, {
-          revalidate: false,
-          populateCache: true,
-        }),
-        mutatePublic(undefined, {
-          revalidate: false,
-          populateCache: true,
-        }),
-        mutatePersonal(undefined, {
-          revalidate: false,
-          populateCache: true,
-        }),
-      ]);
-
-      // バックグラウンドで最新データを取得
-      Promise.all([mutateCalendar(), mutatePublic(), mutatePersonal()]).catch(
-        (error) => {
-          logger.error('Failed to refresh calendar in background:', error);
-        }
-      );
-    } catch (error) {
-      logger.error('Failed to refresh calendar:', error);
-    }
-  }, [calendarId, mutateCalendar, mutatePublic, mutatePersonal]);
+    // 実際のフェッチを実行
+    queryClient.refetchQueries({
+      queryKey: schedulesKey,
+      exact: true,
+    });
+    queryClient.refetchQueries({
+      queryKey: personalSchedulesKey,
+      exact: true,
+    });
+  }, [queryClient, schedulesKey, personalSchedulesKey]);
 
   return {
     calendar,

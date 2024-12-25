@@ -138,7 +138,7 @@ export function CalendarView({
                   ) : (
                     <Crosshair className='h-3 w-3' />
                   )}
-                  {!isPersonal && participants && (
+                  {!isPersonal && (
                     <span className='text-[9px] sm:text-[10px] opacity-80'>
                       {participants.length}/{quota}
                     </span>
@@ -151,7 +151,7 @@ export function CalendarView({
           <TooltipContent side='bottom' className='bg-gray-800 border-gray-700'>
             <div className='space-y-2'>
               <div className='font-medium'>{eventContent.event.title}</div>
-              {!isPersonal && participants && quota && (
+              {!isPersonal && (
                 <>
                   <div className='text-gray-400 flex items-center gap-1'>
                     <User className='h-3 w-3' />

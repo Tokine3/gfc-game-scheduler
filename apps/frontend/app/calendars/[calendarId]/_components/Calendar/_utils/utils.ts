@@ -6,3 +6,10 @@ export const isPublicSchedule = (
 ): event is PublicScheduleWithRelations => {
   return !event.isPersonal;
 };
+
+export const isVisibleEvent = (event: CalendarEvent) => {
+  if (isPublicSchedule(event)) {
+    return true;
+  }
+  return !isPublicSchedule(event) && !!event.title;
+};

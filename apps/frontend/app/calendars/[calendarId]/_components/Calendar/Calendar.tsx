@@ -71,10 +71,8 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
 
   // calendar.publicSchedules と publicSchedules を組み合わせて使用
   const events = useMemo(() => {
-    if (!calendar || !publicSchedules) return [];
-
-    // 個人予定と共有イベントを結合
-    return [...publicSchedules, ...(personalSchedules || [])];
+    // 個人予定と共有イベントを結合（nullチェックのみ行う）
+    return [...(publicSchedules || []), ...(personalSchedules || [])];
   }, [publicSchedules, personalSchedules]);
 
   // 初期状態を最適化
@@ -152,29 +150,36 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
     setShowEventDetail(true);
   }, []);
 
-  // CalendarViewに渡すイベントデータを変換（表示対象のみに絞り込み）
+  // CalendarViewに渡すイベントデータを変換
   const calendarEvents = useMemo(() => {
-    return events.filter(isVisibleEvent).map((event) => {
-      const eventDate = dayjs(event.date)
-        .tz('Asia/Tokyo')
-        .startOf('day')
-        .toDate();
+    return events
+      .filter((event) => {
+        // 共有イベントは常に表示
+        if (!event.isPersonal) return true;
+        // 個人予定はタイトルがある場合のみ表示
+        return event.isPersonal && !!event.title;
+      })
+      .map((event) => {
+        const eventDate = dayjs(event.date)
+          .tz('Asia/Tokyo')
+          .startOf('day')
+          .toDate();
 
-      return {
-        id: String(event.id),
-        start: eventDate,
-        end: eventDate,
-        title: event.title,
-        extendedProps: {
-          isPersonal: event.isPersonal,
-          participants: isPublicSchedule(event)
-            ? event.participants
-            : undefined,
-          quota: isPublicSchedule(event) ? event.quota : undefined,
-          originalEvent: event,
-        },
-      };
-    });
+        return {
+          id: String(event.id),
+          start: eventDate,
+          end: eventDate,
+          title: event.title,
+          extendedProps: {
+            isPersonal: event.isPersonal,
+            participants: isPublicSchedule(event)
+              ? event.participants
+              : undefined,
+            quota: isPublicSchedule(event) ? event.quota : undefined,
+            originalEvent: event,
+          },
+        };
+      });
   }, [events]);
 
   // イベント編集ハンドラー

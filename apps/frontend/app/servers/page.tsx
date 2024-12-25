@@ -6,6 +6,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useServers } from '../../hooks/useServers';
 import { logger } from '../../lib/logger';
 import { ServerList } from './_components/ServerList/ServerList';
+import Header from '../components/Header';
+import { LoadingScreen } from '../components/LoadingScreen';
 
 export default function ServersPage() {
   const router = useRouter();
@@ -34,7 +36,7 @@ export default function ServersPage() {
 
   // 認証またはサーバーデータのロード中は何も表示しない
   if (isAuthLoading || isServersLoading) {
-    return null;
+    return <LoadingScreen message='サーバ一覧を読み込んでいます...' />;
   }
 
   // エラー時はログインページにリダイレクト
@@ -44,5 +46,12 @@ export default function ServersPage() {
     return null;
   }
 
-  return <ServerList servers={servers} calendarCount={calendarCount} />;
+  return (
+    <div className='min-h-screen bg-gray-900'>
+      <Header />
+      <main className='container mx-auto px-4 py-24'>
+        <ServerList servers={servers} calendarCount={calendarCount} />
+      </main>
+    </div>
+  );
 }

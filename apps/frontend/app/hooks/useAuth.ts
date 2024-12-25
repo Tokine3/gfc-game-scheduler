@@ -4,6 +4,8 @@ import {
   getAuth,
   onAuthStateChanged,
   User as FirebaseUser,
+  OAuthProvider,
+  signInWithPopup,
 } from 'firebase/auth';
 import { logger } from '../../lib/logger';
 
@@ -23,6 +25,8 @@ type UseAuthReturn = {
   user: DiscordUser | null;
   firebaseUser: FirebaseUser | null;
   isLoading: boolean;
+  signIn: () => Promise<void>;
+  signOut: () => Promise<void>;
 };
 
 /**
@@ -92,9 +96,36 @@ export const useAuth = (): UseAuthReturn => {
     return () => unsubscribe();
   }, [pathname]);
 
+  const signIn = async (): Promise<void> => {
+    try {
+      const auth = getAuth();
+      const provider = new OAuthProvider('discord.com');
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      logger.error('Failed to sign in:', error);
+      throw error;
+    }
+  };
+
+  const signOut = async (): Promise<void> => {
+    try {
+      const auth = getAuth();
+      await auth.signOut();
+      localStorage.removeItem('discord_id');
+      localStorage.removeItem('discord_name');
+      localStorage.removeItem('discord_email');
+      localStorage.removeItem('discord_avatar');
+    } catch (error) {
+      logger.error('Failed to sign out:', error);
+      throw error;
+    }
+  };
+
   return {
     user: authState.discord,
     firebaseUser: authState.firebase,
     isLoading,
+    signIn,
+    signOut,
   };
 };
