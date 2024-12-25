@@ -3,30 +3,8 @@ import { client } from '../lib/api';
 import { logger } from '../lib/logger';
 import { useState, useCallback } from 'react';
 import dayjs from 'dayjs';
-import type {
-  Calendar,
-  PersonalScheduleWithRelations,
-  PublicScheduleWithRelations,
-} from '../apis/@types';
 
-type UseCalendarReturn = {
-  calendar: Calendar | undefined;
-  publicSchedules: PublicScheduleWithRelations[] | undefined;
-  personalSchedules: PersonalScheduleWithRelations[] | undefined;
-  isLoading: boolean;
-  isError: Error | undefined;
-  refresh: () => Promise<void>;
-  setDate: (date: Date) => void;
-  getPersonalScheduleKey: (
-    targetDate: Date
-  ) => readonly [string, { fromDate: string; toDate: string }] | null;
-};
-
-/**
- * @description カレンダーとスケジュールを管理するカスタムフック
- * @param calendarId - カレンダーID
- */
-export function useCalendar(calendarId: string | undefined): UseCalendarReturn {
+export function useCalendar(calendarId: string | undefined) {
   const [date, setDate] = useState(() => new Date());
 
   const getPublicScheduleKey = useCallback(
@@ -36,7 +14,7 @@ export function useCalendar(calendarId: string | undefined): UseCalendarReturn {
         fromDate: dayjs(targetDate).startOf('month').utc().format(),
         toDate: dayjs(targetDate).endOf('month').utc().format(),
       };
-      return [`/schedules/${calendarId}/public`, query] as const;
+      return ['/schedules/' + calendarId + '/public', query] as const;
     },
     [calendarId]
   );
@@ -44,7 +22,6 @@ export function useCalendar(calendarId: string | undefined): UseCalendarReturn {
   const getPersonalScheduleKey = useCallback(
     (targetDate: Date) => {
       if (!calendarId) return null;
-      // 前後1時間の余裕を持たせて取得
       const query = {
         fromDate: dayjs(targetDate)
           .startOf('month')
@@ -53,13 +30,13 @@ export function useCalendar(calendarId: string | undefined): UseCalendarReturn {
           .format(),
         toDate: dayjs(targetDate).endOf('month').add(1, 'hour').utc().format(),
       };
-      return [`/schedules/${calendarId}/me/personal`, query] as const;
+      return ['/schedules/' + calendarId + '/me/personal', query] as const;
     },
     [calendarId]
   );
 
   const {
-    data: calendar,
+    data,
     error,
     mutate: mutateCalendar,
   } = useSWR(calendarId ? `/calendars/${calendarId}` : null, async () => {
@@ -76,7 +53,9 @@ export function useCalendar(calendarId: string | undefined): UseCalendarReturn {
       });
 
       const hasServerAccess = await client.servers.me.server_user.$get({
-        query: { serverId: calendar.serverId },
+        query: {
+          serverId: calendar.serverId,
+        },
       });
 
       if (!hasServerAccess) {
@@ -126,7 +105,6 @@ export function useCalendar(calendarId: string | undefined): UseCalendarReturn {
     if (!calendarId) return;
 
     try {
-      // 即時にキャッシュを更新
       await Promise.all([
         mutateCalendar(undefined, {
           revalidate: false,
@@ -142,7 +120,6 @@ export function useCalendar(calendarId: string | undefined): UseCalendarReturn {
         }),
       ]);
 
-      // バックグラウンドで最新データを取得
       Promise.all([mutateCalendar(), mutatePublic(), mutatePersonal()]).catch(
         (error) => {
           logger.error('Failed to refresh calendar in background:', error);
@@ -154,10 +131,10 @@ export function useCalendar(calendarId: string | undefined): UseCalendarReturn {
   }, [calendarId, mutateCalendar, mutatePublic, mutatePersonal]);
 
   return {
-    calendar,
+    calendar: data,
     publicSchedules,
     personalSchedules,
-    isLoading: !error && !calendar,
+    isLoading: !error && !data,
     isError: error,
     refresh,
     setDate,

@@ -7,7 +7,7 @@ import {
 } from 'firebase/auth';
 import { logger } from '../../lib/logger';
 
-type DiscordUser = {
+export type DiscordUser = {
   id: string;
   name: string;
   email: string;
@@ -19,27 +19,14 @@ type AuthUser = {
   discord: DiscordUser | null;
 };
 
-type UseAuthReturn = {
-  user: DiscordUser | null;
-  firebaseUser: FirebaseUser | null;
-  isLoading: boolean;
-};
-
-/**
- * @description 認証状態を管理するカスタムフック
- * @returns {UseAuthReturn} 認証情報とローディング状態
- */
-export const useAuth = (): UseAuthReturn => {
-  const [authState, setAuthState] = useState<AuthUser>({
-    firebase: null,
-    discord: null,
-  });
-  const [isLoading, setIsLoading] = useState(true);
+export const useAuth = () => {
+  const [user, setUser] = useState<AuthUser>({ firebase: null, discord: null });
+  const [loading, setLoading] = useState(true);
   const pathname = usePathname();
 
   useEffect(() => {
     if (pathname === '/login') {
-      setIsLoading(false);
+      setLoading(false);
       return;
     }
 
@@ -48,7 +35,7 @@ export const useAuth = (): UseAuthReturn => {
       if (firebaseUser) {
         try {
           localStorage.setItem('discord_id', firebaseUser.uid);
-          setAuthState({
+          setUser({
             firebase: firebaseUser,
             discord: {
               id: firebaseUser.uid,
@@ -59,20 +46,20 @@ export const useAuth = (): UseAuthReturn => {
           });
         } catch (error) {
           logger.error('Failed to fetch Discord user:', error);
-          setAuthState({ firebase: firebaseUser, discord: null });
+          setUser({ firebase: firebaseUser, discord: null });
         }
       } else {
-        setAuthState({ firebase: null, discord: null });
+        setUser({ firebase: null, discord: null });
       }
-      setIsLoading(false);
+      setLoading(false);
     });
 
     return () => unsubscribe();
   }, [pathname]);
 
   return {
-    user: authState.discord,
-    firebaseUser: authState.firebase,
-    isLoading,
+    user: user.discord,
+    firebaseUser: user.firebase,
+    loading,
   };
 };
