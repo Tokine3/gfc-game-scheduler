@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { FC, useState } from 'react';
 import { Button } from '../../../components/ui/button';
 import {
   Dialog,
@@ -10,24 +10,31 @@ import {
 } from '../../../components/ui/dialog';
 import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
+import type { ServerWithRelations } from '../../../../apis/@types';
 
 type Props = {
+  server: ServerWithRelations | null;
   isOpen: boolean;
   onClose: () => void;
-  calendarName: string;
-  onCalendarNameChange: (value: string) => void;
-  onSubmit: () => Promise<void>;
+  onConfirm: (name: string) => Promise<void>;
   isSubmitting: boolean;
 };
 
 export const CreateCalendarDialog: FC<Props> = ({
+  server,
   isOpen,
   onClose,
-  calendarName,
-  onCalendarNameChange,
-  onSubmit,
+  onConfirm,
   isSubmitting,
 }) => {
+  const [calendarName, setCalendarName] = useState('');
+
+  const handleSubmit = async () => {
+    if (!calendarName.trim()) return;
+    await onConfirm(calendarName.trim());
+    setCalendarName(''); // 送信後にフォームをクリア
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className='bg-gray-900/95 backdrop-blur-md border-gray-800'>
@@ -36,7 +43,7 @@ export const CreateCalendarDialog: FC<Props> = ({
             カレンダーの作成
           </DialogTitle>
           <DialogDescription className='text-gray-400'>
-            新しいカレンダーを作成します。
+            {server?.name}に新しいカレンダーを作成します。
           </DialogDescription>
         </DialogHeader>
         <div className='space-y-6 py-4'>
@@ -48,7 +55,7 @@ export const CreateCalendarDialog: FC<Props> = ({
               id='calendar-name'
               placeholder='例: レイドイベント'
               value={calendarName}
-              onChange={(e) => onCalendarNameChange(e.target.value)}
+              onChange={(e) => setCalendarName(e.target.value)}
               className='bg-gray-800/50 border-gray-700 text-gray-100 placeholder:text-gray-500 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500'
             />
           </div>
@@ -63,9 +70,9 @@ export const CreateCalendarDialog: FC<Props> = ({
             キャンセル
           </Button>
           <Button
-            onClick={onSubmit}
+            onClick={handleSubmit}
             className='bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600 text-white shadow-lg shadow-purple-500/20'
-            disabled={isSubmitting}
+            disabled={isSubmitting || !calendarName.trim()}
           >
             {isSubmitting ? (
               <div className='flex items-center gap-2'>

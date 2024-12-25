@@ -20,7 +20,7 @@ export default function ServersPage() {
   }, [authLoading, user, router]);
 
   if (authLoading || isLoading) {
-    return <LoadingScreen message='サーバー一覧を読み込んでいます...' />;
+    return <LoadingScreen message='サーバ一覧を読み込んでいます...' />;
   }
 
   if (isError) {
@@ -31,7 +31,7 @@ export default function ServersPage() {
   return (
     <div className='min-h-screen bg-gray-900'>
       <Header />
-      <main className='container mx-auto px-4 py-8'>
+      <main className='container mx-auto px-4 py-24'>
         <ServerList servers={servers} calendarCount={calendarCount} />
       </main>
     </div>

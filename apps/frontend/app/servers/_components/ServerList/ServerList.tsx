@@ -1,12 +1,15 @@
 'use client';
 
-import { FC } from 'react';
+import { FC, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ServerWithRelations } from '../../../../apis/@types';
 import { ServerCard } from '../ServerCard/ServerCard';
 import { client } from '../../../../lib/api';
 import { logger } from '../../../../lib/logger';
-import type { Server } from '../../types';
+import { toast } from '../../../components/ui/use-toast';
+import { useServers } from '../../../../hooks/useServers';
+import { JoinServerDialog } from '../JoinServerDialog/JoinServerDialog';
+import { CreateCalendarDialog } from '../CreateCalendarDialog/CreateCalendarDialog';
 
 type Props = {
   servers: ServerWithRelations[];
@@ -15,6 +18,13 @@ type Props = {
 
 export const ServerList: FC<Props> = ({ servers }) => {
   const router = useRouter();
+  const { refresh } = useServers();
+  const [joiningServer, setJoiningServer] =
+    useState<ServerWithRelations | null>(null);
+  const [creatingCalendarServer, setCreatingCalendarServer] =
+    useState<ServerWithRelations | null>(null);
+  const [isJoining, setIsJoining] = useState(false);
+  const [isCreatingCalendar, setIsCreatingCalendar] = useState(false);
 
   const handleFavoriteChange = async (
     serverId: string,
@@ -22,47 +32,125 @@ export const ServerList: FC<Props> = ({ servers }) => {
   ) => {
     try {
       await client.servers.fav._id(serverId).$patch({
-        body: {
-          isFavorite,
-        },
+        body: { isFavorite },
       });
+      await refresh();
     } catch (error) {
       logger.error('Failed to update favorite:', error);
+      toast({
+        title: 'お気に入りの更新に失敗しました',
+        variant: 'destructive',
+      });
     }
   };
 
-  const handleJoinServer = async (server: Server) => {
+  const handleJoinServer = (server: ServerWithRelations) => {
+    setJoiningServer(server);
+  };
+
+  const handleCreateCalendar = (serverId: string) => {
+    const server = servers.find((s) => s.id === serverId);
+    if (server) {
+      setCreatingCalendarServer(server);
+    }
+  };
+
+  const handleCreateCalendarConfirm = async (name: string) => {
+    if (!creatingCalendarServer) return;
+
     try {
-      await client.servers.join.$post({
+      setIsCreatingCalendar(true);
+      await client.calendars.$post({
         body: {
-          serverId: server.id,
-          serverName: server.name,
-          serverIcon: server.icon || '',
+          name,
+          serverId: creatingCalendarServer.id,
+          serverName: creatingCalendarServer.name,
+          icon: creatingCalendarServer.icon,
         },
       });
-      window.location.reload();
+
+      await refresh();
+      setCreatingCalendarServer(null);
+
+      toast({
+        title: 'カレンダーを作成しました',
+        description: `${name}を作成しました`,
+      });
+    } catch (error) {
+      logger.error('Failed to create calendar:', error);
+      toast({
+        title: 'カレンダーの作成に失敗しました',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCreatingCalendar(false);
+    }
+  };
+
+  const handleJoinConfirm = async () => {
+    if (!joiningServer) return;
+
+    try {
+      setIsJoining(true);
+      await client.servers.join.$post({
+        body: {
+          serverId: joiningServer.id,
+          serverName: joiningServer.name,
+          serverIcon: joiningServer.icon || '',
+        },
+      });
+
+      await refresh();
+      setJoiningServer(null);
+
+      toast({
+        title: 'サーバーに参加しました',
+        description: `${joiningServer.name}に参加しました`,
+      });
     } catch (error) {
       logger.error('Failed to join server:', error);
+      toast({
+        title: 'サーバーへの参加に失敗しました',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsJoining(false);
     }
   };
 
   return (
-    <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
-      {servers.map((server) => (
-        <ServerCard
-          key={server.id}
-          server={server}
-          isFavorite={server.serverUsers?.[0]?.isFavorite || false}
-          onFavoriteChange={handleFavoriteChange}
-          onJoinServer={handleJoinServer}
-          onCreateCalendar={(serverId) =>
-            router.push(`/calendars/new?serverId=${serverId}`)
-          }
-          onCalendarClick={(calendarId) =>
-            router.push(`/calendars/${calendarId}`)
-          }
-        />
-      ))}
-    </div>
+    <>
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
+        {servers.map((server) => (
+          <ServerCard
+            key={server.id}
+            server={server}
+            isFavorite={server.serverUsers?.[0]?.isFavorite || false}
+            onFavoriteChange={handleFavoriteChange}
+            onJoinServer={handleJoinServer}
+            onCreateCalendar={handleCreateCalendar}
+            onCalendarClick={(calendarId) =>
+              router.push(`/calendars/${calendarId}`)
+            }
+          />
+        ))}
+      </div>
+
+      <JoinServerDialog
+        server={joiningServer}
+        isOpen={!!joiningServer}
+        onClose={() => setJoiningServer(null)}
+        onConfirm={handleJoinConfirm}
+        isSubmitting={isJoining}
+      />
+
+      <CreateCalendarDialog
+        server={creatingCalendarServer}
+        isOpen={!!creatingCalendarServer}
+        onClose={() => setCreatingCalendarServer(null)}
+        onConfirm={handleCreateCalendarConfirm}
+        isSubmitting={isCreatingCalendar}
+      />
+    </>
   );
 };

@@ -1,4 +1,6 @@
-import { FC } from 'react';
+'use client';
+
+import { FC, useState } from 'react';
 import Image from 'next/image';
 import {
   ServerIcon,
@@ -7,7 +9,7 @@ import {
   Plus,
   ArrowRight,
 } from 'lucide-react';
-import type { Server } from '../../types';
+import type { ServerWithRelations } from '../../../../apis/@types';
 import { Button } from '../../../components/ui/button';
 import { HeartCheckbox } from '../../../components/ui/heart-checkbox';
 import {
@@ -16,14 +18,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '../../../components/ui/tooltip';
+import { OpenCalendarDialog } from '../OpenCalendarDialog/OpenCalendarDialog';
 
 type Props = {
-  server: Server;
+  server: ServerWithRelations;
   isFavorite: boolean;
   onFavoriteChange: (serverId: string, isFavorite: boolean) => Promise<void>;
-  onJoinServer: (server: Server) => Promise<void>;
+  onJoinServer: (server: ServerWithRelations) => void;
   onCreateCalendar: (serverId: string) => void;
-  onCalendarClick: (calendarId: string, serverName: string) => void;
+  onCalendarClick: (calendarId: string) => void;
 };
 
 export const ServerCard: FC<Props> = ({
@@ -34,8 +37,19 @@ export const ServerCard: FC<Props> = ({
   onCreateCalendar,
   onCalendarClick,
 }) => {
+  const [selectedCalendarId, setSelectedCalendarId] = useState<string | null>(
+    null
+  );
+
+  const handleCalendarClick = (calendarId: string) => {
+    setSelectedCalendarId(calendarId);
+  };
+
+  // サーバーに参加しているかどうかを判定
+  const isJoined = server.serverUsers && server.serverUsers.length > 0;
+
   const renderServerActions = () => {
-    if (!server.isJoined) {
+    if (!isJoined) {
       return (
         <Button
           className='w-full bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white shadow-lg shadow-violet-500/25 border border-violet-600/20'
@@ -86,7 +100,7 @@ export const ServerCard: FC<Props> = ({
                 key={calendar.id}
                 variant='outline'
                 className='w-full justify-start border-gray-700 hover:bg-gray-700/50 group relative overflow-hidden'
-                onClick={() => onCalendarClick(calendar.id, server.name)}
+                onClick={() => handleCalendarClick(calendar.id)}
               >
                 <div className='absolute inset-0 bg-gradient-to-r from-purple-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity' />
                 <div className='relative flex items-center w-full'>
@@ -149,7 +163,7 @@ export const ServerCard: FC<Props> = ({
                     <CalendarDays className='w-4 h-4' />
                     <span>{server.calendars.length}</span>
                   </div>
-                  {server.isJoined && (
+                  {isJoined && (
                     <div className='px-2.5 py-1 rounded-full bg-gradient-to-r from-purple-500/20 to-cyan-500/20 border border-emerald-500/30 shadow-[0_0_15px_rgba(168,85,247,0.15)] group-hover:shadow-[0_0_20px_rgba(168,85,247,0.25)] group-hover:border-emerald-500/40 transition-all'>
                       <div className='flex items-center gap-1.5'>
                         <div className='w-1.5 h-1.5 rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 animate-pulse' />
@@ -172,6 +186,18 @@ export const ServerCard: FC<Props> = ({
 
         <div className='mt-4 space-y-2'>{renderServerActions()}</div>
       </div>
+
+      {selectedCalendarId && (
+        <OpenCalendarDialog
+          calendar={
+            server.calendars.find((c) => c.id === selectedCalendarId) || null
+          }
+          serverName={server.name}
+          isOpen={!!selectedCalendarId}
+          onClose={() => setSelectedCalendarId(null)}
+          onConfirm={() => onCalendarClick(selectedCalendarId)}
+        />
+      )}
     </div>
   );
 };
