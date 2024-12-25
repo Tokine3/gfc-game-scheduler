@@ -17,6 +17,22 @@ export const mockPublicEvent: PublicScheduleWithRelations = {
   createdAt: dayjs().toISOString(),
   updatedAt: dayjs().toISOString(),
   isRecruiting: true,
+  serverUser: {
+    userId: '1',
+    serverId: '1',
+    isJoined: true,
+    isFavorite: true,
+    createdAt: dayjs().toISOString(),
+    updatedAt: dayjs().toISOString(),
+    user: {
+      id: '1',
+      name: 'プレイヤー1',
+      avatar: '',
+      createdAt: dayjs().toISOString(),
+      updatedAt: dayjs().toISOString(),
+      lastLoggedInAt: dayjs().toISOString(),
+    },
+  },
   participants: [
     {
       userId: '1',
@@ -62,12 +78,20 @@ export const mockPersonalEvent: PersonalScheduleWithRelations = {
   createdAt: dayjs().toISOString(),
   updatedAt: dayjs().toISOString(),
   isPrivate: false,
-  user: {
-    id: '1',
-    name: 'プレイヤー1',
-    avatar: '',
+  serverUser: {
+    userId: '1',
+    serverId: '1',
+    isJoined: true,
+    isFavorite: true,
     createdAt: dayjs().toISOString(),
     updatedAt: dayjs().toISOString(),
-    lastLoggedInAt: dayjs().toISOString(),
+    user: {
+      id: '1',
+      name: 'プレイヤー1',
+      avatar: '',
+      createdAt: dayjs().toISOString(),
+      updatedAt: dayjs().toISOString(),
+      lastLoggedInAt: dayjs().toISOString(),
+    },
   },
 };
