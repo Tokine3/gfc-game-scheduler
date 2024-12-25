@@ -51,6 +51,18 @@ export class UserController {
     return await this.userService.login(req.user.id);
   }
 
+  @ApiOperation({ summary: 'ログイン中のユーザの取得' })
+  @ApiResponse({
+    status: 200,
+    description: 'ログイン中のユーザの取得成功',
+    type: User,
+  })
+  @UseGuards(DiscordAuthGuard)
+  @Get('me')
+  me(@Request() req: RequestWithUser) {
+    return this.userService.me(req.user.id);
+  }
+
   @ApiOperation({ summary: '指定したユーザの取得' })
   @ApiResponse({
     status: 200,

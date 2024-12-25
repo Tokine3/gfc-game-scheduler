@@ -9,4 +9,5 @@ export type Participant = {
 export type Props = {
   event: CalendarEvent;
   onClose: () => void;
+  onEdit?: () => void;
 };

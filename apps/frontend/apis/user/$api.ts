@@ -3,11 +3,13 @@ import { dataToURLString } from "aspida";
 import type { Methods as Methods_by08hd } from ".";
 import type { Methods as Methods_2yw7dz } from "./_id@string";
 import type { Methods as Methods_idk8rz } from "./login";
+import type { Methods as Methods_1uc1f5c } from "./me";
 
 const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
   const prefix = (baseURL === undefined ? "" : baseURL).replace(/\/$/, "");
   const PATH0 = "/user";
   const PATH1 = "/user/login";
+  const PATH2 = "/user/me";
   const GET = "GET";
   const DELETE = "DELETE";
   const PATCH = "PATCH";
@@ -104,6 +106,29 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
           .json()
           .then((r) => r.body),
       $path: () => `${prefix}${PATH1}`,
+    },
+    me: {
+      /**
+       * @returns ログイン中のユーザの取得成功
+       */
+      get: (option?: { config?: T | undefined } | undefined) =>
+        fetch<
+          Methods_1uc1f5c["get"]["resBody"],
+          BasicHeaders,
+          Methods_1uc1f5c["get"]["status"]
+        >(prefix, PATH2, GET, option).json(),
+      /**
+       * @returns ログイン中のユーザの取得成功
+       */
+      $get: (option?: { config?: T | undefined } | undefined) =>
+        fetch<
+          Methods_1uc1f5c["get"]["resBody"],
+          BasicHeaders,
+          Methods_1uc1f5c["get"]["status"]
+        >(prefix, PATH2, GET, option)
+          .json()
+          .then((r) => r.body),
+      $path: () => `${prefix}${PATH2}`,
     },
     /**
      * @returns 検索条件に当てはまるユーザの取得成功

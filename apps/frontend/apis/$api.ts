@@ -20,6 +20,7 @@ import type { Methods as Methods_m3tpez } from "./servers/me/server-user";
 import type { Methods as Methods_tli9od } from "./user";
 import type { Methods as Methods_13i5w2z } from "./user/_id@string";
 import type { Methods as Methods_1904ovn } from "./user/login";
+import type { Methods as Methods_9k2hsc } from "./user/me";
 
 const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
   const prefix = (baseURL === undefined ? "" : baseURL).replace(/\/$/, "");
@@ -39,6 +40,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
   const PATH13 = "/servers/me/server-user";
   const PATH14 = "/user";
   const PATH15 = "/user/login";
+  const PATH16 = "/user/me";
   const GET = "GET";
   const POST = "POST";
   const DELETE = "DELETE";
@@ -792,6 +794,29 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
             .json()
             .then((r) => r.body),
         $path: () => `${prefix}${PATH15}`,
+      },
+      me: {
+        /**
+         * @returns ログイン中のユーザの取得成功
+         */
+        get: (option?: { config?: T | undefined } | undefined) =>
+          fetch<
+            Methods_9k2hsc["get"]["resBody"],
+            BasicHeaders,
+            Methods_9k2hsc["get"]["status"]
+          >(prefix, PATH16, GET, option).json(),
+        /**
+         * @returns ログイン中のユーザの取得成功
+         */
+        $get: (option?: { config?: T | undefined } | undefined) =>
+          fetch<
+            Methods_9k2hsc["get"]["resBody"],
+            BasicHeaders,
+            Methods_9k2hsc["get"]["status"]
+          >(prefix, PATH16, GET, option)
+            .json()
+            .then((r) => r.body),
+        $path: () => `${prefix}${PATH16}`,
       },
       /**
        * @returns 検索条件に当てはまるユーザの取得成功

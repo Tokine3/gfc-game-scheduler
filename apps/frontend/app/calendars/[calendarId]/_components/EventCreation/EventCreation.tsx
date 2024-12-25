@@ -27,6 +27,7 @@ import {
 import { Button } from '../../../../components/ui/button';
 import { Form } from '../../../../components/ui/form';
 import { EventFormField } from './_components';
+import { CalendarEvent, isPublicSchedule } from '../Calendar/_types/types';
 
 const formSchema = z.object({
   title: z.string().min(1, '必須項目です'),
@@ -42,6 +43,7 @@ type Props = {
   onClose: () => void;
   date?: Date;
   calendarId: string;
+  event?: CalendarEvent;
   onSuccess?: () => void;
 };
 
@@ -49,6 +51,7 @@ export const EventCreation: FC<Props> = ({
   onClose,
   date,
   calendarId,
+  event,
   onSuccess,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,13 +59,15 @@ export const EventCreation: FC<Props> = ({
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: '',
-      description: '',
-      date: date
-        ? dayjs(date).format('YYYY-MM-DD')
-        : dayjs().format('YYYY-MM-DD'),
-      time: dayjs().format('HH:mm'),
-      quota: 1,
+      title: event?.title || '',
+      description: event?.description || '',
+      date: event
+        ? dayjs(event.date).format('YYYY-MM-DD')
+        : date
+          ? dayjs(date).format('YYYY-MM-DD')
+          : dayjs().format('YYYY-MM-DD'),
+      time: event ? dayjs(event.date).format('HH:mm') : dayjs().format('HH:mm'),
+      quota: event && isPublicSchedule(event) ? event.quota : 1,
     },
   });
 
@@ -70,28 +75,43 @@ export const EventCreation: FC<Props> = ({
     async (values: FormValues) => {
       setIsSubmitting(true);
       try {
-        await client.schedules._calendarId(calendarId).public.$post({
-          body: {
-            title: values.title,
-            description: values.description || '',
-            date: dayjs(`${values.date} ${values.time}`).toISOString(),
-            quota: values.quota,
-          },
-        });
+        if (event) {
+          // TODO: 共有イベントの更新処理を追加する
+          // await client.schedules
+          //   ._calendarId(calendarId)
+          //   .public._eventId(event.id)
+          //   .$patch({
+          //     body: {
+          //       title: values.title,
+          //       description: values.description || '',
+          //       date: dayjs(`${values.date} ${values.time}`).toISOString(),
+          //       quota: values.quota,
+          //     },
+          //   });
+        } else {
+          await client.schedules._calendarId(calendarId).public.$post({
+            body: {
+              title: values.title,
+              description: values.description || '',
+              date: dayjs(`${values.date} ${values.time}`).toISOString(),
+              quota: values.quota,
+            },
+          });
+        }
         onSuccess?.();
         onClose();
       } catch (error) {
-        console.error('Failed to create event:', error);
+        console.error('Failed to save event:', error);
         toast({
           title: 'エラー',
-          description: 'イベントの作成に失敗しました',
+          description: `イベントの${event ? '更新' : '作成'}に失敗しました`,
           variant: 'destructive',
         });
       } finally {
         setIsSubmitting(false);
       }
     },
-    [calendarId, onClose, onSuccess]
+    [calendarId, event, onClose, onSuccess]
   );
 
   return (
@@ -102,7 +122,7 @@ export const EventCreation: FC<Props> = ({
             <div className='p-2 rounded-lg bg-gradient-to-r from-violet-500/20 to-indigo-500/20 border border-violet-500/20'>
               <CrosshairIcon className='w-5 h-5 text-violet-400' />
             </div>
-            ゲームイベントを作成
+            {event ? 'イベントを編集' : 'ゲームイベントを作成'}
           </DialogTitle>
           <DialogDescription className='text-sm text-gray-400'>
             参加者を募集するゲームイベントを作成できます

@@ -86,6 +86,7 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
     null
   );
   const [showTypeSelector, setShowTypeSelector] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
   // 空き予定の集計を最適化
   const availabilities = useMemo(() => {
@@ -175,6 +176,12 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
       };
     });
   }, [events]);
+
+  // イベント編集ハンドラー
+  const handleEventEdit = useCallback((event: CalendarEvent) => {
+    setEditingEvent(event);
+    setShowEventDetail(false);
+  }, []);
 
   return (
     <div className='space-y-6'>
@@ -278,6 +285,23 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
         <MemoizedEventDetail
           event={selectedEvent}
           onClose={() => setShowEventDetail(false)}
+          onEdit={() => handleEventEdit(selectedEvent)}
+        />
+      )}
+
+      {editingEvent && (
+        <MemoizedEventCreation
+          onClose={() => setEditingEvent(null)}
+          date={new Date(editingEvent.date)}
+          calendarId={props.id}
+          event={editingEvent} // 編集対象のイベント
+          onSuccess={() => {
+            refresh();
+            toast({
+              title: 'イベントを更新しました',
+              description: 'カレンダーを更新しました',
+            });
+          }}
         />
       )}
     </div>

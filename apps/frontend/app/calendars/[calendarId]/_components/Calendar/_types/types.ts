@@ -1,11 +1,18 @@
 import {
   PersonalScheduleWithRelations,
   PublicScheduleWithRelations,
+  Participant,
 } from '../../../../../../apis/@types';
 
 export type CalendarEvent =
   | PersonalScheduleWithRelations
   | PublicScheduleWithRelations;
+
+export const isPublicSchedule = (
+  event: CalendarEvent
+): event is PublicScheduleWithRelations => {
+  return !event.isPersonal;
+};
 
 export type Availability = {
   date: string;
