@@ -21,6 +21,9 @@ export class ServerUser {
   @ApiProperty({ description: 'お気に入りかどうか' })
   isFavorite: boolean;
 
+  @ApiProperty({ description: '参加しているかどうか' })
+  isJoined: boolean;
+
   @ApiProperty({ description: '参加日時' })
   createdAt: Date;
 
@@ -37,6 +40,11 @@ export class ServerWithRelations extends Server {
     type: [ServerUser],
   })
   serverUsers: ServerUser[];
+}
+
+export class ServerUserWithRelations extends ServerUser {
+  @ApiProperty({ description: 'ユーザー' })
+  user: User;
 }
 
 export class ServerWithServerUser extends Server {

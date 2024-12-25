@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import useSWR from 'swr';
 
 import { CalendarDays, CrosshairIcon } from 'lucide-react';
 import CalendarView from '../CalendarView/CalendarView';
@@ -11,7 +12,10 @@ import EventCreation from '../EventCreation/EventCreation';
 import PersonalEventCreation from '../PersonalEventCreation/PersonalEventCreation';
 import EventDetail from '../EventDetail/EventDetail';
 import EventTypeSelector from '../EventTypeSelector/EventTypeSelector';
-import { CalendarWithRelations } from '../../../../../apis/@types';
+import {
+  CalendarWithRelations,
+  PersonalScheduleWithRelations,
+} from '../../../../../apis/@types';
 import { Availability, CalendarEvent } from './_types/types';
 import { client } from '../../../../../lib/api';
 import { logger } from '../../../../../lib/logger';
@@ -32,8 +36,19 @@ const MemoizedPersonalEventCreation = memo(PersonalEventCreation);
 const MemoizedEventDetail = memo(EventDetail);
 const MemoizedEventTypeSelector = memo(EventTypeSelector);
 
+// イベントの表示条件を判定するユーティリティ関数を追加
+const isVisibleEvent = (event: CalendarEvent) => {
+  if (isPublicSchedule(event)) {
+    // 共有イベントは常に表示
+    return true;
+  }
+  // 個人予定はタイトルが設定されている場合のみ表示
+  return !isPublicSchedule(event) && !!event.title;
+};
+
 export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
-  const [date, setDate] = useState<Date | undefined>(undefined);
+  // 初期状態を最適化
+  const [date, setDate] = useState<Date>(() => new Date());
   const [showEventCreation, setShowEventCreation] = useState(false);
   const [showPersonalEventCreation, setShowPersonalEventCreation] =
     useState(false);
@@ -41,18 +56,82 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
     null
   );
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [showTypeSelector, setShowTypeSelector] = useState(false);
-  const [availabilities, setAvailabilities] = useState<Availability[]>([]);
 
-  // デバッグログを追加
-  console.log('Calendar props:', {
-    id: props.id,
-    name: props.name,
-    serverId: props.serverId,
-  });
+  // イベントの取得を最適化
+  const { data: events = [], mutate: mutateEvents } = useSWR(
+    props.id ? props.id : null,
+    async () => {
+      const response = await client.schedules
+        ._calendarId(props.id)
+        .all_schedules.$get({
+          query: {
+            fromDate: dayjs(date)
+              .startOf('month')
+              .subtract(1, 'hour')
+              .utc()
+              .format(),
+            toDate: dayjs(date).endOf('month').add(1, 'hour').utc().format(),
+          },
+        });
+      return [...response.personalSchedules, ...response.publicSchedules];
+    },
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 30000, // 30秒間キャッシュを保持
+    }
+  );
 
-  logger.log('calendar', props);
+  // 空き予定の集計を最適化
+  const availabilities = useMemo(() => {
+    // PersonalScheduleのみをフィルタリング
+    const personalSchedules = events.filter(
+      (event): event is PersonalScheduleWithRelations =>
+        !isPublicSchedule(event)
+    );
+
+    // 日付ごとの空き予定を集計
+    return Object.values(
+      personalSchedules.reduce(
+        (acc, schedule) => {
+          const dateStr = dayjs(schedule.date).format('YYYY-MM-DD');
+
+          if (!acc[dateStr]) {
+            acc[dateStr] = {
+              date: dateStr,
+              count: 0,
+              users: [],
+            };
+          }
+
+          if (schedule.serverUser.isJoined) {
+            // isFreeの場合のみカウントとユーザー情報を追加
+            if (schedule.isFree) {
+              acc[dateStr].count += 1;
+              acc[dateStr].users.push({
+                id: schedule.serverUser.user.id,
+                name: schedule.serverUser.user.name,
+                avatar: schedule.serverUser.user.avatar,
+                isAvailable: true,
+                isJoined: schedule.serverUser.isJoined,
+              });
+            } else {
+              // 予定ありの場合もユーザー情報は保持
+              acc[dateStr].users.push({
+                id: schedule.serverUser.user.id,
+                name: schedule.serverUser.user.name,
+                avatar: schedule.serverUser.user.avatar,
+                isAvailable: false,
+                isJoined: schedule.serverUser.isJoined,
+              });
+            }
+          }
+          return acc;
+        },
+        {} as Record<string, Availability>
+      )
+    );
+  }, [events]); // eventsの変更時のみ再計算
 
   // コールバック関数をメモ化
   const handleDateSelect = useCallback((date: Date | undefined) => {
@@ -67,89 +146,30 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
     setShowEventDetail(true);
   }, []);
 
-  // イベントの取得をメモ化
-  const fetchEvents = useCallback(async () => {
-    try {
-      const currentDate = date ?? new Date();
-      const response = await client.schedules
-        ._calendarId(props.id)
-        .all_schedules.$get({
-          query: {
-            fromDate: dayjs(currentDate)
-              .startOf('month')
-              .subtract(1, 'hour')
-              .utc()
-              .format(),
-            toDate: dayjs(currentDate)
-              .endOf('month')
-              .add(1, 'hour')
-              .utc()
-              .format(),
-          },
-        });
-      setEvents([...response.personalSchedules, ...response.publicSchedules]);
-    } catch (error) {
-      logger.error('Failed to fetch events:', error);
-    }
-  }, [props.id, date]);
+  // CalendarViewに渡すイベントデータを変換（表示対象のみに絞り込み）
+  const calendarEvents = useMemo(() => {
+    return events.filter(isVisibleEvent).map((event) => {
+      const eventDate = dayjs(event.date)
+        .tz('Asia/Tokyo')
+        .startOf('day')
+        .toDate();
 
-  useEffect(() => {
-    fetchEvents();
-  }, [fetchEvents]);
-
-  // カレンダーコンポーネントで空き予定を集計
-  useEffect(() => {
-    const freeSchedules = props.personalSchedules.filter(
-      (schedule) => schedule.isFree
-    );
-
-    const availabilityMap = freeSchedules.reduce(
-      (acc, schedule) => {
-        const dateStr = dayjs(schedule.date).format('YYYY-MM-DD');
-        if (!acc[dateStr]) {
-          acc[dateStr] = {
-            date: dateStr,
-            count: 0,
-            users: [],
-          };
-        }
-        acc[dateStr].count += 1;
-        acc[dateStr].users.push({
-          id: schedule.user.id,
-          name: schedule.user.name,
-          avatar: schedule.user.avatar,
-          isAvailable: schedule.isFree,
-          isJoined: false,
-        });
-        return acc;
-      },
-      {} as Record<string, Availability>
-    );
-
-    setAvailabilities(Object.values(availabilityMap));
-  }, [props.personalSchedules]);
-
-  // CalendarViewに渡すイベントデータを変換
-  const calendarEvents = events.map((event) => {
-    // 日付を日本時間の0時に設定
-    const eventDate = dayjs(event.date)
-      .tz('Asia/Tokyo')
-      .startOf('day')
-      .toDate();
-
-    return {
-      id: String(event.id),
-      start: eventDate,
-      end: eventDate,
-      title: event.title,
-      extendedProps: {
-        isPersonal: event.isPersonal,
-        participants: isPublicSchedule(event) ? event.participants : undefined,
-        quota: isPublicSchedule(event) ? event.quota : undefined,
-        originalEvent: event,
-      },
-    };
-  });
+      return {
+        id: String(event.id),
+        start: eventDate,
+        end: eventDate,
+        title: event.title,
+        extendedProps: {
+          isPersonal: event.isPersonal,
+          participants: isPublicSchedule(event)
+            ? event.participants
+            : undefined,
+          quota: isPublicSchedule(event) ? event.quota : undefined,
+          originalEvent: event,
+        },
+      };
+    });
+  }, [events]);
 
   return (
     <div className='space-y-6'>
@@ -191,7 +211,7 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
 
             <div className='p-4'>
               <EventList
-                events={events}
+                events={events.filter(isVisibleEvent)}
                 onEventClick={handleEventClick}
                 type='upcoming'
               />
@@ -206,7 +226,7 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
 
             <div className='p-4'>
               <EventList
-                events={events}
+                events={events.filter(isVisibleEvent)}
                 onEventClick={handleEventClick}
                 type='past'
               />

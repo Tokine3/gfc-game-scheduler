@@ -149,7 +149,14 @@ export class SchedulesService {
       for (const schedule of existingSchedules) {
         await tx.personalSchedule.update({
           where: { id: schedule.id },
-          data: schedule,
+          data: {
+            date: dayjs.tz(schedule.date, 'Asia/Tokyo').startOf('day').toDate(),
+            title: schedule.title,
+            description: schedule.description,
+            isPrivate: schedule.isPrivate,
+            isFree: schedule.isFree,
+            updatedBy: userName,
+          },
           include: {
             serverUser: true,
           },
@@ -202,14 +209,19 @@ export class SchedulesService {
     const [personalSchedules, publicSchedules] = await Promise.all([
       this.prisma.personalSchedule.findMany({
         where: { calendarId, userId, date: { gte: fromDate, lte: toDate } },
+        include: { serverUser: { include: { user: true } } },
       }),
       this.prisma.publicSchedule.findMany({
         where: { calendarId, date: { gte: fromDate, lte: toDate } },
         include: {
           participants: true,
+          serverUser: { include: { user: true } },
         },
       }),
     ]);
+
+    console.log('personalSchedules', personalSchedules);
+    console.log('publicSchedules', publicSchedules);
 
     return { personalSchedules, publicSchedules };
   }

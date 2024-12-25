@@ -7,10 +7,15 @@ import { LoadingScreen } from '../components/LoadingScreen';
 import Header from '../components/Header';
 import { useServers } from '../../hooks/useServers';
 import { ServerList } from './_components/ServerList/ServerList';
+import { toast } from '../components/ui/use-toast';
 
+/**
+ * @description サーバー一覧ページ
+ * 認証されていないユーザーはログインページにリダイレクトされる
+ */
 export default function ServersPage() {
   const { user, loading: authLoading } = useAuth();
-  const { servers, calendarCount, isLoading, isError } = useServers();
+  const { servers, calendarCount, error, isLoading } = useServers();
   const router = useRouter();
 
   useEffect(() => {
@@ -19,13 +24,19 @@ export default function ServersPage() {
     }
   }, [authLoading, user, router]);
 
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: 'エラー',
+        description: 'サーバー一覧の取得に失敗しました',
+        variant: 'destructive',
+      });
+      router.replace('/error');
+    }
+  }, [error, router]);
+
   if (authLoading || isLoading) {
     return <LoadingScreen message='サーバ一覧を読み込んでいます...' />;
-  }
-
-  if (isError) {
-    router.replace('/error');
-    return null;
   }
 
   return (

@@ -1,43 +1,49 @@
 import useSWR from 'swr';
 import { client } from '../lib/api';
-import { logger } from '../lib/logger';
-import type { GetUserServersResponse } from '../apis/@types';
+import { ServerWithRelations } from '../apis/@types';
 
-const SERVERS_CACHE_KEY = '/servers';
+const fetchServers = async () => {
+  const response = await client.auth.servers.get();
+  const serversData = response.body.data;
 
-export function useServers() {
-  const { data, error, mutate } = useSWR<GetUserServersResponse>(
-    SERVERS_CACHE_KEY,
-    async () => {
-      try {
-        const response = await client.auth.servers.$get();
-        return response;
-      } catch (error) {
-        logger.error('Failed to fetch servers:', error);
-        throw error;
+  return serversData
+    .map((server, index) => {
+      const serverUser = server.serverUsers[index];
+      return {
+        ...server,
+        isJoined: serverUser?.isJoined || false,
+        isFavorite: serverUser?.isFavorite || false,
+        updatedAt: serverUser?.updatedAt || new Date(0).toISOString(),
+        calendars: server.calendars,
+      };
+    })
+    .sort((a, b) => {
+      const aFavorite = a.serverUsers[0]?.isFavorite || false;
+      const bFavorite = b.serverUsers[0]?.isFavorite || false;
+      if (aFavorite !== bFavorite) {
+        return aFavorite ? -1 : 1;
       }
-    },
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 0,
-    }
-  );
+      return 0;
+    });
+};
 
-  const refresh = async () => {
-    try {
-      const newData = await client.auth.servers.$get();
-      await mutate(newData, false); // optimistic update
-    } catch (error) {
-      logger.error('Failed to refresh servers:', error);
-      throw error;
-    }
-  };
+export const useServers = () => {
+  const {
+    data: servers,
+    error,
+    isLoading,
+    mutate,
+  } = useSWR<ServerWithRelations[]>('servers', fetchServers, {
+    revalidateOnFocus: false,
+    shouldRetryOnError: false,
+  });
 
   return {
-    servers: data?.data || [],
-    calendarCount: data?.calendarCount || 0,
-    isLoading: !error && !data,
-    isError: error,
-    refresh,
+    servers: servers || [],
+    calendarCount:
+      servers?.reduce((acc, server) => acc + server.calendars.length, 0) || 0,
+    error,
+    isLoading,
+    mutate,
   };
-}
+};

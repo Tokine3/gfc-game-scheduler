@@ -10,6 +10,7 @@ import { toast } from '../../../components/ui/use-toast';
 import { useServers } from '../../../../hooks/useServers';
 import { JoinServerDialog } from '../JoinServerDialog/JoinServerDialog';
 import { CreateCalendarDialog } from '../CreateCalendarDialog/CreateCalendarDialog';
+import { ServersHeader } from '../ServersHeader/ServersHeader';
 
 type Props = {
   servers: ServerWithRelations[];
@@ -18,7 +19,7 @@ type Props = {
 
 export const ServerList: FC<Props> = ({ servers }) => {
   const router = useRouter();
-  const { refresh } = useServers();
+  const { mutate } = useServers();
   const [joiningServer, setJoiningServer] =
     useState<ServerWithRelations | null>(null);
   const [creatingCalendarServer, setCreatingCalendarServer] =
@@ -34,7 +35,7 @@ export const ServerList: FC<Props> = ({ servers }) => {
       await client.servers.fav._id(serverId).$patch({
         body: { isFavorite },
       });
-      await refresh();
+      await mutate();
     } catch (error) {
       logger.error('Failed to update favorite:', error);
       toast({
@@ -69,7 +70,7 @@ export const ServerList: FC<Props> = ({ servers }) => {
         },
       });
 
-      await refresh();
+      await mutate();
       setCreatingCalendarServer(null);
 
       toast({
@@ -100,7 +101,7 @@ export const ServerList: FC<Props> = ({ servers }) => {
         },
       });
 
-      await refresh();
+      await mutate();
       setJoiningServer(null);
 
       toast({
@@ -118,22 +119,33 @@ export const ServerList: FC<Props> = ({ servers }) => {
     }
   };
 
+  const totalServers = servers.length;
+  const joinedServers = servers.filter(
+    (server) => server.serverUsers[0]?.isJoined
+  ).length;
+
   return (
     <>
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
-        {servers.map((server) => (
-          <ServerCard
-            key={server.id}
-            server={server}
-            isFavorite={server.serverUsers?.[0]?.isFavorite || false}
-            onFavoriteChange={handleFavoriteChange}
-            onJoinServer={handleJoinServer}
-            onCreateCalendar={handleCreateCalendar}
-            onCalendarClick={(calendarId) =>
-              router.push(`/calendars/${calendarId}`)
-            }
-          />
-        ))}
+      <div className='space-y-8'>
+        <ServersHeader
+          totalServers={totalServers}
+          joinedServers={joinedServers}
+        />
+        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
+          {servers.map((server) => (
+            <ServerCard
+              key={server.id}
+              server={server}
+              isFavorite={server.serverUsers?.[0]?.isFavorite || false}
+              onFavoriteChange={handleFavoriteChange}
+              onJoinServer={handleJoinServer}
+              onCreateCalendar={handleCreateCalendar}
+              onCalendarClick={(calendarId) =>
+                router.push(`/calendars/${calendarId}`)
+              }
+            />
+          ))}
+        </div>
       </div>
 
       <JoinServerDialog

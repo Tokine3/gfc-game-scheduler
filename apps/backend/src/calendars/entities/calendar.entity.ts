@@ -1,8 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Reaction } from '@prisma/client';
+import { Type } from 'class-transformer';
 import {
   PersonalSchedule,
-  PublicSchedule,
+  PersonalScheduleWithRelations,
+  PublicScheduleWithRelations,
 } from 'src/schedules/entities/schedule.entity';
 import { Server } from 'src/servers/entities/server.entity';
 import { User } from 'src/user/entities/user.entity';
@@ -101,31 +103,45 @@ export class Participant {
   updatedAt: Date;
 }
 
-export class PublicScheduleWithRelations extends PublicSchedule {
-  @ApiProperty({ description: '参加者', type: [Participant] })
-  participants: Participant[];
-}
+// export class PublicScheduleWithRelations extends PublicSchedule {
+//   @ApiProperty({ description: '参加者', type: [Participant] })
+//   participants: Participant[];
+// }
 
-export class PersonalScheduleWithRelations extends PersonalSchedule {
-  @ApiProperty({ description: '作成したユーザ', type: User })
-  user: User;
-}
+// export class PersonalScheduleWithRelations extends PersonalSchedule {
+//   @ApiProperty({ description: '作成したユーザ', type: User })
+//   user: User;
+// }
 
 export class Events {
-  @ApiProperty({ description: '公開予定', type: [PublicScheduleWithRelations] })
+  @ApiProperty({
+    description: '公開予定',
+    type: () => [PublicScheduleWithRelations],
+  })
   publicSchedules: PublicScheduleWithRelations[];
-  @ApiProperty({ description: '個人予定', type: [PersonalSchedule] })
-  personalSchedules: PersonalSchedule[];
+  @ApiProperty({
+    description: '個人予定',
+    type: () => [PersonalScheduleWithRelations],
+  })
+  personalSchedules: PersonalScheduleWithRelations[];
 }
 
 export class CalendarWithRelations extends Calendar {
   @ApiProperty({ description: 'サーバー', type: () => Server })
+  @Type(() => Server)
   server: Server;
-  @ApiProperty({ description: '公開予定', type: [PublicScheduleWithRelations] })
+
+  @ApiProperty({
+    description: '公開予定',
+    type: () => [PublicScheduleWithRelations],
+  })
+  @Type(() => PublicScheduleWithRelations)
   publicSchedules: PublicScheduleWithRelations[];
+
   @ApiProperty({
     description: '個人予定',
-    type: [PersonalScheduleWithRelations],
+    type: () => [PersonalScheduleWithRelations],
   })
+  @Type(() => PersonalScheduleWithRelations)
   personalSchedules: PersonalScheduleWithRelations[];
 }

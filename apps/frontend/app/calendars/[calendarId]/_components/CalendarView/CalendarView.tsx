@@ -98,7 +98,7 @@ export function CalendarView({
   };
 
   const renderEventContent = (eventContent: EventContentArg) => {
-    const { isPersonal, participants, quota } =
+    const { isPersonal, participants, quota, title } =
       eventContent.event.extendedProps;
     const isFull =
       participants &&
@@ -116,7 +116,7 @@ export function CalendarView({
                 'text-xs font-medium shadow-lg backdrop-blur-sm',
                 'transition-all duration-200 hover:scale-105 hover:shadow-xl',
                 'border border-opacity-30',
-                isPersonal
+                isPersonal && !title
                   ? 'bg-purple-500/20 text-purple-200 border-purple-500/30 hover:bg-purple-500/30'
                   : isFull
                     ? 'bg-green-500/20 text-green-200 border-green-500/30 hover:bg-green-500/30'
@@ -125,7 +125,7 @@ export function CalendarView({
             >
               <div className='flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-1.5 min-w-0'>
                 <div className='flex items-center gap-1 flex-shrink-0'>
-                  {isPersonal ? (
+                  {isPersonal && !title ? (
                     <User className='h-3 w-3' />
                   ) : (
                     <Crosshair className='h-3 w-3' />

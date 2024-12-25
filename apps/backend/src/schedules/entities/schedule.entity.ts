@@ -1,6 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ServerUser } from 'src/servers/entities/server.entity';
+import {
+  ServerUser,
+  ServerUserWithRelations,
+} from 'src/servers/entities/server.entity';
 import { User } from 'src/user/entities/user.entity';
 
 export class ScheduleUserInfo {
@@ -78,37 +81,43 @@ export class PublicSchedule extends BaseSchedule {
   @ApiProperty({ description: '個人予定フラグ', default: false })
   isPersonal: boolean;
 
-  @ApiProperty({ description: '参加者', type: [Participant] })
+  @ApiProperty({ description: '参加者', type: () => [Participant] })
   @Type(() => Participant)
   participants: Participant[];
 }
 
 export class PublicScheduleWithRelations extends PublicSchedule {
-  @ApiProperty({ description: '参加者', type: [Participant] })
+  @ApiProperty({ description: '参加者', type: () => [Participant] })
   @Type(() => Participant)
   participants: Participant[];
 
-  @ApiProperty({ description: 'サーバユーザ' })
-  @Type(() => ServerUser)
-  serverUser: ServerUser;
+  @ApiProperty({
+    description: 'サーバユーザ',
+    type: () => ServerUserWithRelations,
+  })
+  @Type(() => ServerUserWithRelations)
+  serverUser: ServerUserWithRelations;
 }
 
 export class PersonalScheduleWithRelations extends PersonalSchedule {
-  @ApiProperty({ description: 'サーバユーザ' })
-  @Type(() => ServerUser)
-  serverUser: ServerUser;
+  @ApiProperty({
+    description: 'サーバユーザ',
+    type: () => ServerUserWithRelations,
+  })
+  @Type(() => ServerUserWithRelations)
+  serverUser: ServerUserWithRelations;
 }
 
 export class AllUserSchedules {
   @ApiProperty({
     description: '個人スケジュール',
-    type: [PersonalScheduleWithRelations],
+    type: () => [PersonalScheduleWithRelations],
   })
   personalSchedules: PersonalScheduleWithRelations[];
 
   @ApiProperty({
     description: '公開スケジュール',
-    type: [PublicScheduleWithRelations],
+    type: () => [PublicScheduleWithRelations],
   })
   publicSchedules: PublicScheduleWithRelations[];
 }

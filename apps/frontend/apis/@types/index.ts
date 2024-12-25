@@ -19,6 +19,8 @@ export type ServerUser = {
   serverId: string;
   /** お気に入りかどうか */
   isFavorite: boolean;
+  /** 参加しているかどうか */
+  isJoined: boolean;
   /** 参加日時 */
   createdAt: string;
   /** 更新日時 */
@@ -124,11 +126,29 @@ export type Participant = {
   /** 参加者名 */
   name: string;
   /** 参加者反応 */
-  reaction: 'OK' | 'UNDECIDED' | 'NG';
+  reaction: "OK" | "UNDECIDED" | "NG";
   /** 参加者反応日 */
   createdAt: string;
   /** 参加者反応更新日 */
   updatedAt: string;
+};
+
+export type ServerUserWithRelations = {
+  /** サーバーに参加しているユーザーID */
+  userId: string;
+  /** サーバーID */
+  serverId: string;
+  /** お気に入りかどうか */
+  isFavorite: boolean;
+  /** 参加しているかどうか */
+  isJoined: boolean;
+  /** 参加日時 */
+  createdAt: string;
+  /** 更新日時 */
+  updatedAt: string;
+
+  /** ユーザー */
+  user: User;
 };
 
 export type PublicScheduleWithRelations = {
@@ -156,6 +176,9 @@ export type PublicScheduleWithRelations = {
   isPersonal: boolean;
   /** 参加者 */
   participants: Participant[];
+
+  /** サーバユーザ */
+  serverUser: ServerUserWithRelations;
 };
 
 export type PersonalScheduleWithRelations = {
@@ -182,8 +205,8 @@ export type PersonalScheduleWithRelations = {
   /** 個人予定フラグ */
   isPersonal: boolean;
 
-  /** 作成したユーザ */
-  user: User;
+  /** サーバユーザ */
+  serverUser: ServerUserWithRelations;
 };
 
 export type CalendarWithRelations = {

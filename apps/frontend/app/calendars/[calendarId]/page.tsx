@@ -13,6 +13,7 @@ import { Calendar as CalendarIcon, ChevronLeft } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { JoinServerPrompt } from '../../servers/_components/JoinServerPrompt/JoinServerPrompt';
 import { CalendarWithRelations } from '../../../apis/@types';
+import { useEffect, useMemo } from 'react';
 
 interface Props {
   params: Promise<{ calendarId: string }>;
@@ -22,34 +23,64 @@ export default function CalendarPage({ params }: Props) {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { calendarId } = use(params);
+
+  const memoizedCalendarId = useMemo(
+    () => (!authLoading && user ? calendarId : undefined),
+    [authLoading, user, calendarId]
+  );
+
   const {
     calendar,
     isLoading: calendarLoading,
     isError,
-  } = useCalendar(!authLoading && user ? calendarId : undefined);
+  } = useCalendar(memoizedCalendarId);
+
   const { isMember, isLoading: membershipLoading } = useServerMembership(
     calendar?.serverId
   );
 
-  // 認証チェック
-  if (!authLoading && !user) {
-    sessionStorage.setItem('redirectPath', `/calendars/${calendarId}`);
-    router.replace('/login');
-    return null;
+  useEffect(() => {
+    if (!authLoading && !user) {
+      sessionStorage.setItem('redirectPath', `/calendars/${calendarId}`);
+      router.replace('/login');
+    }
+  }, [authLoading, user, calendarId, router]);
+
+  useEffect(() => {
+    if (isError) {
+      router.replace('/error/unauthorized');
+    }
+  }, [isError, router]);
+
+  const isLoading = useMemo(
+    () => authLoading || calendarLoading || membershipLoading,
+    [authLoading, calendarLoading, membershipLoading]
+  );
+
+  const loadingMessage = useMemo(
+    () => (
+      <div className='flex items-center gap-2'>
+        {!calendar ? (
+          <span>カレンダー</span>
+        ) : (
+          <span className='text-purple-400 font-semibold'>
+            {calendar?.name}
+          </span>
+        )}
+        <span>を読み込んでいます...</span>
+      </div>
+    ),
+    [calendar?.name]
+  );
+
+  if (isLoading) {
+    return (
+      <div className='min-h-screen bg-gray-900'>
+        <LoadingScreen message={loadingMessage} />
+      </div>
+    );
   }
 
-  // ローディング表示
-  if (authLoading || calendarLoading || membershipLoading) {
-    return <LoadingScreen message='カレンダーを読み込んでいます...' />;
-  }
-
-  // エラー時は権限エラーページへ
-  if (isError) {
-    router.replace('/error/unauthorized');
-    return null;
-  }
-
-  // サーバー未参加の場合
   if (calendar && !isMember) {
     return (
       <div className='min-h-screen bg-gray-900 flex flex-col'>
@@ -59,18 +90,15 @@ export default function CalendarPage({ params }: Props) {
     );
   }
 
-  // メインのカレンダー表示
   return (
     <div className='min-h-screen bg-gray-900 flex flex-col'>
       <BackgroundDecoration />
       <Header />
-
       <div className='flex-1 flex flex-col mt-16'>
         <CalendarHeader
           calendar={calendar}
           onBack={() => router.push('/servers')}
         />
-
         <motion.div
           className='flex-1 container mx-auto p-4'
           initial={{ opacity: 0 }}
@@ -84,7 +112,6 @@ export default function CalendarPage({ params }: Props) {
   );
 }
 
-// 背景装飾コンポーネント
 function BackgroundDecoration() {
   return (
     <div className='fixed inset-0 z-0'>
@@ -95,7 +122,6 @@ function BackgroundDecoration() {
   );
 }
 
-// カレンダーヘッダーコンポーネント
 function CalendarHeader({
   calendar,
   onBack,
@@ -130,7 +156,6 @@ function CalendarHeader({
   );
 }
 
-// サレンダー情報コンポーネント
 function CalendarInfo({ calendar }: { calendar?: CalendarWithRelations }) {
   if (!calendar) return null;
 
