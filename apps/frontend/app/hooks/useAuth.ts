@@ -7,7 +7,7 @@ import {
 } from 'firebase/auth';
 import { logger } from '../../lib/logger';
 
-export type DiscordUser = {
+type DiscordUser = {
   id: string;
   name: string;
   email: string;
@@ -19,14 +19,27 @@ type AuthUser = {
   discord: DiscordUser | null;
 };
 
-export const useAuth = () => {
-  const [user, setUser] = useState<AuthUser>({ firebase: null, discord: null });
-  const [loading, setLoading] = useState(true);
+type UseAuthReturn = {
+  user: DiscordUser | null;
+  firebaseUser: FirebaseUser | null;
+  isLoading: boolean;
+};
+
+/**
+ * @description 認証状態を管理するカスタムフック
+ * @returns {UseAuthReturn} 認証情報とローディング状態
+ */
+export const useAuth = (): UseAuthReturn => {
+  const [authState, setAuthState] = useState<AuthUser>({
+    firebase: null,
+    discord: null,
+  });
+  const [isLoading, setIsLoading] = useState(true);
   const pathname = usePathname();
 
   useEffect(() => {
     if (pathname === '/login') {
-      setLoading(false);
+      setIsLoading(false);
       return;
     }
 
@@ -35,7 +48,7 @@ export const useAuth = () => {
       if (firebaseUser) {
         try {
           localStorage.setItem('discord_id', firebaseUser.uid);
-          setUser({
+          setAuthState({
             firebase: firebaseUser,
             discord: {
               id: firebaseUser.uid,
@@ -46,20 +59,20 @@ export const useAuth = () => {
           });
         } catch (error) {
           logger.error('Failed to fetch Discord user:', error);
-          setUser({ firebase: firebaseUser, discord: null });
+          setAuthState({ firebase: firebaseUser, discord: null });
         }
       } else {
-        setUser({ firebase: null, discord: null });
+        setAuthState({ firebase: null, discord: null });
       }
-      setLoading(false);
+      setIsLoading(false);
     });
 
     return () => unsubscribe();
   }, [pathname]);
 
   return {
-    user: user.discord,
-    firebaseUser: user.firebase,
-    loading,
+    user: authState.discord,
+    firebaseUser: authState.firebase,
+    isLoading,
   };
 };
