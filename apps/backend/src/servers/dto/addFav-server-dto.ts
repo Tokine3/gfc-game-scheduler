@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty } from 'class-validator';
+import { IsArray, IsBoolean, IsNotEmpty, ValidateNested } from 'class-validator';
+import { ServerWithRelations } from '../entities/server.entity';
+import { Type } from 'class-transformer';
 
 export class AddFavServerDto {
   @ApiProperty({
@@ -8,4 +10,14 @@ export class AddFavServerDto {
   @IsNotEmpty()
   @IsBoolean()
   isFavorite: boolean;
+
+  @ApiProperty({
+    description: 'サーバーのメンバーかどうか',
+    type: [ServerWithRelations],
+  })
+  @IsNotEmpty()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ServerWithRelations)
+  serversList: ServerWithRelations[];
 }

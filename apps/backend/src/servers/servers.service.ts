@@ -76,6 +76,8 @@ export class ServersService {
     addFavServerDto: AddFavServerDto,
     req: RequestWithUser
   ) {
+    console.log('addFavorite', serverId, addFavServerDto);
+    const { isFavorite, serversList } = addFavServerDto;
     const server = await this.prisma.server.findUnique({
       where: {
         id: serverId,
@@ -84,8 +86,7 @@ export class ServersService {
 
     // DB上にサーバのデータが無いとき
     if (!server) {
-      const guilds = await getUserDiscordServer(req);
-      const server = guilds.find((guild) => guild.id === serverId);
+      const server = serversList.find((server) => server.id === serverId);
       // サーバに所属しているか確認
       if (!server) {
         throw new NotFoundException('サーバが見つかりません');
@@ -99,7 +100,7 @@ export class ServersService {
           serverUsers: {
             create: {
               userId: req.user.id,
-              isFavorite: addFavServerDto.isFavorite,
+              isFavorite
             },
           },
         },
@@ -126,13 +127,13 @@ export class ServersService {
           },
         },
         update: {
-          isFavorite: addFavServerDto.isFavorite,
+          isFavorite: isFavorite,
           updatedAt: new Date(),
         },
         create: {
           userId: req.user.id,
           serverId: serverId,
-          isFavorite: addFavServerDto.isFavorite,
+          isFavorite: isFavorite,
         },
       });
 

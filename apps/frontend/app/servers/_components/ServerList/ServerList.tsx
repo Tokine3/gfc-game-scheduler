@@ -1,6 +1,6 @@
 'use client';
 
-import { FC, useState } from 'react';
+import { FC, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ServerWithRelations } from '../../../../apis/@types';
 import { ServerCard } from '../ServerCard/ServerCard';
@@ -11,6 +11,7 @@ import { useServers } from '../../../../hooks/useServers';
 import { JoinServerDialog } from '../JoinServerDialog/JoinServerDialog';
 import { CreateCalendarDialog } from '../CreateCalendarDialog/CreateCalendarDialog';
 import { ServersHeader } from '../ServersHeader/ServersHeader';
+import { EmptyState } from '../EmptyState/EmptyState';
 
 type Props = {
   servers: ServerWithRelations[];
@@ -20,6 +21,7 @@ type Props = {
 export const ServerList: FC<Props> = ({ servers }) => {
   const router = useRouter();
   const { mutate } = useServers();
+  const [activeTab, setActiveTab] = useState<'joined' | 'all'>('joined');
   const [joiningServer, setJoiningServer] =
     useState<ServerWithRelations | null>(null);
   const [creatingCalendarServer, setCreatingCalendarServer] =
@@ -27,13 +29,22 @@ export const ServerList: FC<Props> = ({ servers }) => {
   const [isJoining, setIsJoining] = useState(false);
   const [isCreatingCalendar, setIsCreatingCalendar] = useState(false);
 
+  console.log('servers', servers);
+
+  const filteredServers = useMemo(() => {
+    return activeTab === 'joined'
+      ? servers.filter((server) => server.serverUsers[0]?.isJoined)
+      : servers;
+  }, [servers, activeTab]);
+
   const handleFavoriteChange = async (
     serverId: string,
+    servers: ServerWithRelations[],
     isFavorite: boolean
   ) => {
     try {
       await client.servers.fav._id(serverId).$patch({
-        body: { isFavorite },
+        body: { isFavorite, serversList: servers },
       });
       await mutate();
     } catch (error) {
@@ -130,22 +141,30 @@ export const ServerList: FC<Props> = ({ servers }) => {
         <ServersHeader
           totalServers={totalServers}
           joinedServers={joinedServers}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
         />
-        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
-          {servers.map((server) => (
-            <ServerCard
-              key={server.id}
-              server={server}
-              isFavorite={server.serverUsers?.[0]?.isFavorite || false}
-              onFavoriteChange={handleFavoriteChange}
-              onJoinServer={handleJoinServer}
-              onCreateCalendar={handleCreateCalendar}
-              onCalendarClick={(calendarId) =>
-                router.push(`/calendars/${calendarId}`)
-              }
-            />
-          ))}
-        </div>
+        
+        {activeTab === 'joined' && filteredServers.length === 0 ? (
+          <EmptyState onShowAll={() => setActiveTab('all')} />
+        ) : (
+          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
+            {filteredServers.map((server) => (
+              <ServerCard
+                key={server.id}
+                server={server}
+                servers={servers}
+                isFavorite={server.serverUsers?.[0]?.isFavorite || false}
+                onFavoriteChange={handleFavoriteChange}
+                onJoinServer={handleJoinServer}
+                onCreateCalendar={handleCreateCalendar}
+                onCalendarClick={(calendarId) =>
+                  router.push(`/calendars/${calendarId}`)
+                }
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <JoinServerDialog

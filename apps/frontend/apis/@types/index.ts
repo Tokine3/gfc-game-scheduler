@@ -98,6 +98,8 @@ export type ServerWithServerUser = {
 export type AddFavServerDto = {
   /** お気に入りフラグ */
   isFavorite: boolean;
+  /** サーバーのメンバーかどうか */
+  serversList: ServerWithRelations[];
 };
 
 export type CreateCalendarDto = {

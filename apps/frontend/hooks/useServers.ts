@@ -19,23 +19,23 @@ const fetchServers = async (): Promise<ServerWithRelations[]> => {
     const response = await client.auth.servers.get();
     const serversData = response.body.data;
     return serversData
-      .map((server, index) => {
-        const serverUser = server.serverUsers[index];
-        return {
-          ...server,
-          isJoined: serverUser?.isJoined ?? false,
-          isFavorite: serverUser?.isFavorite ?? false,
-          updatedAt: serverUser?.updatedAt ?? new Date(0).toISOString(),
-          calendars: server.calendars,
-        };
-      })
+      .map((server, index) => ({
+        ...server,
+        isJoined: server.serverUsers[index]?.isJoined ?? false,
+        isFavorite: server.serverUsers[index]?.isFavorite ?? false,
+        updatedAt: server.serverUsers[index]?.updatedAt ?? new Date(0).toISOString(),
+        calendars: server.calendars,
+      }))
       .sort((a, b) => {
         const aFavorite = a.serverUsers[0]?.isFavorite ?? false;
         const bFavorite = b.serverUsers[0]?.isFavorite ?? false;
-        return aFavorite === bFavorite ? 0 : aFavorite ? -1 : 1;
+        if (aFavorite !== bFavorite) return aFavorite ? -1 : 1;
+
+        const aJoined = a.serverUsers[0]?.isJoined ?? false;
+        const bJoined = b.serverUsers[0]?.isJoined ?? false;
+        return aJoined === bJoined ? 0 : aJoined ? -1 : 1;
       });
   } catch (error) {
-    // 認証エラーの場合はログに記録
     logger.error('Failed to fetch servers:', error);
     throw error;
   }

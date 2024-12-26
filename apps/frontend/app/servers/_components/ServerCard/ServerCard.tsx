@@ -19,18 +19,21 @@ import {
   TooltipTrigger,
 } from '../../../components/ui/tooltip';
 import { OpenCalendarDialog } from '../OpenCalendarDialog/OpenCalendarDialog';
+import { logger } from '../../../../lib/logger';
 
-type Props = {
+interface ServerCardProps {
   server: ServerWithRelations;
+  servers: ServerWithRelations[];
   isFavorite: boolean;
-  onFavoriteChange: (serverId: string, isFavorite: boolean) => Promise<void>;
+  onFavoriteChange: (serverId: string, servers: ServerWithRelations[], isFavorite: boolean) => Promise<void>;
   onJoinServer: (server: ServerWithRelations) => void;
   onCreateCalendar: (serverId: string) => void;
   onCalendarClick: (calendarId: string) => void;
-};
+}
 
-export const ServerCard: FC<Props> = ({
+export const ServerCard: FC<ServerCardProps> = ({
   server,
+  servers,
   isFavorite,
   onFavoriteChange,
   onJoinServer,
@@ -45,8 +48,14 @@ export const ServerCard: FC<Props> = ({
     setSelectedCalendarId(calendarId);
   };
 
+  logger.log('server', server);
+  logger.log('serverUsers', server.serverUsers);
   // サーバーに参加しているかどうかを判定
-  const isJoined = server.serverUsers && server.serverUsers.length > 0;
+  const isJoined = server.serverUsers?.[0]?.isJoined ?? false;
+
+  const handleFavoriteChange = async () => {
+    await onFavoriteChange(server.id, servers, !isFavorite);
+  };
 
   const renderServerActions = () => {
     if (!isJoined) {
@@ -164,9 +173,9 @@ export const ServerCard: FC<Props> = ({
                     <span>{server.calendars.length}</span>
                   </div>
                   {isJoined && (
-                    <div className='px-2.5 py-1 rounded-full bg-gradient-to-r from-purple-500/20 to-cyan-500/20 border border-emerald-500/30 shadow-[0_0_15px_rgba(168,85,247,0.15)] group-hover:shadow-[0_0_20px_rgba(168,85,247,0.25)] group-hover:border-emerald-500/40 transition-all'>
+                    <div className='px-2.5 py-1 rounded-full bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30 shadow-[0_0_15px_rgba(168,85,247,0.15)] group-hover:shadow-[0_0_20px_rgba(168,85,247,0.25)] group-hover:border-emerald-500/40 transition-all'>
                       <div className='flex items-center gap-1.5'>
-                        <div className='w-1.5 h-1.5 rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 animate-pulse' />
+                        <div className='w-1.5 h-1.5 rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400' />
                         <span className='text-xs font-semibold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent'>
                           参加済み
                         </span>
@@ -178,7 +187,7 @@ export const ServerCard: FC<Props> = ({
               <HeartCheckbox
                 className='text-gray-400 hover:text-pink-400 shrink-0'
                 checked={isFavorite}
-                onChange={(e) => onFavoriteChange(server.id, e.target.checked)}
+                onChange={handleFavoriteChange}
               />
             </div>
           </div>
