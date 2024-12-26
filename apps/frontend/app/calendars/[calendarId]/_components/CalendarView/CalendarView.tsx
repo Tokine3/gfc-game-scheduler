@@ -20,6 +20,7 @@ import dynamic from 'next/dynamic';
 import { debounce, rafThrottle } from '../../../../../lib/utils';
 import { Participant } from '../../../../../apis/@types';
 import { Availability, CalendarEvent, isPublicSchedule } from '../Calendar/_types/types';
+import { CalendarWithRelations } from '../../../../../apis/@types';
 
 
 interface CalendarViewProps {
@@ -37,6 +38,7 @@ interface CalendarViewProps {
     };
   }[];
   availabilities: Availability[];
+  calendar: CalendarWithRelations | undefined;
   onDateSelect: (date: Date | undefined) => void;
   onEventClick: (event: CalendarEvent) => void;
   onMonthChange: (date: Date) => void;
@@ -60,6 +62,7 @@ export function CalendarView({
   date,
   events,
   availabilities,
+  calendar,
   onDateSelect,
   onEventClick,
   onMonthChange,
@@ -374,7 +377,7 @@ export function CalendarView({
       />
       {selectedAvailability && (
         <AvailableUsers
-          users={selectedAvailability.users}
+          personalSchedules={calendar?.personalSchedules || []}
           date={selectedAvailability.date}
           onClose={() => setSelectedAvailability(null)}
         />

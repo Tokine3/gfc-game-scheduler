@@ -1,6 +1,6 @@
 'use client';
 
-import { FC, useCallback } from 'react';
+import { FC, useCallback, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -13,28 +13,40 @@ import { Button } from '../../../../components/ui/button';
 import { Calendar, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserCard } from './_components';
+import { PersonalScheduleWithRelations } from '../../../../../apis/@types';
+import dayjs from 'dayjs';
 
 interface Props {
-  users: Array<{
-    id: string;
-    name: string;
-    avatar: string | null;
-    isJoined: boolean;
-  }>;
+  personalSchedules: PersonalScheduleWithRelations[];
   date: string;
   onClose: () => void;
 }
 
-export const AvailableUsers: FC<Props> = ({ users, date, onClose }) => {
+export const AvailableUsers: FC<Props> = ({ personalSchedules, date, onClose }) => {
+  // 空き予定のあるユーザーを抽出
+  const availableUsers = useMemo(() => {
+    const targetDate = dayjs(date).startOf('day');
+    
+    // その日の予定を持つユーザーを抽出
+    const usersWithSchedule = personalSchedules
+      .filter(schedule => dayjs(schedule.date).isSame(targetDate, 'day'))
+      .map(schedule => ({
+        id: schedule.serverUser.userId,
+        name: schedule.serverUser.user.name,
+        avatar: schedule.serverUser.user.avatar,
+        isFree: schedule.isFree,
+        isJoined: true
+      }));
+
+    // 空き予定（isFree = true）のユーザーのみを返す
+    return usersWithSchedule.filter(user => user.isFree);
+  }, [personalSchedules, date]);
+
   const handleClose = useCallback(() => {
     Promise.resolve().then(onClose);
   }, [onClose]);
 
-  const formattedDate = new Date(date).toLocaleDateString('ja-JP', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  const formattedDate = dayjs(date).format('YYYY年M月D日');
 
   return (
     <Dialog open onOpenChange={handleClose}>
@@ -48,7 +60,7 @@ export const AvailableUsers: FC<Props> = ({ users, date, onClose }) => {
           </DialogTitle>
           <DialogDescription className='flex items-center justify-center gap-2 text-gray-400 pt-2'>
             <Users className='w-4 h-4' />
-            空き予定のあるメンバー ({users.length}人)
+            空き予定のあるメンバー ({availableUsers.length}人)
           </DialogDescription>
         </DialogHeader>
 
@@ -58,9 +70,15 @@ export const AvailableUsers: FC<Props> = ({ users, date, onClose }) => {
           className='space-y-2 py-4 max-h-[60vh] overflow-y-auto pr-2'
         >
           <AnimatePresence>
-            {users.map((user, i) => (
-              <UserCard key={user.id} user={user} index={i} />
-            ))}
+            {availableUsers.length > 0 ? (
+              availableUsers.map((user, i) => (
+                <UserCard key={user.id} user={user} index={i} />
+              ))
+            ) : (
+              <div className='text-center text-gray-400 py-4'>
+                空き予定のあるメンバーはいません
+              </div>
+            )}
           </AnimatePresence>
         </motion.div>
 

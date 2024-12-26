@@ -227,6 +227,7 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
           <MemoizedCalendarView
             events={calendarEvents}
             date={date}
+            calendar={calendar}
             onDateSelect={handleDateSelect}
             onEventClick={handleEventClick}
             availabilities={availabilities}

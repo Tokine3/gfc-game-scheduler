@@ -62,8 +62,8 @@ export const EventList: FC<Props> = memo(({ events, onEventClick, type, userId }
                   ? 'bg-green-500/10'
                   : 'bg-cyan-500/10'
                 : isOwnPersonalSchedule
-                  ? 'bg-purple-500/10'
-                  : 'bg-indigo-500/10',
+                  ? 'bg-indgo-500/10'
+                  : 'bg-purple-500/10',
               type === 'past' && 'opacity-75'
             )}
             onClick={() => onEventClick(event)}
