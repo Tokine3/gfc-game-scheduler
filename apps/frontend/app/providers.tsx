@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { SWRConfig } from 'swr';
 import { ReactNode } from 'react';
 import { initializeApp } from 'firebase/app';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -14,6 +15,8 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
+
+const queryClient = new QueryClient();
 
 export function Providers({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
@@ -36,7 +39,7 @@ export function Providers({ children }: { children: ReactNode }) {
         shouldRetryOnError: false,
       }}
     >
-      {children}
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     </SWRConfig>
   );
 }
