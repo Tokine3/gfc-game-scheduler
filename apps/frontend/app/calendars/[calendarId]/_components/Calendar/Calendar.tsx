@@ -21,6 +21,7 @@ import { ActionBar } from './_components/ActionBar/ActionBar';
 import { EventList } from './_components/EventList/EventList';
 import { useCalendar } from '../../../../../hooks/useCalendar';
 import { toast } from '../../../../components/ui/use-toast';
+import { useAuth } from '../../../../hooks/useAuth';
 
 // プラグインを追加
 dayjs.extend(utc);
@@ -35,17 +36,8 @@ const MemoizedPersonalEventCreation = memo(PersonalEventCreation);
 const MemoizedEventDetail = memo(EventDetail);
 const MemoizedEventTypeSelector = memo(EventTypeSelector);
 
-// イベントの表示条件を判定するユーティリティ関数を追加
-const isVisibleEvent = (event: CalendarEvent) => {
-  if (isPublicSchedule(event)) {
-    // 共有イベントは常に表示
-    return true;
-  }
-  // 個人予定はタイトルが設定されている場合のみ表示
-  return !isPublicSchedule(event) && !!event.title;
-};
-
 export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
+  const { user } = useAuth();
   const [date, setDate] = useState<Date>(() => new Date());
   const {
     calendar,
@@ -54,6 +46,22 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
     setDate: setCalendarDate,
     refresh,
   } = useCalendar(props.id);
+
+  // イベントの表示条件を判定するユーティリティ関数
+  const isVisibleEvent = useCallback((event: CalendarEvent) => {
+    // 共有イベントは常に表示
+    if (isPublicSchedule(event)) {
+      return true;
+    }
+
+    // 自分の個人予定の場合のみタイトルチェック
+    if (event.serverUser?.userId === user?.id) {
+      return !!event.title;
+    }
+
+    // 他人の予定は既にフィルタリング済み
+    return true;
+  }, [user?.id]);
 
   // 月が変更された時
   const handleMonthChange = useCallback(
@@ -71,9 +79,28 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
 
   // calendar.publicSchedules と publicSchedules を組み合わせて使用
   const events = useMemo(() => {
-    // 個人予定と共有イベントを結合（nullチェックのみ行う）
-    return [...(publicSchedules || []), ...(personalSchedules || [])];
-  }, [publicSchedules, personalSchedules]);
+    // 既存のイベントのIDを記録するSet
+    const existingIds = new Set(personalSchedules?.map(schedule => schedule.id) || []);
+
+    // calendar.personalSchedulesから他人の非公開でない予定を取得
+    const otherUsersSchedules = (calendar?.personalSchedules || []).filter(schedule => 
+      // 他人の予定で非公開でないもの、かつまだ追加されていないもの
+      schedule.serverUser?.userId !== user?.id && 
+      !schedule.isPrivate && 
+      !existingIds.has(schedule.id)
+    );
+
+    // 自分の予定と他人の予定を結合
+    const allPersonalSchedules = [
+      ...(personalSchedules || []),
+      ...otherUsersSchedules,
+    ];
+
+    return [
+      ...(publicSchedules || []),
+      ...allPersonalSchedules,
+    ];
+  }, [publicSchedules, personalSchedules, calendar?.personalSchedules, user?.id]);
 
   // 初期状態を最適化
   const [showEventCreation, setShowEventCreation] = useState(false);
@@ -204,6 +231,7 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
             onEventClick={handleEventClick}
             availabilities={availabilities}
             onMonthChange={handleMonthChange}
+            userId={user?.id}
           />
         </div>
 
@@ -221,6 +249,7 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
                 events={events.filter(isVisibleEvent)}
                 onEventClick={handleEventClick}
                 type='upcoming'
+                userId={user?.id}
               />
             </div>
 
@@ -236,6 +265,7 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
                 events={events.filter(isVisibleEvent)}
                 onEventClick={handleEventClick}
                 type='past'
+                userId={user?.id}
               />
             </div>
           </div>

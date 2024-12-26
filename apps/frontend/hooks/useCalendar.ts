@@ -23,6 +23,14 @@ type UseCalendarReturn = {
   ) => readonly [string, { fromDate: string; toDate: string }] | null;
 };
 
+// カスタムエラークラスを追加
+export class UnauthorizedError extends Error {
+  constructor(message: string = 'Unauthorized') {
+    super(message);
+    this.name = 'UnauthorizedError';
+  }
+}
+
 export function useCalendar(calendarId: string): UseCalendarReturn {
   const [date, setDate] = useState(() => new Date());
   const queryClient = useQueryClient();
@@ -83,14 +91,17 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
 
         if (!hasServerAccess) {
           logger.error('No server access:', { serverId: calendar.serverId });
-          const error = new Error('unauthorized');
-          error.name = 'UnauthorizedError';
-          throw error;
+          throw new UnauthorizedError(
+            `サーバー "${calendar.serverId}" へのアクセス権限がありません`
+          );
         }
 
         logger.info('Calendar data fetched successfully');
         return calendar;
       } catch (error) {
+        if (error instanceof UnauthorizedError) {
+          throw error;
+        }
         logger.error('Calendar fetch error:', {
           error,
           calendarId,
@@ -103,6 +114,9 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
       }
     },
     retry: false,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: publicSchedules } = useQuery({
@@ -117,14 +131,18 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
               .startOf('month')
               .utc()
               .format(),
-            toDate: dayjs(date).tz('Asia/Tokyo').endOf('month').utc().format(),
+            toDate: dayjs(date)
+              .tz('Asia/Tokyo')
+              .endOf('month')
+              .utc()
+              .format(),
           },
         });
       return response;
     },
     staleTime: 0,
-    placeholderData: (prev) => prev ?? [],
-    refetchOnWindowFocus: false,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: personalSchedules } = useQuery({
@@ -151,32 +169,30 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
       return response;
     },
     staleTime: 0,
-    placeholderData: (prev) => prev ?? [],
-    refetchOnWindowFocus: false,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   // 最適化されたリフレッシュ関数
-  const refresh = useCallback(() => {
-    // 即時に再フェッチを行う
-    queryClient.invalidateQueries({
-      queryKey: schedulesKey,
-      exact: true,
-    });
-    queryClient.invalidateQueries({
-      queryKey: personalSchedulesKey,
-      exact: true,
-    });
+  const refresh = useCallback(async () => {
+    try {
+      // すべてのクエリを無効化
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: calendarKey }),
+        queryClient.invalidateQueries({ queryKey: schedulesKey }),
+        queryClient.invalidateQueries({ queryKey: personalSchedulesKey }),
+      ]);
 
-    // 実際のフェッチを実行
-    queryClient.refetchQueries({
-      queryKey: schedulesKey,
-      exact: true,
-    });
-    queryClient.refetchQueries({
-      queryKey: personalSchedulesKey,
-      exact: true,
-    });
-  }, [queryClient, schedulesKey, personalSchedulesKey]);
+      // すべてのクエリを再フェッチ
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: calendarKey }),
+        queryClient.refetchQueries({ queryKey: schedulesKey }),
+        queryClient.refetchQueries({ queryKey: personalSchedulesKey }),
+      ]);
+    } catch (error) {
+      logger.error('Failed to refresh calendar data:', error);
+    }
+  }, [queryClient, calendarKey, schedulesKey, personalSchedulesKey]);
 
   return {
     calendar,

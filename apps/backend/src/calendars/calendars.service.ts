@@ -68,21 +68,39 @@ export class CalendarsService {
         },
         personalSchedules: {
           where: {
-            AND: [
+            OR: [
               {
-                serverUser: {
-                  userId: req.user.id,
-                },
+                AND: [
+                  {
+                    serverUser: {
+                      userId: req.user.id,
+                    },
+                  },
+                  {
+                    date: {
+                      gte:
+                        dayjs(fromDate).startOf('day').toDate() ??
+                        dayjs().startOf('day').toDate(),
+                      lte:
+                        dayjs(toDate).endOf('day').toDate() ??
+                        dayjs().endOf('day').toDate(),
+                    },
+                  },
+                ],
               },
               {
-                date: {
-                  gte:
-                    dayjs(fromDate).startOf('day').toDate() ??
-                    dayjs().startOf('day').toDate(),
-                  lte:
-                    dayjs(toDate).endOf('day').toDate() ??
-                    dayjs().endOf('day').toDate(),
-                },
+                AND: [
+                  {
+                    isPrivate: false,
+                  },
+                  {
+                    serverUser: {
+                      NOT: {
+                        userId: req.user.id,
+                      },
+                    },
+                  },
+                ],
               },
             ],
           },

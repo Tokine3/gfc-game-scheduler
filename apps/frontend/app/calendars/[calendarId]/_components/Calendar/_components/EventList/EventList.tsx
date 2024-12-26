@@ -1,5 +1,5 @@
 import { FC, memo } from 'react';
-import { CrosshairIcon, UserIcon, UsersIcon } from 'lucide-react';
+import { CrosshairIcon, UserIcon, UserCircle2, UsersIcon, Lock } from 'lucide-react';
 import { Button } from '../../../../../../components/ui/button';
 import { cn } from '../../../../../../../lib/utils';
 import dayjs from 'dayjs';
@@ -10,12 +10,19 @@ type Props = {
   events: CalendarEvent[];
   onEventClick: (event: CalendarEvent) => void;
   type: 'upcoming' | 'past';
+  userId: string | undefined;
 };
 
-export const EventList: FC<Props> = memo(({ events, onEventClick, type }) => {
+export const EventList: FC<Props> = memo(({ events, onEventClick, type, userId }) => {
   const filteredEvents = events
     .filter((event) => {
-      const isPast = new Date(event.date) < new Date();
+      if (!isPublicSchedule(event) && !event.title) {
+        return false;
+      }
+
+      const now = dayjs().tz('Asia/Tokyo');
+      const eventDate = dayjs(event.date).tz('Asia/Tokyo');
+      const isPast = eventDate.isBefore(now, 'day');
       return type === 'past' ? isPast : !isPast;
     })
     .sort((a, b) => {
@@ -40,6 +47,8 @@ export const EventList: FC<Props> = memo(({ events, onEventClick, type }) => {
             ).length
           : 0;
         const isFull = isPublicSchedule(event) && joinCount >= event.quota;
+        const isOwnPersonalSchedule = !isPublicSchedule(event) && event.serverUser?.userId === userId;
+        const isPrivate = isOwnPersonalSchedule && event.isPrivate;
         const eventKey = `${type}-${event.isPersonal ? 'personal' : 'public'}-${event.id}`;
 
         return (
@@ -48,11 +57,13 @@ export const EventList: FC<Props> = memo(({ events, onEventClick, type }) => {
             variant='outline'
             className={cn(
               'w-full justify-start text-left border-gray-700/50 hover:bg-gray-800/60 group relative overflow-hidden',
-              event.isPersonal
-                ? 'bg-purple-500/10'
-                : isFull
+              isPublicSchedule(event)
+                ? isFull
                   ? 'bg-green-500/10'
-                  : 'bg-cyan-500/10',
+                  : 'bg-cyan-500/10'
+                : isOwnPersonalSchedule
+                  ? 'bg-purple-500/10'
+                  : 'bg-indigo-500/10',
               type === 'past' && 'opacity-75'
             )}
             onClick={() => onEventClick(event)}
@@ -62,26 +73,33 @@ export const EventList: FC<Props> = memo(({ events, onEventClick, type }) => {
               <div
                 className={cn(
                   'p-2 rounded-lg',
-                  event.isPersonal
-                    ? 'bg-purple-500/20 text-purple-400'
-                    : 'bg-cyan-500/20 text-cyan-400',
+                  isPublicSchedule(event)
+                    ? 'bg-cyan-500/20 text-cyan-400'
+                    : isOwnPersonalSchedule
+                      ? 'bg-indigo-500/20 text-indigo-400'
+                      : 'bg-purple-500/20 text-purple-400',
                   type === 'past' && '/75'
                 )}
               >
-                {event.isPersonal ? (
-                  <UserIcon className='w-4 h-4' />
-                ) : (
-                  <CrosshairIcon className='w-4 h-4' />
-                )}
+                    {isPublicSchedule(event) ? (
+                      <CrosshairIcon className='w-4 h-4' />
+                    ) : isOwnPersonalSchedule ? (
+                      <UserIcon className='w-4 h-4' />
+                    ) : (
+                      <UserCircle2 className='w-4 h-4' />
+                    )}
               </div>
               <div className='flex-1 min-w-0'>
-                <div
-                  className={cn(
+                <div className='flex items-center gap-2'>
+                  <div className={cn(
                     'font-medium truncate',
                     type === 'past' ? 'text-gray-400' : 'text-gray-200'
+                  )}>
+                    {event.title}
+                  </div>
+                  {isPrivate && (
+                    <Lock className='w-3.5 h-3.5 flex-shrink-0 text-gray-400' />
                   )}
-                >
-                  {event.title}
                 </div>
                 <div className='text-sm text-gray-400 flex items-center gap-2'>
                   <span>{dayjs(event.date).format('YYYY年MM月DD日')}</span>

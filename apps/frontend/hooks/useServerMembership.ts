@@ -3,7 +3,7 @@ import { client } from '../lib/api';
 import { logger } from '../lib/logger';
 
 type UseServerMembershipReturn = {
-  isMember: boolean;
+  isMember: boolean | undefined;
   isLoading: boolean;
   refresh: () => Promise<void>;
 };
@@ -15,19 +15,15 @@ type UseServerMembershipReturn = {
 export function useServerMembership(
   serverId: string | undefined
 ): UseServerMembershipReturn {
-  const { data, error, mutate } = useSWR<boolean>(
-    serverId ? serverId : null,
-    async (id: string) => {
+  const { data, error, mutate } = useSWR(
+    serverId ? `/servers/me/server_user?serverId=${serverId}` : null,
+    async () => {
       try {
-        const serverUser = await client.servers.me.server_user.$get({
-          query: { serverId: id },
+        return await client.servers.me.server_user.$get({
+          query: { serverId: serverId! },
         });
-        return !!serverUser;
-      } catch (error) {
-        logger.error('Failed to fetch server membership:', {
-          error,
-          serverId: id,
-        });
+      } catch (error: any) {
+        if (error.status === 404) return null;
         throw error;
       }
     },
@@ -38,7 +34,7 @@ export function useServerMembership(
   );
 
   return {
-    isMember: !!data,
+    isMember: data === undefined ? undefined : !!data,
     isLoading: !error && !data,
     refresh: async () => {
       await mutate();

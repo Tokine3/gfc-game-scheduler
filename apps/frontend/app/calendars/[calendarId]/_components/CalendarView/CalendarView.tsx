@@ -5,7 +5,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import jaLocale from '@fullcalendar/core/locales/ja';
 import { DateSelectArg, EventContentArg } from '@fullcalendar/core';
-import { User, Crosshair } from 'lucide-react';
+import { User, Crosshair, UserCircle2, Users, Lock } from 'lucide-react';
 import { cn } from '../../../../../lib/utils';
 import { useRef, useMemo, useCallback, useState, useEffect } from 'react';
 import {
@@ -19,7 +19,8 @@ import dayjs from 'dayjs';
 import dynamic from 'next/dynamic';
 import { debounce, rafThrottle } from '../../../../../lib/utils';
 import { Participant } from '../../../../../apis/@types';
-import { Availability, CalendarEvent } from '../Calendar/_types/types';
+import { Availability, CalendarEvent, isPublicSchedule } from '../Calendar/_types/types';
+
 
 interface CalendarViewProps {
   date: Date | undefined;
@@ -39,6 +40,7 @@ interface CalendarViewProps {
   onDateSelect: (date: Date | undefined) => void;
   onEventClick: (event: CalendarEvent) => void;
   onMonthChange: (date: Date) => void;
+  userId: string | undefined;
 }
 
 interface Holiday {
@@ -61,6 +63,7 @@ export function CalendarView({
   onDateSelect,
   onEventClick,
   onMonthChange,
+  userId,
 }: CalendarViewProps) {
   const calendarRef = useRef<any>(null);
   const lastTapRef = useRef<number>(0);
@@ -98,13 +101,10 @@ export function CalendarView({
   };
 
   const renderEventContent = (eventContent: EventContentArg) => {
-    const { isPersonal, participants, quota, originalEvent, title } =
-      eventContent.event.extendedProps;
-    const isFull =
-      participants &&
-      quota &&
-      participants.filter((p: Participant) => p.reaction === 'OK').length >=
-        quota;
+    const { isPersonal, participants, quota, originalEvent } = eventContent.event.extendedProps;
+    const isFull = participants && quota && participants.filter((p: Participant) => p.reaction === 'OK').length >= quota;
+    const isOwnPersonalSchedule = !isPublicSchedule(originalEvent) && originalEvent.serverUser?.userId === userId;
+    const isPrivate = isOwnPersonalSchedule && originalEvent.isPrivate;
 
     const handleEventClick = (e: React.MouseEvent) => {
       e.stopPropagation(); // 日付セルのクリックイベントを防ぐ
@@ -124,33 +124,42 @@ export function CalendarView({
                 'text-xs font-medium shadow-lg backdrop-blur-sm',
                 'transition-all duration-200 hover:scale-105 hover:shadow-xl',
                 'border border-opacity-30',
-                isPersonal && !title
-                  ? 'bg-purple-500/20 text-purple-200 border-purple-500/30 hover:bg-purple-500/30'
-                  : isFull
+                isPublicSchedule(originalEvent)
+                  ? isFull
                     ? 'bg-green-500/20 text-green-200 border-green-500/30 hover:bg-green-500/30'
                     : 'bg-blue-500/20 text-blue-200 border-blue-500/30 hover:bg-blue-500/30'
+                  : isOwnPersonalSchedule
+                    ? 'bg-indigo-500/20 text-indigo-200 border-indigo-500/30 hover:bg-indigo-500/30'
+                    : 'bg-purple-500/20 text-purple-200 border-purple-500/30 hover:bg-purple-500/30'
               )}
             >
-              <div className='flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-1.5 min-w-0'>
-                <div className='flex items-center gap-1 flex-shrink-0'>
-                  {isPersonal && !title ? (
-                    <User className='h-3 w-3' />
-                  ) : (
-                    <Crosshair className='h-3 w-3' />
-                  )}
-                  {!isPersonal && (
-                    <span className='text-[9px] sm:text-[10px] opacity-80'>
-                      {participants.length}/{quota}
-                    </span>
-                  )}
+              <div className='flex items-center justify-between w-full gap-1.5'>
+                <div className='flex items-center gap-1.5 min-w-0'>
+                  <div className='flex items-center gap-1 flex-shrink-0'>
+                    {isPublicSchedule(originalEvent) ? (
+                      <Crosshair className='h-3 w-3' />
+                    ) : isOwnPersonalSchedule ? (
+                      <User className='h-3 w-3' />
+                    ) : (
+                      <UserCircle2 className='h-3 w-3' />
+                    )}
+                    {!isPersonal && (
+                      <span className='text-[9px] sm:text-[10px] opacity-80'>
+                        {participants.length}/{quota}
+                      </span>
+                    )}
+                  </div>
+                  <span className='truncate'>{eventContent.event.title}</span>
                 </div>
-                <span className='truncate'>{eventContent.event.title}</span>
+                {isPrivate && (
+                  <Lock className='h-3 w-3 flex-shrink-0 ml-1 opacity-75' />
+                )}
               </div>
             </div>
           </TooltipTrigger>
           <TooltipContent side='bottom' className='bg-gray-800 border-gray-700'>
             <div className='space-y-2'>
-              <div className='font-medium'>{eventContent.event.title}</div>
+              <div className='font-medium'>{`${eventContent.event.title}（${isOwnPersonalSchedule ? '自分' : eventContent.event.extendedProps.originalEvent.serverUser?.user?.name}）`}</div>
               {!isPersonal && (
                 <>
                   <div className='text-gray-400 flex items-center gap-1'>

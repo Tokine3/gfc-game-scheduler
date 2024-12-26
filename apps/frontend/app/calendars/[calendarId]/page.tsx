@@ -14,6 +14,8 @@ import { Button } from '../../components/ui/button';
 import { JoinServerPrompt } from '../../servers/_components/JoinServerPrompt/JoinServerPrompt';
 import type { CalendarWithRelations } from '../../../apis/@types';
 import { logger } from '../../../lib/logger';
+import { UnauthorizedError } from '../../../hooks/useCalendar';
+import { LoadingScreen } from '../../components/LoadingScreen';
 
 export default function CalendarPage({
   params,
@@ -30,24 +32,20 @@ export default function CalendarPage({
     isLoading: isCalendarLoading,
     isError,
   } = useCalendar(resolvedParams.calendarId);
-  const { isMember } = useServerMembership(calendar?.serverId);
+  const { isMember, isLoading: isMembershipLoading } = useServerMembership(calendar?.serverId);
 
   useEffect(() => {
-    logger.info('Calendar page auth state:', {
-      hasUser: !!user,
-      isAuthLoading,
-      userId: user?.id,
-      calendarId: resolvedParams.calendarId,
-      localStorageDiscordId: localStorage.getItem('discord_id'),
-      localStorageDiscordToken: !!localStorage.getItem('discord_token'),
-    });
+    if (isError instanceof UnauthorizedError) {
+      router.push('/error/unauthorized');
+      return;
+    }
 
-    if (!isAuthLoading && !user) {
-      logger.log('No user found in calendar page, redirecting to login');
+    if (!isError && !isAuthLoading && !user) {
+      localStorage.setItem('redirectAfterLogin', window.location.pathname);
       router.replace('/login');
       return;
     }
-  }, [user, isAuthLoading, router, resolvedParams.calendarId]);
+  }, [isError, isAuthLoading, user, router]);
 
   useEffect(() => {
     logger.info('Calendar data state:', {
@@ -69,12 +67,8 @@ export default function CalendarPage({
     personalSchedules,
   ]);
 
-  if (isAuthLoading || isCalendarLoading) {
-    logger.info('Calendar page loading...', {
-      isAuthLoading,
-      isCalendarLoading,
-    });
-    return null;
+  if (isAuthLoading || isCalendarLoading || isMembershipLoading) {
+    return <LoadingScreen message='カレンダーを読み込んでいます...' />;
   }
 
   if (isError) {
@@ -83,7 +77,7 @@ export default function CalendarPage({
     return null;
   }
 
-  if (calendar && !isMember) {
+  if (calendar && isMember === false) {
     return (
       <div className='min-h-screen bg-gray-900 flex flex-col'>
         <Header />
