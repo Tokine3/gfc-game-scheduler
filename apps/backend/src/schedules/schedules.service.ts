@@ -11,6 +11,7 @@ import { FindAllUserSchedulesSchedulesDto } from './dto/findAllUserSchedules-sch
 import { FindMyPersonalSchedulesScheduleDto } from './dto/findMyPersonalSchedules-schedule.dto';
 import { UpsertPersonalScheduleDto } from './dto/upsert-pesonalSchedule.dto';
 import { FindPublicSchedulesScheduleDto } from './dto/findPublicShedules-schedules.dto';
+import { Prisma } from '@prisma/client';
 // プラグインを追加
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -132,63 +133,64 @@ export class SchedulesService {
             id: existingSchedule.id,
           });
         } else {
-          acc.newSchedules.push(schedule);
+          acc.newSchedules.push({
+            date: dayjs.tz(schedule.date, 'Asia/Tokyo').startOf('day').toDate(),
+            title: schedule.title || '',
+            description: schedule.description || '',
+            isPrivate: schedule.isPrivate || false,
+            isFree: schedule.isFree || false,
+            calendarId,
+            serverUserId: serverUser.id,
+            userId,
+            createdBy: userName,
+            updatedBy: userName,
+          });
         }
 
         return acc;
       },
       {
         existingSchedules: [] as (UpsertPersonalScheduleDto & { id: number })[],
-        newSchedules: [] as UpsertPersonalScheduleDto[],
+        newSchedules: [] as Prisma.PersonalScheduleCreateManyInput[],
       }
     );
 
     // トランザクション処理で更新と作成を実行
     await this.prisma.$transaction(
       async (tx) => {
-        for (const schedule of existingSchedules) {
-          await tx.personalSchedule.update({
-            where: { id: schedule.id },
-            data: {
-              date: dayjs
-                .tz(schedule.date, 'Asia/Tokyo')
-                .startOf('day')
-                .toDate(),
-              title: schedule.title,
-              description: schedule.description,
-              isPrivate: schedule.isPrivate,
-              isFree: schedule.isFree,
-              updatedBy: userName,
-            },
-            include: {
-              serverUser: true,
-            },
-          });
-        }
+        await Promise.all([
+          // 既存のスケジュール更新処理
+          existingSchedules.length > 0
+            ? Promise.all(
+                existingSchedules.map(schedule => 
+                  tx.personalSchedule.update({
+                    where: { id: schedule.id },
+                    data: {
+                      date: dayjs.tz(schedule.date, 'Asia/Tokyo').startOf('day').toDate(),
+                      title: schedule.title,
+                      description: schedule.description,
+                      isPrivate: schedule.isPrivate,
+                      isFree: schedule.isFree,
+                      updatedBy: userName,
+                    }
+                  })
+                )
+              )
+            : Promise.resolve(),
+
+          // 新規スケジュール作成処理
+          newSchedules.length > 0
+            ? tx.personalSchedule.createMany({
+                data: newSchedules,
+              })
+            : Promise.resolve()
+        ]);
       },
       {
         timeout: 10000,
         maxWait: 5000,
       }
     );
-
-    // 新規スケジュールを作成
-    if (newSchedules.length > 0) {
-      await this.prisma.personalSchedule.createMany({
-        data: newSchedules.map((schedule) => ({
-          date: dayjs.tz(schedule.date, 'Asia/Tokyo').startOf('day').toDate(),
-          title: schedule.title,
-          description: schedule.description,
-          isPrivate: schedule.isPrivate,
-          isFree: schedule.isFree,
-          calendarId,
-          serverUserId: serverUser.id,
-          userId,
-          createdBy: userName,
-          updatedBy: userName,
-        })),
-      });
-    }
 
     // 更新後のスケジュールを取得して返す
     return this.prisma.personalSchedule.findMany({
