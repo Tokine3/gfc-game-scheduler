@@ -27,6 +27,7 @@ import {
   UserCircle2,
   Calendar,
   Trash2,
+  Loader2,
 } from 'lucide-react';
 import { toast } from '../../../../components/ui/use-toast';
 import type { Props } from './types';
@@ -171,10 +172,22 @@ export const EventDetail: FC<Props> = ({
                         : 'h-7 px-2.5 rounded-lg bg-gradient-to-r from-red-500/10 to-pink-500/10 hover:from-red-500/20 hover:to-pink-500/20 text-red-400 hover:text-red-300 border border-red-500/20'
                     )}
                   >
-                    <Trash2 className='w-4 h-4 mr-1.5' />
-                    {isPublicSchedule(event) && event.isDeleted
-                      ? '削除済み'
-                      : '削除'}
+                    {isPublicSchedule(event) && event.isDeleted ? (
+                      <div className='flex items-center gap-2'>
+                        <Trash2 className='w-4 h-4 mr-1.5' />
+                        削除済み
+                      </div>
+                    ) : isSubmitting ? (
+                      <div className='flex items-center gap-2'>
+                        <Loader2 className='w-4 h-4 animate-spin' />
+                        削除中...
+                      </div>
+                    ) : (
+                      <div className='flex items-center gap-2'>
+                        <Trash2 className='w-4 h-4 mr-1.5' />
+                        削除
+                      </div>
+                    )}
                   </Button>
                 </div>
               )}
