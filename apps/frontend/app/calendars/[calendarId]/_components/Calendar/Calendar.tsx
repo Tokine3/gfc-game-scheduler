@@ -22,6 +22,9 @@ import { EventList } from './_components/EventList/EventList';
 import { useCalendar } from '../../../../../hooks/useCalendar';
 import { toast } from '../../../../components/ui/use-toast';
 import { useAuth } from '../../../../hooks/useAuth';
+import { QueryClient, useQueryClient } from '@tanstack/react-query';
+import { logger } from '../../../../../lib/logger';
+import { client } from '../../../../../lib/api';
 
 // プラグインを追加
 dayjs.extend(utc);
@@ -37,6 +40,7 @@ const MemoizedEventDetail = memo(EventDetail);
 const MemoizedEventTypeSelector = memo(EventTypeSelector);
 
 export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const [date, setDate] = useState<Date>(() => new Date());
   const {
@@ -215,6 +219,45 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
     setShowEventDetail(false);
   }, []);
 
+  // イベント削除ハンドラー
+  const handleEventDelete = useCallback(async () => {
+    try {
+      console.log('Calendar: 削除開始');
+      if (!selectedEvent) return;
+
+      // APIコール
+      if (isPublicSchedule(selectedEvent)) {
+        await client.schedules._id(selectedEvent.id).public.$delete({
+          body: { calendarId: props.id, isDeleted: true }
+        });
+      } else {
+        await client.schedules._id(selectedEvent.id).personal.$delete({
+          body: { calendarId: props.id }
+        });
+      }
+      
+      console.log('Calendar: API完了');
+      
+      // 更新
+      await queryClient.invalidateQueries({
+        queryKey: ['schedules', props.id],
+      });
+      await refresh();
+      
+      console.log('Calendar: データ更新完了');
+      
+      // 最後にモーダルを閉じる
+      setShowEventDetail(false);
+      setSelectedEvent(null);
+      
+      console.log('Calendar: モーダル閉じた');
+      
+    } catch (error) {
+      console.error('Calendar: 削除エラー:', error);
+      throw error;
+    }
+  }, [selectedEvent, props.id, queryClient, refresh]);
+
   return (
     <div className='space-y-6'>
       <ActionBar
@@ -319,9 +362,11 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
       )}
       {showEventDetail && selectedEvent && (
         <MemoizedEventDetail
+          calendarId={props.id}
           event={selectedEvent}
           onClose={() => setShowEventDetail(false)}
           onEdit={() => handleEventEdit(selectedEvent)}
+          onDelete={handleEventDelete}
         />
       )}
 

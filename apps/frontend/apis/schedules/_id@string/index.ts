@@ -11,8 +11,4 @@ export type Methods = DefineMethods<{
     status: 200;
     reqBody: Types.UpdateScheduleDto;
   };
-
-  delete: {
-    status: 200;
-  };
 }>;

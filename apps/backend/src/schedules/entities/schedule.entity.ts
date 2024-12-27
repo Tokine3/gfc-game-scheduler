@@ -81,6 +81,9 @@ export class PublicSchedule extends BaseSchedule {
   @ApiProperty({ description: '個人予定フラグ', default: false })
   isPersonal: boolean;
 
+  @ApiProperty({ description: '削除フラグ', default: false })
+  isDeleted: boolean;
+
   @ApiProperty({ description: '参加者', type: () => [Participant] })
   @Type(() => Participant)
   participants: Participant[];

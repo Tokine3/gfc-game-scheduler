@@ -12,6 +12,8 @@ import type { Methods as Methods_bn7aym } from "./schedules/_calendarId@string/m
 import type { Methods as Methods_zxijjv } from "./schedules/_calendarId@string/personal";
 import type { Methods as Methods_1ti6346 } from "./schedules/_calendarId@string/public";
 import type { Methods as Methods_11i9wjc } from "./schedules/_id@string";
+import type { Methods as Methods_32ivfh } from "./schedules/_id@string/personal";
+import type { Methods as Methods_17gmbg0 } from "./schedules/_id@string/public";
 import type { Methods as Methods_1r95pbu } from "./servers";
 import type { Methods as Methods_11eh2yq } from "./servers/_id@string";
 import type { Methods as Methods_fh3uxg } from "./servers/fav/_id@string";
@@ -466,6 +468,68 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
         const prefix1 = `${PATH5}/${val1}`;
 
         return {
+          personal: {
+            /**
+             * @param option.body - 個人スケジュール削除リクエスト
+             */
+            delete: (option: {
+              body: Methods_32ivfh["delete"]["reqBody"];
+              config?: T | undefined;
+            }) =>
+              fetch<void, BasicHeaders, Methods_32ivfh["delete"]["status"]>(
+                prefix,
+                `${prefix1}${PATH8}`,
+                DELETE,
+                option,
+              ).send(),
+            /**
+             * @param option.body - 個人スケジュール削除リクエスト
+             */
+            $delete: (option: {
+              body: Methods_32ivfh["delete"]["reqBody"];
+              config?: T | undefined;
+            }) =>
+              fetch<void, BasicHeaders, Methods_32ivfh["delete"]["status"]>(
+                prefix,
+                `${prefix1}${PATH8}`,
+                DELETE,
+                option,
+              )
+                .send()
+                .then((r) => r.body),
+            $path: () => `${prefix}${prefix1}${PATH8}`,
+          },
+          public: {
+            /**
+             * @param option.body - 公開スケジュール削除リクエスト
+             */
+            delete: (option: {
+              body: Methods_17gmbg0["delete"]["reqBody"];
+              config?: T | undefined;
+            }) =>
+              fetch<void, BasicHeaders, Methods_17gmbg0["delete"]["status"]>(
+                prefix,
+                `${prefix1}${PATH9}`,
+                DELETE,
+                option,
+              ).send(),
+            /**
+             * @param option.body - 公開スケジュール削除リクエスト
+             */
+            $delete: (option: {
+              body: Methods_17gmbg0["delete"]["reqBody"];
+              config?: T | undefined;
+            }) =>
+              fetch<void, BasicHeaders, Methods_17gmbg0["delete"]["status"]>(
+                prefix,
+                `${prefix1}${PATH9}`,
+                DELETE,
+                option,
+              )
+                .send()
+                .then((r) => r.body),
+            $path: () => `${prefix}${prefix1}${PATH9}`,
+          },
           get: (option?: { config?: T | undefined } | undefined) =>
             fetch<void, BasicHeaders, Methods_11i9wjc["get"]["status"]>(
               prefix,
@@ -500,22 +564,6 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
               prefix,
               prefix1,
               PATCH,
-              option,
-            )
-              .send()
-              .then((r) => r.body),
-          delete: (option?: { config?: T | undefined } | undefined) =>
-            fetch<void, BasicHeaders, Methods_11i9wjc["delete"]["status"]>(
-              prefix,
-              prefix1,
-              DELETE,
-              option,
-            ).send(),
-          $delete: (option?: { config?: T | undefined } | undefined) =>
-            fetch<void, BasicHeaders, Methods_11i9wjc["delete"]["status"]>(
-              prefix,
-              prefix1,
-              DELETE,
               option,
             )
               .send()

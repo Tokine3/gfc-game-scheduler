@@ -176,18 +176,20 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
   // 最適化されたリフレッシュ関数
   const refresh = useCallback(async () => {
     try {
-      // すべてのクエリを無効化
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: calendarKey }),
-        queryClient.invalidateQueries({ queryKey: schedulesKey }),
-        queryClient.invalidateQueries({ queryKey: personalSchedulesKey }),
-      ]);
-
-      // すべてのクエリを再フェッチ
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: calendarKey }),
-        queryClient.refetchQueries({ queryKey: schedulesKey }),
-        queryClient.refetchQueries({ queryKey: personalSchedulesKey }),
+      // すべてのクエリを無効化して再フェッチ
+      return Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: calendarKey,
+          refetchType: 'active',
+        }),
+        queryClient.invalidateQueries({
+          queryKey: schedulesKey,
+          refetchType: 'active',
+        }),
+        queryClient.invalidateQueries({
+          queryKey: personalSchedulesKey,
+          refetchType: 'active',
+        }),
       ]);
     } catch (error) {
       logger.error('Failed to refresh calendar data:', error);

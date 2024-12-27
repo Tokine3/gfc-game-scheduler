@@ -64,12 +64,12 @@ export const EventList: FC<Props> = memo(({ events, onEventClick, type, userId }
                 : isOwnPersonalSchedule
                   ? 'bg-indgo-500/10'
                   : 'bg-purple-500/10',
-              type === 'past' && 'opacity-75'
+              type === 'past' && 'opacity-75',
             )}
             onClick={() => onEventClick(event)}
           >
             <div className='absolute inset-0 bg-gradient-to-r from-purple-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity' />
-            <div className='relative flex items-center w-full gap-3'>
+            <div className={cn('relative flex items-center w-full gap-3')}>
               <div
                 className={cn(
                   'p-2 rounded-lg',
@@ -78,7 +78,7 @@ export const EventList: FC<Props> = memo(({ events, onEventClick, type, userId }
                     : isOwnPersonalSchedule
                       ? 'bg-indigo-500/20 text-indigo-400'
                       : 'bg-purple-500/20 text-purple-400',
-                  type === 'past' && '/75'
+                  type === 'past' && '/75',
                 )}
               >
                     {isPublicSchedule(event) ? (
@@ -93,9 +93,15 @@ export const EventList: FC<Props> = memo(({ events, onEventClick, type, userId }
                 <div className='flex items-center gap-2'>
                   <div className={cn(
                     'font-medium truncate',
-                    type === 'past' ? 'text-gray-400' : 'text-gray-200'
+                    type === 'past' ? 'text-gray-400' : 'text-gray-200',
+                    isPublicSchedule(event) && event.isDeleted && 'line-through text-gray-500'
                   )}>
                     {event.title}
+                  </div>
+                  <div className='text-gray-400'>
+                  {isPublicSchedule(event) && event.isDeleted && (
+                    <span>（削除済み）</span>
+                  )}
                   </div>
                   {isPrivate && (
                     <Lock className='w-3.5 h-3.5 flex-shrink-0 text-gray-400' />

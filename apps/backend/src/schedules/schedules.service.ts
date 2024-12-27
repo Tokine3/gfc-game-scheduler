@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePublicScheduleDto } from './dto/create-publicSchedule.dto';
@@ -12,6 +12,8 @@ import { FindMyPersonalSchedulesScheduleDto } from './dto/findMyPersonalSchedule
 import { UpsertPersonalScheduleDto } from './dto/upsert-pesonalSchedule.dto';
 import { FindPublicSchedulesScheduleDto } from './dto/findPublicShedules-schedules.dto';
 import { Prisma } from '@prisma/client';
+import { RemovePublicScheduleDto } from './dto/remove-publicSchedule-schedules.dto';
+import { RemovePersonalScheduleDto } from './dto/remove-PersonalSchedule-schedules.dto';
 // プラグインを追加
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -291,7 +293,27 @@ export class SchedulesService {
     return `This action updates a #${id} schedule`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} schedule`;
+  removePublicSchedule(req: RequestWithUser, id: number, body: RemovePublicScheduleDto) {
+    const { calendarId, isDeleted } = body;
+    const { id: userId } = req.user;
+    // 論理削除
+    return this.prisma.publicSchedule.update({
+      where: { id, calendarId, serverUser: { userId } },
+      data: { isDeleted },
+    }).catch((error) => {
+      throw new BadRequestException('スケジュール削除に失敗しました');
+    });
+  }
+
+  removePersonalSchedule(req: RequestWithUser, id: number, body: RemovePersonalScheduleDto) {
+    const { calendarId} = body;
+    const { id: userId } = req.user;
+
+    // 物理削除
+    return this.prisma.personalSchedule.delete({
+      where: { id, calendarId, userId },
+    }).catch((error) => {
+      throw new BadRequestException('スケジュール削除に失敗しました');
+    });
   }
 }

@@ -107,6 +107,7 @@ export function CalendarView({
     const { isPersonal, participants, quota, originalEvent } = eventContent.event.extendedProps;
     const isFull = participants && quota && participants.filter((p: Participant) => p.reaction === 'OK').length >= quota;
     const isOwnPersonalSchedule = !isPublicSchedule(originalEvent) && originalEvent.serverUser?.userId === userId;
+    const isDeleted = isPublicSchedule(originalEvent) && originalEvent.isDeleted;
     const isPrivate = isOwnPersonalSchedule && originalEvent.isPrivate;
 
     const handleEventClick = (e: React.MouseEvent) => {
@@ -307,6 +308,19 @@ export function CalendarView({
       document.removeEventListener('click', handleAvailabilityClick, true);
   }, [handleAvailabilityClick]);
 
+  // イベントをフィルタリング
+  const filteredEvents = useMemo(() => {
+    return events.filter(event => {
+      const originalEvent = event.extendedProps?.originalEvent;
+      // 共有イベントの場合、削除済みは表示しない
+      if (originalEvent && isPublicSchedule(originalEvent)) {
+        return !originalEvent.isDeleted;
+      }
+      // 個人予定はそのまま表示
+      return true;
+    });
+  }, [events]);
+
   return (
     <div className='w-full h-full'>
       <style jsx global>{`
@@ -345,7 +359,7 @@ export function CalendarView({
         selectable={true}
         select={handleDateSelect}
         dateClick={handleDateClick}
-        events={events}
+        events={filteredEvents}
         eventContent={renderEventContent}
         headerToolbar={{
           start: 'title',

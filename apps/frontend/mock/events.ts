@@ -17,6 +17,7 @@ export const mockPublicEvent: PublicScheduleWithRelations = {
   createdAt: dayjs().toISOString(),
   updatedAt: dayjs().toISOString(),
   isRecruiting: true,
+  isDeleted: false,
   serverUser: {
     userId: '1',
     serverId: '1',
