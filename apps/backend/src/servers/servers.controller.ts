@@ -5,15 +5,12 @@ import {
   Body,
   Patch,
   Param,
-  Delete,
   UseGuards,
   Request,
   Query,
   Req,
 } from '@nestjs/common';
 import { ServersService } from './servers.service';
-import { CreateServerDto } from './dto/create-server.dto';
-import { UpdateServerDto } from './dto/update-server.dto';
 import { DiscordAuthGuard } from '../auth/discord-auth.guard';
 import { RequestWithUser } from 'src/types/request.types';
 import { JoinServerDto } from './dto/join-server.dto';
@@ -53,16 +50,6 @@ export class ServersController {
     return this.serversService.findMeServerUser(req, serverId);
   }
 
-  @Get()
-  findAll() {
-    return this.serversService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.serversService.findOne(+id);
-  }
-
   @ApiOperation({ summary: 'サーバーをお気に入りに追加する' })
   @ApiResponse({
     status: 200,
@@ -77,10 +64,5 @@ export class ServersController {
     @Req() req: RequestWithUser
   ) {
     return this.serversService.addFavorite(id, addFavServerDto, req);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.serversService.remove(+id);
   }
 }

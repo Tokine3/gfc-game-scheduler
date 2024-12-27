@@ -71,9 +71,4 @@ export class CalendarsController {
   ) {
     return this.calendarsService.update(id, req, updateCalendarDto);
   }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.calendarsService.remove(+id);
-  }
 }

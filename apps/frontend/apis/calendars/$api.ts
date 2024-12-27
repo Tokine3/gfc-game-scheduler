@@ -8,7 +8,6 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
   const PATH0 = "/calendars";
   const GET = "GET";
   const POST = "POST";
-  const DELETE = "DELETE";
   const PATCH = "PATCH";
 
   return {
@@ -75,22 +74,6 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
             Methods_2yw7dz["patch"]["status"]
           >(prefix, prefix0, PATCH, option)
             .json()
-            .then((r) => r.body),
-        delete: (option?: { config?: T | undefined } | undefined) =>
-          fetch<void, BasicHeaders, Methods_2yw7dz["delete"]["status"]>(
-            prefix,
-            prefix0,
-            DELETE,
-            option,
-          ).send(),
-        $delete: (option?: { config?: T | undefined } | undefined) =>
-          fetch<void, BasicHeaders, Methods_2yw7dz["delete"]["status"]>(
-            prefix,
-            prefix0,
-            DELETE,
-            option,
-          )
-            .send()
             .then((r) => r.body),
         $path: (
           option?:

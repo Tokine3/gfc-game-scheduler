@@ -3,15 +3,11 @@ import {
   NotFoundException,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { CreateServerDto } from './dto/create-server.dto';
-import { UpdateServerDto } from './dto/update-server.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { RequestWithUser } from 'src/types/request.types';
 import { JoinServerDto } from './dto/join-server.dto';
 import { logger } from 'src/utils/logger';
 import { AddFavServerDto } from './dto/addFav-server-dto';
-import { User } from 'src/user/entities/user.entity';
-import { getUserDiscordServer } from 'src/utils/getDiscordServer';
 
 @Injectable()
 export class ServersService {
@@ -63,14 +59,6 @@ export class ServersService {
     return !!serverUser;
   }
 
-  findAll() {
-    return `This action returns all servers`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} server`;
-  }
-
   async addFavorite(
     serverId: string,
     addFavServerDto: AddFavServerDto,
@@ -100,7 +88,7 @@ export class ServersService {
           serverUsers: {
             create: {
               userId: req.user.id,
-              isFavorite
+              isFavorite,
             },
           },
         },
@@ -144,13 +132,5 @@ export class ServersService {
         'Failed to update favorite status'
       );
     }
-  }
-
-  update(id: number, updateServerDto: UpdateServerDto) {
-    return `This action updates a #${id} server`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} server`;
   }
 }

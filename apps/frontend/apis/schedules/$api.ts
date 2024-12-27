@@ -5,7 +5,6 @@ import type { Methods as Methods_1p1r0xa } from "./_calendarId@string/all-schedu
 import type { Methods as Methods_x7hmud } from "./_calendarId@string/me/personal";
 import type { Methods as Methods_1tduqze } from "./_calendarId@string/personal";
 import type { Methods as Methods_7up0tv } from "./_calendarId@string/public";
-import type { Methods as Methods_2yw7dz } from "./_id@string";
 import type { Methods as Methods_mdoht4 } from "./_id@string/personal";
 import type { Methods as Methods_kq0c5l } from "./_id@string/public";
 
@@ -312,23 +311,6 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
               .then((r) => r.body),
           $path: () => `${prefix}${prefix0}${PATH4}`,
         },
-        get: (option?: { config?: T | undefined } | undefined) =>
-          fetch<void, BasicHeaders, Methods_2yw7dz["get"]["status"]>(
-            prefix,
-            prefix0,
-            GET,
-            option,
-          ).send(),
-        $get: (option?: { config?: T | undefined } | undefined) =>
-          fetch<void, BasicHeaders, Methods_2yw7dz["get"]["status"]>(
-            prefix,
-            prefix0,
-            GET,
-            option,
-          )
-            .send()
-            .then((r) => r.body),
-        $path: () => `${prefix}${prefix0}`,
       };
     },
     get: (option?: { config?: T | undefined } | undefined) =>
