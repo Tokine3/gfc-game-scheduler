@@ -33,6 +33,7 @@ import {
 } from '../../../../components/ui/tooltip';
 import { getDaysInRange } from '../../../../../lib/dateUtils';
 import { ScheduleRow } from './_components';
+import { z } from 'zod';
 
 type Props = {
   onClose: () => void;
@@ -59,6 +60,14 @@ type DaySchedule = {
 };
 
 type ViewMode = 'month' | 'week';
+
+const formSchema = z.object({
+  title: z
+    .string()
+    .min(1, '必須項目です')
+    .max(30, 'タイトルは30文字以内で入力してください'),
+  description: z.string().optional(),
+});
 
 export const PersonalEventCreation: FC<Props> = ({
   onClose,

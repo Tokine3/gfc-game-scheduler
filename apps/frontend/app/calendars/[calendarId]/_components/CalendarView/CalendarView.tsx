@@ -19,9 +19,12 @@ import dayjs from 'dayjs';
 import dynamic from 'next/dynamic';
 import { debounce, rafThrottle } from '../../../../../lib/utils';
 import { Participant } from '../../../../../apis/@types';
-import { Availability, CalendarEvent, isPublicSchedule } from '../Calendar/_types/types';
+import {
+  Availability,
+  CalendarEvent,
+  isPublicSchedule,
+} from '../Calendar/_types/types';
 import { CalendarWithRelations } from '../../../../../apis/@types';
-
 
 interface CalendarViewProps {
   date: Date | undefined;
@@ -104,10 +107,18 @@ export function CalendarView({
   };
 
   const renderEventContent = (eventContent: EventContentArg) => {
-    const { isPersonal, participants, quota, originalEvent } = eventContent.event.extendedProps;
-    const isFull = participants && quota && participants.filter((p: Participant) => p.reaction === 'OK').length >= quota;
-    const isOwnPersonalSchedule = !isPublicSchedule(originalEvent) && originalEvent.serverUser?.userId === userId;
-    const isDeleted = isPublicSchedule(originalEvent) && originalEvent.isDeleted;
+    const { isPersonal, participants, quota, originalEvent } =
+      eventContent.event.extendedProps;
+    const isFull =
+      participants &&
+      quota &&
+      participants.filter((p: Participant) => p.reaction === 'OK').length >=
+        quota;
+    const isOwnPersonalSchedule =
+      !isPublicSchedule(originalEvent) &&
+      originalEvent.serverUser?.userId === userId;
+    const isDeleted =
+      isPublicSchedule(originalEvent) && originalEvent.isDeleted;
     const isPrivate = isOwnPersonalSchedule && originalEvent.isPrivate;
 
     const handleEventClick = (e: React.MouseEvent) => {
@@ -187,16 +198,14 @@ export function CalendarView({
                       </div>
                     )}
                     {participants.filter(
-                      (p: Participant) => p.reaction === 'UNDECIDED'
+                      (p: Participant) => p.reaction === 'PENDING'
                     ).length > 0 && (
                       <div className='text-xs'>
                         <span className='text-yellow-400 font-medium'>
                           未定:{' '}
                         </span>
                         {participants
-                          .filter(
-                            (p: Participant) => p.reaction === 'UNDECIDED'
-                          )
+                          .filter((p: Participant) => p.reaction === 'PENDING')
                           .map((p: Participant) => p.name)
                           .join(', ')}
                       </div>
@@ -310,7 +319,7 @@ export function CalendarView({
 
   // イベントをフィルタリング
   const filteredEvents = useMemo(() => {
-    return events.filter(event => {
+    return events.filter((event) => {
       const originalEvent = event.extendedProps?.originalEvent;
       // 共有イベントの場合、削除済みは表示しない
       if (originalEvent && isPublicSchedule(originalEvent)) {

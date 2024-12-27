@@ -55,6 +55,7 @@ export const ScheduleRow = memo<Props>(
             </span>
           </div>
           <Input
+            maxLength={30}
             placeholder='予定の内容'
             value={schedule.description}
             onChange={(e) =>

@@ -49,6 +49,7 @@ export const EventFormField: FC<Props> = ({
             />
           ) : (
             <Input
+              maxLength={30}
               type={type}
               min={min}
               placeholder={placeholder}

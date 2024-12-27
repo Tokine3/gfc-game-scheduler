@@ -31,7 +31,10 @@ import { EventFormField } from './_components';
 import { CalendarEvent, isPublicSchedule } from '../Calendar/_types/types';
 
 const formSchema = z.object({
-  title: z.string().min(1, '必須項目です'),
+  title: z
+    .string()
+    .min(1, '必須項目です')
+    .max(30, 'タイトルは30文字以内で入力してください'),
   description: z.string().optional(),
   date: z.string().min(1, '必須項目です'),
   time: z.string().min(1, '必須項目です'),
