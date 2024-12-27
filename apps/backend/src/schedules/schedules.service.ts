@@ -86,7 +86,7 @@ export class SchedulesService {
     logger.log('createPersonalSchedule', body);
     const { id: userId, name: userName } = req.user;
 
-    const [serverUser, calendar, personalSchedules] = await Promise.all([
+    const [serverUser, personalSchedules] = await Promise.all([
       this.prisma.serverUser.findFirst({
         where: {
           userId,
@@ -97,11 +97,6 @@ export class SchedulesService {
               },
             },
           },
-        },
-      }),
-      this.prisma.calendar.findUnique({
-        where: {
-          id: calendarId,
         },
       }),
       this.prisma.personalSchedule.findMany({
@@ -123,15 +118,13 @@ export class SchedulesService {
       throw new NotFoundException('サーバーユーザーが見つかりません');
     }
 
-    if (!calendar) {
-      throw new NotFoundException('カレンダーが見つかりません');
-    }
-
     // 既存のスケジュールと新規スケジュールを分離
     const { existingSchedules, newSchedules } = body.reduce(
       (acc, schedule) => {
         const existingSchedule = personalSchedules.find((s) =>
-          dayjs(s.date).isSame(dayjs(schedule.date), 'day')
+          dayjs
+            .tz(s.date, 'Asia/Tokyo')
+            .isSame(dayjs.tz(schedule.date, 'Asia/Tokyo'), 'day')
         );
 
         if (existingSchedule) {
