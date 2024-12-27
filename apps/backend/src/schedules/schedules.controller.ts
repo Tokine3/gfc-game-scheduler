@@ -28,7 +28,7 @@ import { FindMyPersonalSchedulesScheduleDto } from './dto/findMyPersonalSchedule
 import { UpsertPersonalScheduleDto } from './dto/upsert-pesonalSchedule.dto';
 import { FindPublicSchedulesScheduleDto } from './dto/findPublicShedules-schedules.dto';
 import { RemovePublicScheduleDto } from './dto/remove-publicSchedule-schedules.dto';
-import { RemovePersonalScheduleDto } from './dto/remove-PersonalSchedule-schedules.dto';
+import { RemovePersonalScheduleDto } from './dto/remove-personalSchedule-schedules.dto';
 
 @Controller('schedules')
 export class SchedulesController {
@@ -74,11 +74,6 @@ export class SchedulesController {
     @Body() body: [UpsertPersonalScheduleDto]
   ) {
     return this.schedulesService.upsertPersonalSchedules(req, calendarId, body);
-  }
-
-  @Get()
-  findAll() {
-    return this.schedulesService.findAll();
   }
 
   @ApiOperation({ summary: 'ユーザーの個人スケジュール取得' })

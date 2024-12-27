@@ -289,14 +289,6 @@ export class SchedulesService {
     return { personalSchedules, publicSchedules };
   }
 
-  findAll() {
-    return `This action returns all schedules`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} schedule`;
-  }
-
   updatePublicSchedule(
     req: RequestWithUser,
     id: number,

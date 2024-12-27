@@ -6,7 +6,6 @@ import type { Methods as Methods_19zxzpn } from "./auth/servers";
 import type { Methods as Methods_1nhtobh } from "./calendars";
 import type { Methods as Methods_14m84y3 } from "./calendars/_id@string";
 import type { Methods as Methods_18qsrps } from "./health";
-import type { Methods as Methods_lxn7j8 } from "./schedules";
 import type { Methods as Methods_xb80kx } from "./schedules/_calendarId@string/all-schedules";
 import type { Methods as Methods_bn7aym } from "./schedules/_calendarId@string/me/personal";
 import type { Methods as Methods_zxijjv } from "./schedules/_calendarId@string/personal";
@@ -540,23 +539,6 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
           },
         };
       },
-      get: (option?: { config?: T | undefined } | undefined) =>
-        fetch<void, BasicHeaders, Methods_lxn7j8["get"]["status"]>(
-          prefix,
-          PATH5,
-          GET,
-          option,
-        ).send(),
-      $get: (option?: { config?: T | undefined } | undefined) =>
-        fetch<void, BasicHeaders, Methods_lxn7j8["get"]["status"]>(
-          prefix,
-          PATH5,
-          GET,
-          option,
-        )
-          .send()
-          .then((r) => r.body),
-      $path: () => `${prefix}${PATH5}`,
     },
     servers: {
       fav: {

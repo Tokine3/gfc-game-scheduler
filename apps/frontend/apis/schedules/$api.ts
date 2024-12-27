@@ -1,6 +1,5 @@
 import type { AspidaClient, BasicHeaders } from "aspida";
 import { dataToURLString } from "aspida";
-import type { Methods as Methods_by08hd } from ".";
 import type { Methods as Methods_1p1r0xa } from "./_calendarId@string/all-schedules";
 import type { Methods as Methods_x7hmud } from "./_calendarId@string/me/personal";
 import type { Methods as Methods_1tduqze } from "./_calendarId@string/personal";
@@ -313,23 +312,6 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
         },
       };
     },
-    get: (option?: { config?: T | undefined } | undefined) =>
-      fetch<void, BasicHeaders, Methods_by08hd["get"]["status"]>(
-        prefix,
-        PATH0,
-        GET,
-        option,
-      ).send(),
-    $get: (option?: { config?: T | undefined } | undefined) =>
-      fetch<void, BasicHeaders, Methods_by08hd["get"]["status"]>(
-        prefix,
-        PATH0,
-        GET,
-        option,
-      )
-        .send()
-        .then((r) => r.body),
-    $path: () => `${prefix}${PATH0}`,
   };
 };
 
