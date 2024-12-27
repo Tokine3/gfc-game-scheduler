@@ -25,8 +25,17 @@ export class ServersService {
     });
     if (server) {
       // サーバーが既に存在する場合はサーバーユーザーを作成
-      return await this.prisma.serverUser.create({
-        data: {
+      return await this.prisma.serverUser.upsert({
+        where: {
+          userId_serverId: {
+            userId: req.user.id,
+            serverId: serverId,
+          },
+        },
+        update: {
+          isJoined: true,
+        },
+        create: {
           userId: req.user.id,
           serverId,
           isJoined: true,
