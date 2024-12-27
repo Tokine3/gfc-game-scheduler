@@ -51,11 +51,11 @@ export class CalendarsService {
           where: {
             date: {
               gte:
-                dayjs(fromDate).startOf('day').toDate() ??
-                dayjs().startOf('day').toDate(),
+                dayjs.tz(fromDate, 'Asia/Tokyo').startOf('day').toDate() ??
+                dayjs.tz(dayjs(), 'Asia/Tokyo').startOf('day').toDate(),
               lte:
-                dayjs(toDate).endOf('day').toDate() ??
-                dayjs().endOf('day').toDate(),
+                dayjs.tz(toDate, 'Asia/Tokyo').endOf('day').toDate() ??
+                dayjs.tz(dayjs(), 'Asia/Tokyo').endOf('day').toDate(),
             },
           },
           include: {
@@ -84,11 +84,14 @@ export class CalendarsService {
                   {
                     date: {
                       gte:
-                        dayjs(fromDate).startOf('day').toDate() ??
-                        dayjs().startOf('day').toDate(),
+                        dayjs
+                          .tz(fromDate, 'Asia/Tokyo')
+                          .startOf('day')
+                          .toDate() ??
+                        dayjs.tz(dayjs(), 'Asia/Tokyo').startOf('day').toDate(),
                       lte:
-                        dayjs(toDate).endOf('day').toDate() ??
-                        dayjs().endOf('day').toDate(),
+                        dayjs.tz(toDate, 'Asia/Tokyo').endOf('day').toDate() ??
+                        dayjs.tz(dayjs(), 'Asia/Tokyo').endOf('day').toDate(),
                     },
                   },
                 ],
