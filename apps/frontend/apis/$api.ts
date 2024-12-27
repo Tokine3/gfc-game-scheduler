@@ -11,9 +11,8 @@ import type { Methods as Methods_xb80kx } from "./schedules/_calendarId@string/a
 import type { Methods as Methods_bn7aym } from "./schedules/_calendarId@string/me/personal";
 import type { Methods as Methods_zxijjv } from "./schedules/_calendarId@string/personal";
 import type { Methods as Methods_1ti6346 } from "./schedules/_calendarId@string/public";
-import type { Methods as Methods_11i9wjc } from "./schedules/_id@string";
-import type { Methods as Methods_1r95pbu } from "./servers";
-import type { Methods as Methods_11eh2yq } from "./servers/_id@string";
+import type { Methods as Methods_32ivfh } from "./schedules/_id@string/personal";
+import type { Methods as Methods_17gmbg0 } from "./schedules/_id@string/public";
 import type { Methods as Methods_fh3uxg } from "./servers/fav/_id@string";
 import type { Methods as Methods_dvs1gv } from "./servers/join";
 import type { Methods as Methods_m3tpez } from "./servers/me/server-user";
@@ -34,13 +33,12 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
   const PATH7 = "/me/personal";
   const PATH8 = "/personal";
   const PATH9 = "/public";
-  const PATH10 = "/servers";
-  const PATH11 = "/servers/fav";
-  const PATH12 = "/servers/join";
-  const PATH13 = "/servers/me/server-user";
-  const PATH14 = "/user";
-  const PATH15 = "/user/login";
-  const PATH16 = "/user/me";
+  const PATH10 = "/servers/fav";
+  const PATH11 = "/servers/join";
+  const PATH12 = "/servers/me/server-user";
+  const PATH13 = "/user";
+  const PATH14 = "/user/login";
+  const PATH15 = "/user/me";
   const GET = "GET";
   const POST = "POST";
   const DELETE = "DELETE";
@@ -174,22 +172,6 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
               Methods_14m84y3["patch"]["status"]
             >(prefix, prefix1, PATCH, option)
               .json()
-              .then((r) => r.body),
-          delete: (option?: { config?: T | undefined } | undefined) =>
-            fetch<void, BasicHeaders, Methods_14m84y3["delete"]["status"]>(
-              prefix,
-              prefix1,
-              DELETE,
-              option,
-            ).send(),
-          $delete: (option?: { config?: T | undefined } | undefined) =>
-            fetch<void, BasicHeaders, Methods_14m84y3["delete"]["status"]>(
-              prefix,
-              prefix1,
-              DELETE,
-              option,
-            )
-              .send()
               .then((r) => r.body),
           $path: (
             option?:
@@ -466,61 +448,96 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
         const prefix1 = `${PATH5}/${val1}`;
 
         return {
-          get: (option?: { config?: T | undefined } | undefined) =>
-            fetch<void, BasicHeaders, Methods_11i9wjc["get"]["status"]>(
-              prefix,
-              prefix1,
-              GET,
-              option,
-            ).send(),
-          $get: (option?: { config?: T | undefined } | undefined) =>
-            fetch<void, BasicHeaders, Methods_11i9wjc["get"]["status"]>(
-              prefix,
-              prefix1,
-              GET,
-              option,
-            )
-              .send()
-              .then((r) => r.body),
-          patch: (option: {
-            body: Methods_11i9wjc["patch"]["reqBody"];
-            config?: T | undefined;
-          }) =>
-            fetch<void, BasicHeaders, Methods_11i9wjc["patch"]["status"]>(
-              prefix,
-              prefix1,
-              PATCH,
-              option,
-            ).send(),
-          $patch: (option: {
-            body: Methods_11i9wjc["patch"]["reqBody"];
-            config?: T | undefined;
-          }) =>
-            fetch<void, BasicHeaders, Methods_11i9wjc["patch"]["status"]>(
-              prefix,
-              prefix1,
-              PATCH,
-              option,
-            )
-              .send()
-              .then((r) => r.body),
-          delete: (option?: { config?: T | undefined } | undefined) =>
-            fetch<void, BasicHeaders, Methods_11i9wjc["delete"]["status"]>(
-              prefix,
-              prefix1,
-              DELETE,
-              option,
-            ).send(),
-          $delete: (option?: { config?: T | undefined } | undefined) =>
-            fetch<void, BasicHeaders, Methods_11i9wjc["delete"]["status"]>(
-              prefix,
-              prefix1,
-              DELETE,
-              option,
-            )
-              .send()
-              .then((r) => r.body),
-          $path: () => `${prefix}${prefix1}`,
+          personal: {
+            /**
+             * @param option.body - 個人スケジュール削除リクエスト
+             */
+            delete: (option: {
+              body: Methods_32ivfh["delete"]["reqBody"];
+              config?: T | undefined;
+            }) =>
+              fetch<void, BasicHeaders, Methods_32ivfh["delete"]["status"]>(
+                prefix,
+                `${prefix1}${PATH8}`,
+                DELETE,
+                option,
+              ).send(),
+            /**
+             * @param option.body - 個人スケジュール削除リクエスト
+             */
+            $delete: (option: {
+              body: Methods_32ivfh["delete"]["reqBody"];
+              config?: T | undefined;
+            }) =>
+              fetch<void, BasicHeaders, Methods_32ivfh["delete"]["status"]>(
+                prefix,
+                `${prefix1}${PATH8}`,
+                DELETE,
+                option,
+              )
+                .send()
+                .then((r) => r.body),
+            $path: () => `${prefix}${prefix1}${PATH8}`,
+          },
+          public: {
+            /**
+             * @param option.body - 公開スケジュール更新リクエスト
+             * @returns 公開スケジュール更新成功
+             */
+            patch: (option: {
+              body: Methods_17gmbg0["patch"]["reqBody"];
+              config?: T | undefined;
+            }) =>
+              fetch<
+                Methods_17gmbg0["patch"]["resBody"],
+                BasicHeaders,
+                Methods_17gmbg0["patch"]["status"]
+              >(prefix, `${prefix1}${PATH9}`, PATCH, option).json(),
+            /**
+             * @param option.body - 公開スケジュール更新リクエスト
+             * @returns 公開スケジュール更新成功
+             */
+            $patch: (option: {
+              body: Methods_17gmbg0["patch"]["reqBody"];
+              config?: T | undefined;
+            }) =>
+              fetch<
+                Methods_17gmbg0["patch"]["resBody"],
+                BasicHeaders,
+                Methods_17gmbg0["patch"]["status"]
+              >(prefix, `${prefix1}${PATH9}`, PATCH, option)
+                .json()
+                .then((r) => r.body),
+            /**
+             * @param option.body - 公開スケジュール削除リクエスト
+             */
+            delete: (option: {
+              body: Methods_17gmbg0["delete"]["reqBody"];
+              config?: T | undefined;
+            }) =>
+              fetch<void, BasicHeaders, Methods_17gmbg0["delete"]["status"]>(
+                prefix,
+                `${prefix1}${PATH9}`,
+                DELETE,
+                option,
+              ).send(),
+            /**
+             * @param option.body - 公開スケジュール削除リクエスト
+             */
+            $delete: (option: {
+              body: Methods_17gmbg0["delete"]["reqBody"];
+              config?: T | undefined;
+            }) =>
+              fetch<void, BasicHeaders, Methods_17gmbg0["delete"]["status"]>(
+                prefix,
+                `${prefix1}${PATH9}`,
+                DELETE,
+                option,
+              )
+                .send()
+                .then((r) => r.body),
+            $path: () => `${prefix}${prefix1}${PATH9}`,
+          },
         };
       },
       get: (option?: { config?: T | undefined } | undefined) =>
@@ -542,48 +559,9 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
       $path: () => `${prefix}${PATH5}`,
     },
     servers: {
-      _id: (val1: string) => {
-        const prefix1 = `${PATH10}/${val1}`;
-
-        return {
-          get: (option?: { config?: T | undefined } | undefined) =>
-            fetch<void, BasicHeaders, Methods_11eh2yq["get"]["status"]>(
-              prefix,
-              prefix1,
-              GET,
-              option,
-            ).send(),
-          $get: (option?: { config?: T | undefined } | undefined) =>
-            fetch<void, BasicHeaders, Methods_11eh2yq["get"]["status"]>(
-              prefix,
-              prefix1,
-              GET,
-              option,
-            )
-              .send()
-              .then((r) => r.body),
-          delete: (option?: { config?: T | undefined } | undefined) =>
-            fetch<void, BasicHeaders, Methods_11eh2yq["delete"]["status"]>(
-              prefix,
-              prefix1,
-              DELETE,
-              option,
-            ).send(),
-          $delete: (option?: { config?: T | undefined } | undefined) =>
-            fetch<void, BasicHeaders, Methods_11eh2yq["delete"]["status"]>(
-              prefix,
-              prefix1,
-              DELETE,
-              option,
-            )
-              .send()
-              .then((r) => r.body),
-          $path: () => `${prefix}${prefix1}`,
-        };
-      },
       fav: {
         _id: (val2: string) => {
-          const prefix2 = `${PATH11}/${val2}`;
+          const prefix2 = `${PATH10}/${val2}`;
 
           return {
             /**
@@ -628,7 +606,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
             Methods_dvs1gv["post"]["resBody"],
             BasicHeaders,
             Methods_dvs1gv["post"]["status"]
-          >(prefix, PATH12, POST, option).json(),
+          >(prefix, PATH11, POST, option).json(),
         /**
          * @returns サーバーに参加しました
          */
@@ -640,10 +618,10 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
             Methods_dvs1gv["post"]["resBody"],
             BasicHeaders,
             Methods_dvs1gv["post"]["status"]
-          >(prefix, PATH12, POST, option)
+          >(prefix, PATH11, POST, option)
             .json()
             .then((r) => r.body),
-        $path: () => `${prefix}${PATH12}`,
+        $path: () => `${prefix}${PATH11}`,
       },
       me: {
         server_user: {
@@ -658,7 +636,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
               Methods_m3tpez["get"]["resBody"],
               BasicHeaders,
               Methods_m3tpez["get"]["status"]
-            >(prefix, PATH13, GET, option).json(),
+            >(prefix, PATH12, GET, option).json(),
           /**
            * @returns サーバーに参加しているかどうか
            */
@@ -670,7 +648,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
               Methods_m3tpez["get"]["resBody"],
               BasicHeaders,
               Methods_m3tpez["get"]["status"]
-            >(prefix, PATH13, GET, option)
+            >(prefix, PATH12, GET, option)
               .json()
               .then((r) => r.body),
           $path: (
@@ -681,30 +659,13 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
                 }
               | undefined,
           ) =>
-            `${prefix}${PATH13}${option && option.query ? `?${dataToURLString(option.query)}` : ""}`,
+            `${prefix}${PATH12}${option && option.query ? `?${dataToURLString(option.query)}` : ""}`,
         },
       },
-      get: (option?: { config?: T | undefined } | undefined) =>
-        fetch<void, BasicHeaders, Methods_1r95pbu["get"]["status"]>(
-          prefix,
-          PATH10,
-          GET,
-          option,
-        ).send(),
-      $get: (option?: { config?: T | undefined } | undefined) =>
-        fetch<void, BasicHeaders, Methods_1r95pbu["get"]["status"]>(
-          prefix,
-          PATH10,
-          GET,
-          option,
-        )
-          .send()
-          .then((r) => r.body),
-      $path: () => `${prefix}${PATH10}`,
     },
     user: {
       _id: (val1: string) => {
-        const prefix1 = `${PATH14}/${val1}`;
+        const prefix1 = `${PATH13}/${val1}`;
 
         return {
           /**
@@ -781,7 +742,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
             Methods_1904ovn["get"]["resBody"],
             BasicHeaders,
             Methods_1904ovn["get"]["status"]
-          >(prefix, PATH15, GET, option).json(),
+          >(prefix, PATH14, GET, option).json(),
         /**
          * @returns 最終ログイン時間の更新と自身のデータ取得成功
          */
@@ -790,10 +751,10 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
             Methods_1904ovn["get"]["resBody"],
             BasicHeaders,
             Methods_1904ovn["get"]["status"]
-          >(prefix, PATH15, GET, option)
+          >(prefix, PATH14, GET, option)
             .json()
             .then((r) => r.body),
-        $path: () => `${prefix}${PATH15}`,
+        $path: () => `${prefix}${PATH14}`,
       },
       me: {
         /**
@@ -804,7 +765,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
             Methods_9k2hsc["get"]["resBody"],
             BasicHeaders,
             Methods_9k2hsc["get"]["status"]
-          >(prefix, PATH16, GET, option).json(),
+          >(prefix, PATH15, GET, option).json(),
         /**
          * @returns ログイン中のユーザの取得成功
          */
@@ -813,10 +774,10 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
             Methods_9k2hsc["get"]["resBody"],
             BasicHeaders,
             Methods_9k2hsc["get"]["status"]
-          >(prefix, PATH16, GET, option)
+          >(prefix, PATH15, GET, option)
             .json()
             .then((r) => r.body),
-        $path: () => `${prefix}${PATH16}`,
+        $path: () => `${prefix}${PATH15}`,
       },
       /**
        * @returns 検索条件に当てはまるユーザの取得成功
@@ -833,7 +794,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
           Methods_tli9od["get"]["resBody"],
           BasicHeaders,
           Methods_tli9od["get"]["status"]
-        >(prefix, PATH14, GET, option).json(),
+        >(prefix, PATH13, GET, option).json(),
       /**
        * @returns 検索条件に当てはまるユーザの取得成功
        */
@@ -849,7 +810,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
           Methods_tli9od["get"]["resBody"],
           BasicHeaders,
           Methods_tli9od["get"]["status"]
-        >(prefix, PATH14, GET, option)
+        >(prefix, PATH13, GET, option)
           .json()
           .then((r) => r.body),
       $path: (
@@ -860,7 +821,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
             }
           | undefined,
       ) =>
-        `${prefix}${PATH14}${option && option.query ? `?${dataToURLString(option.query)}` : ""}`,
+        `${prefix}${PATH13}${option && option.query ? `?${dataToURLString(option.query)}` : ""}`,
     },
   };
 };

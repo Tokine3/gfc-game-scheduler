@@ -1,5 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { UpdateScheduleDto } from './dto/update-schedule.dto';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { UpdatePublicScheduleDto } from './dto/update-publicSchedule.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePublicScheduleDto } from './dto/create-publicSchedule.dto';
 import { RequestWithUser } from 'src/types/request.types';
@@ -11,6 +15,9 @@ import { FindAllUserSchedulesSchedulesDto } from './dto/findAllUserSchedules-sch
 import { FindMyPersonalSchedulesScheduleDto } from './dto/findMyPersonalSchedules-schedule.dto';
 import { UpsertPersonalScheduleDto } from './dto/upsert-pesonalSchedule.dto';
 import { FindPublicSchedulesScheduleDto } from './dto/findPublicShedules-schedules.dto';
+import { Prisma } from '@prisma/client';
+import { RemovePublicScheduleDto } from './dto/remove-publicSchedule-schedules.dto';
+import { RemovePersonalScheduleDto } from './dto/remove-PersonalSchedule-schedules.dto';
 // プラグインを追加
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -132,63 +139,67 @@ export class SchedulesService {
             id: existingSchedule.id,
           });
         } else {
-          acc.newSchedules.push(schedule);
+          acc.newSchedules.push({
+            date: dayjs.tz(schedule.date, 'Asia/Tokyo').startOf('day').toDate(),
+            title: schedule.title || '',
+            description: schedule.description || '',
+            isPrivate: schedule.isPrivate || false,
+            isFree: schedule.isFree || false,
+            calendarId,
+            serverUserId: serverUser.id,
+            userId,
+            createdBy: userName,
+            updatedBy: userName,
+          });
         }
 
         return acc;
       },
       {
         existingSchedules: [] as (UpsertPersonalScheduleDto & { id: number })[],
-        newSchedules: [] as UpsertPersonalScheduleDto[],
+        newSchedules: [] as Prisma.PersonalScheduleCreateManyInput[],
       }
     );
 
     // トランザクション処理で更新と作成を実行
     await this.prisma.$transaction(
       async (tx) => {
-        for (const schedule of existingSchedules) {
-          await tx.personalSchedule.update({
-            where: { id: schedule.id },
-            data: {
-              date: dayjs
-                .tz(schedule.date, 'Asia/Tokyo')
-                .startOf('day')
-                .toDate(),
-              title: schedule.title,
-              description: schedule.description,
-              isPrivate: schedule.isPrivate,
-              isFree: schedule.isFree,
-              updatedBy: userName,
-            },
-            include: {
-              serverUser: true,
-            },
-          });
-        }
+        await Promise.all([
+          // 既存のスケジュール更新処理
+          existingSchedules.length > 0
+            ? Promise.all(
+                existingSchedules.map((schedule) =>
+                  tx.personalSchedule.update({
+                    where: { id: schedule.id },
+                    data: {
+                      date: dayjs
+                        .tz(schedule.date, 'Asia/Tokyo')
+                        .startOf('day')
+                        .toDate(),
+                      title: schedule.title,
+                      description: schedule.description,
+                      isPrivate: schedule.isPrivate,
+                      isFree: schedule.isFree,
+                      updatedBy: userName,
+                    },
+                  })
+                )
+              )
+            : Promise.resolve(),
+
+          // 新規スケジュール作成処理
+          newSchedules.length > 0
+            ? tx.personalSchedule.createMany({
+                data: newSchedules,
+              })
+            : Promise.resolve(),
+        ]);
       },
       {
         timeout: 10000,
         maxWait: 5000,
       }
     );
-
-    // 新規スケジュールを作成
-    if (newSchedules.length > 0) {
-      await this.prisma.personalSchedule.createMany({
-        data: newSchedules.map((schedule) => ({
-          date: dayjs.tz(schedule.date, 'Asia/Tokyo').startOf('day').toDate(),
-          title: schedule.title,
-          description: schedule.description,
-          isPrivate: schedule.isPrivate,
-          isFree: schedule.isFree,
-          calendarId,
-          serverUserId: serverUser.id,
-          userId,
-          createdBy: userName,
-          updatedBy: userName,
-        })),
-      });
-    }
 
     // 更新後のスケジュールを取得して返す
     return this.prisma.personalSchedule.findMany({
@@ -285,11 +296,61 @@ export class SchedulesService {
     return `This action returns a #${id} schedule`;
   }
 
-  update(id: number, updateScheduleDto: UpdateScheduleDto) {
-    return `This action updates a #${id} schedule`;
+  updatePublicSchedule(
+    req: RequestWithUser,
+    id: number,
+    body: UpdatePublicScheduleDto
+  ) {
+    const { calendarId } = body;
+    const { id: userId } = req.user;
+
+    return this.prisma.publicSchedule
+      .update({
+        where: { id, calendarId, serverUser: { userId } },
+        data: body,
+        include: {
+          participants: true,
+          serverUser: { include: { user: true } },
+        },
+      })
+      .catch((error) => {
+        throw new BadRequestException('スケジュール更新に失敗しました');
+      });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} schedule`;
+  removePublicSchedule(
+    req: RequestWithUser,
+    id: number,
+    body: RemovePublicScheduleDto
+  ) {
+    const { calendarId, isDeleted } = body;
+    const { id: userId } = req.user;
+    // 論理削除
+    return this.prisma.publicSchedule
+      .update({
+        where: { id, calendarId, serverUser: { userId } },
+        data: { isDeleted },
+      })
+      .catch((error) => {
+        throw new BadRequestException('スケジュール削除に失敗しました');
+      });
+  }
+
+  removePersonalSchedule(
+    req: RequestWithUser,
+    id: number,
+    body: RemovePersonalScheduleDto
+  ) {
+    const { calendarId } = body;
+    const { id: userId } = req.user;
+
+    // 物理削除
+    return this.prisma.personalSchedule
+      .delete({
+        where: { id, calendarId, userId },
+      })
+      .catch((error) => {
+        throw new BadRequestException('スケジュール削除に失敗しました');
+      });
   }
 }

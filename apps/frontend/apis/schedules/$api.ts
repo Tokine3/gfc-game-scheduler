@@ -5,7 +5,8 @@ import type { Methods as Methods_1p1r0xa } from "./_calendarId@string/all-schedu
 import type { Methods as Methods_x7hmud } from "./_calendarId@string/me/personal";
 import type { Methods as Methods_1tduqze } from "./_calendarId@string/personal";
 import type { Methods as Methods_7up0tv } from "./_calendarId@string/public";
-import type { Methods as Methods_2yw7dz } from "./_id@string";
+import type { Methods as Methods_mdoht4 } from "./_id@string/personal";
+import type { Methods as Methods_kq0c5l } from "./_id@string/public";
 
 const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
   const prefix = (baseURL === undefined ? "" : baseURL).replace(/\/$/, "");
@@ -220,61 +221,96 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
       const prefix0 = `${PATH0}/${val0}`;
 
       return {
-        get: (option?: { config?: T | undefined } | undefined) =>
-          fetch<void, BasicHeaders, Methods_2yw7dz["get"]["status"]>(
-            prefix,
-            prefix0,
-            GET,
-            option,
-          ).send(),
-        $get: (option?: { config?: T | undefined } | undefined) =>
-          fetch<void, BasicHeaders, Methods_2yw7dz["get"]["status"]>(
-            prefix,
-            prefix0,
-            GET,
-            option,
-          )
-            .send()
-            .then((r) => r.body),
-        patch: (option: {
-          body: Methods_2yw7dz["patch"]["reqBody"];
-          config?: T | undefined;
-        }) =>
-          fetch<void, BasicHeaders, Methods_2yw7dz["patch"]["status"]>(
-            prefix,
-            prefix0,
-            PATCH,
-            option,
-          ).send(),
-        $patch: (option: {
-          body: Methods_2yw7dz["patch"]["reqBody"];
-          config?: T | undefined;
-        }) =>
-          fetch<void, BasicHeaders, Methods_2yw7dz["patch"]["status"]>(
-            prefix,
-            prefix0,
-            PATCH,
-            option,
-          )
-            .send()
-            .then((r) => r.body),
-        delete: (option?: { config?: T | undefined } | undefined) =>
-          fetch<void, BasicHeaders, Methods_2yw7dz["delete"]["status"]>(
-            prefix,
-            prefix0,
-            DELETE,
-            option,
-          ).send(),
-        $delete: (option?: { config?: T | undefined } | undefined) =>
-          fetch<void, BasicHeaders, Methods_2yw7dz["delete"]["status"]>(
-            prefix,
-            prefix0,
-            DELETE,
-            option,
-          )
-            .send()
-            .then((r) => r.body),
-        $path: () => `${prefix}${prefix0}`,
+        personal: {
+          /**
+           * @param option.body - 個人スケジュール削除リクエスト
+           */
+          delete: (option: {
+            body: Methods_mdoht4["delete"]["reqBody"];
+            config?: T | undefined;
+          }) =>
+            fetch<void, BasicHeaders, Methods_mdoht4["delete"]["status"]>(
+              prefix,
+              `${prefix0}${PATH3}`,
+              DELETE,
+              option,
+            ).send(),
+          /**
+           * @param option.body - 個人スケジュール削除リクエスト
+           */
+          $delete: (option: {
+            body: Methods_mdoht4["delete"]["reqBody"];
+            config?: T | undefined;
+          }) =>
+            fetch<void, BasicHeaders, Methods_mdoht4["delete"]["status"]>(
+              prefix,
+              `${prefix0}${PATH3}`,
+              DELETE,
+              option,
+            )
+              .send()
+              .then((r) => r.body),
+          $path: () => `${prefix}${prefix0}${PATH3}`,
+        },
+        public: {
+          /**
+           * @param option.body - 公開スケジュール更新リクエスト
+           * @returns 公開スケジュール更新成功
+           */
+          patch: (option: {
+            body: Methods_kq0c5l["patch"]["reqBody"];
+            config?: T | undefined;
+          }) =>
+            fetch<
+              Methods_kq0c5l["patch"]["resBody"],
+              BasicHeaders,
+              Methods_kq0c5l["patch"]["status"]
+            >(prefix, `${prefix0}${PATH4}`, PATCH, option).json(),
+          /**
+           * @param option.body - 公開スケジュール更新リクエスト
+           * @returns 公開スケジュール更新成功
+           */
+          $patch: (option: {
+            body: Methods_kq0c5l["patch"]["reqBody"];
+            config?: T | undefined;
+          }) =>
+            fetch<
+              Methods_kq0c5l["patch"]["resBody"],
+              BasicHeaders,
+              Methods_kq0c5l["patch"]["status"]
+            >(prefix, `${prefix0}${PATH4}`, PATCH, option)
+              .json()
+              .then((r) => r.body),
+          /**
+           * @param option.body - 公開スケジュール削除リクエスト
+           */
+          delete: (option: {
+            body: Methods_kq0c5l["delete"]["reqBody"];
+            config?: T | undefined;
+          }) =>
+            fetch<void, BasicHeaders, Methods_kq0c5l["delete"]["status"]>(
+              prefix,
+              `${prefix0}${PATH4}`,
+              DELETE,
+              option,
+            ).send(),
+          /**
+           * @param option.body - 公開スケジュール削除リクエスト
+           */
+          $delete: (option: {
+            body: Methods_kq0c5l["delete"]["reqBody"];
+            config?: T | undefined;
+          }) =>
+            fetch<void, BasicHeaders, Methods_kq0c5l["delete"]["status"]>(
+              prefix,
+              `${prefix0}${PATH4}`,
+              DELETE,
+              option,
+            )
+              .send()
+              .then((r) => r.body),
+          $path: () => `${prefix}${prefix0}${PATH4}`,
+        },
       };
     },
     get: (option?: { config?: T | undefined } | undefined) =>

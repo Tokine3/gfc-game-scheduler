@@ -12,7 +12,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { SchedulesService } from './schedules.service';
-import { UpdateScheduleDto } from './dto/update-schedule.dto';
+import { UpdatePublicScheduleDto } from './dto/update-publicSchedule.dto';
 import { CreatePublicScheduleDto } from './dto/create-publicSchedule.dto';
 import { RequestWithUser } from 'src/types/request.types';
 import { ApiOperation, ApiResponse, ApiBody, ApiQuery } from '@nestjs/swagger';
@@ -27,6 +27,8 @@ import { FindAllUserSchedulesSchedulesDto } from './dto/findAllUserSchedules-sch
 import { FindMyPersonalSchedulesScheduleDto } from './dto/findMyPersonalSchedules-schedule.dto';
 import { UpsertPersonalScheduleDto } from './dto/upsert-pesonalSchedule.dto';
 import { FindPublicSchedulesScheduleDto } from './dto/findPublicShedules-schedules.dto';
+import { RemovePublicScheduleDto } from './dto/remove-publicSchedule-schedules.dto';
+import { RemovePersonalScheduleDto } from './dto/remove-PersonalSchedule-schedules.dto';
 
 @Controller('schedules')
 export class SchedulesController {
@@ -142,21 +144,63 @@ export class SchedulesController {
     return this.schedulesService.findAllUserSchedules(req, calendarId, query);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.schedulesService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(
+  @ApiOperation({ summary: '公開スケジュール更新' })
+  @ApiResponse({
+    status: 200,
+    description: '公開スケジュール更新成功',
+    type: PublicScheduleWithRelations,
+  })
+  @ApiBody({
+    type: UpdatePublicScheduleDto,
+    description: '公開スケジュール更新リクエスト',
+  })
+  @UseGuards(DiscordAuthGuard)
+  @Patch(':id/public')
+  updatePublicSchedule(
+    @Req() req: RequestWithUser,
     @Param('id') id: string,
-    @Body() updateScheduleDto: UpdateScheduleDto
+    @Body() body: UpdatePublicScheduleDto
   ) {
-    return this.schedulesService.update(+id, updateScheduleDto);
+    return this.schedulesService.updatePublicSchedule(req, +id, body);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.schedulesService.remove(+id);
+  @ApiOperation({ summary: '公開スケジュール削除' })
+  @ApiResponse({
+    status: 200,
+    description: '公開スケジュール削除成功',
+    type: null,
+  })
+  @ApiBody({
+    type: RemovePublicScheduleDto,
+    description: '公開スケジュール削除リクエスト',
+  })
+  @UseGuards(DiscordAuthGuard)
+  @Delete(':id/public')
+  removePublicSchedule(
+    @Req() req: RequestWithUser,
+    @Param('id') id: string,
+    @Body() body: RemovePublicScheduleDto
+  ) {
+    return this.schedulesService.removePublicSchedule(req, +id, body);
+  }
+
+  @ApiOperation({ summary: '個人スケジュール削除' })
+  @ApiResponse({
+    status: 204,
+    description: '個人スケジュール削除成功',
+    type: null,
+  })
+  @ApiBody({
+    type: RemovePersonalScheduleDto,
+    description: '個人スケジュール削除リクエスト',
+  })
+  @UseGuards(DiscordAuthGuard)
+  @Delete(':id/personal')
+  removePersonalSchedule(
+    @Req() req: RequestWithUser,
+    @Param('id') id: string,
+    @Body() body: RemovePersonalScheduleDto
+  ) {
+    return this.schedulesService.removePersonalSchedule(req, +id, body);
   }
 }

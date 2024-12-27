@@ -22,8 +22,4 @@ export type Methods = DefineMethods<{
     resBody: Types.CalendarWithRelations;
     reqBody: Types.UpdateCalendarDto;
   };
-
-  delete: {
-    status: 200;
-  };
 }>;

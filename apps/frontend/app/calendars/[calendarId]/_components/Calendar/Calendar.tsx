@@ -22,6 +22,8 @@ import { EventList } from './_components/EventList/EventList';
 import { useCalendar } from '../../../../../hooks/useCalendar';
 import { toast } from '../../../../components/ui/use-toast';
 import { useAuth } from '../../../../hooks/useAuth';
+import { useQueryClient } from '@tanstack/react-query';
+import { client } from '../../../../../lib/api';
 
 // プラグインを追加
 dayjs.extend(utc);
@@ -37,6 +39,7 @@ const MemoizedEventDetail = memo(EventDetail);
 const MemoizedEventTypeSelector = memo(EventTypeSelector);
 
 export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const [date, setDate] = useState<Date>(() => new Date());
   const {
@@ -48,20 +51,23 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
   } = useCalendar(props.id);
 
   // イベントの表示条件を判定するユーティリティ関数
-  const isVisibleEvent = useCallback((event: CalendarEvent) => {
-    // 共有イベントは常に表示
-    if (isPublicSchedule(event)) {
+  const isVisibleEvent = useCallback(
+    (event: CalendarEvent) => {
+      // 共有イベントは常に表示
+      if (isPublicSchedule(event)) {
+        return true;
+      }
+
+      // 自分の個人予定の場合のみタイトルチェック
+      if (event.serverUser?.userId === user?.id) {
+        return !!event.title;
+      }
+
+      // 他人の予定は既にフィルタリング済み
       return true;
-    }
-
-    // 自分の個人予定の場合のみタイトルチェック
-    if (event.serverUser?.userId === user?.id) {
-      return !!event.title;
-    }
-
-    // 他人の予定は既にフィルタリング済み
-    return true;
-  }, [user?.id]);
+    },
+    [user?.id]
+  );
 
   // 月が変更された時
   const handleMonthChange = useCallback(
@@ -80,14 +86,17 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
   // calendar.publicSchedules と publicSchedules を組み合わせて使用
   const events = useMemo(() => {
     // 既存のイベントのIDを記録するSet
-    const existingIds = new Set(personalSchedules?.map(schedule => schedule.id) || []);
+    const existingIds = new Set(
+      personalSchedules?.map((schedule) => schedule.id) || []
+    );
 
     // calendar.personalSchedulesから他人の非公開でない予定を取得
-    const otherUsersSchedules = (calendar?.personalSchedules || []).filter(schedule => 
-      // 他人の予定で非公開でないもの、かつまだ追加されていないもの
-      schedule.serverUser?.userId !== user?.id && 
-      !schedule.isPrivate && 
-      !existingIds.has(schedule.id)
+    const otherUsersSchedules = (calendar?.personalSchedules || []).filter(
+      (schedule) =>
+        // 他人の予定で非公開でないもの、かつまだ追加されていないもの
+        schedule.serverUser?.userId !== user?.id &&
+        !schedule.isPrivate &&
+        !existingIds.has(schedule.id)
     );
 
     // 自分の予定と他人の予定を結合
@@ -96,11 +105,13 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
       ...otherUsersSchedules,
     ];
 
-    return [
-      ...(publicSchedules || []),
-      ...allPersonalSchedules,
-    ];
-  }, [publicSchedules, personalSchedules, calendar?.personalSchedules, user?.id]);
+    return [...(publicSchedules || []), ...allPersonalSchedules];
+  }, [
+    publicSchedules,
+    personalSchedules,
+    calendar?.personalSchedules,
+    user?.id,
+  ]);
 
   // 初期状態を最適化
   const [showEventCreation, setShowEventCreation] = useState(false);
@@ -215,6 +226,44 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
     setShowEventDetail(false);
   }, []);
 
+  // イベント削除ハンドラー
+  const handleEventDelete = useCallback(async () => {
+    try {
+      console.log('Calendar: 削除開始');
+      if (!selectedEvent) return;
+
+      // APIコール
+      if (isPublicSchedule(selectedEvent)) {
+        await client.schedules._id(selectedEvent.id).public.$delete({
+          body: { calendarId: props.id, isDeleted: true },
+        });
+      } else {
+        await client.schedules._id(selectedEvent.id).personal.$delete({
+          body: { calendarId: props.id },
+        });
+      }
+
+      console.log('Calendar: API完了');
+
+      // 更新
+      await queryClient.invalidateQueries({
+        queryKey: ['schedules', props.id],
+      });
+      await refresh();
+
+      console.log('Calendar: データ更新完了');
+
+      // 最後にモーダルを閉じる
+      setShowEventDetail(false);
+      setSelectedEvent(null);
+
+      console.log('Calendar: モーダル閉じた');
+    } catch (error) {
+      console.error('Calendar: 削除エラー:', error);
+      throw error;
+    }
+  }, [selectedEvent, props.id, queryClient, refresh]);
+
   return (
     <div className='space-y-6'>
       <ActionBar
@@ -319,9 +368,11 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
       )}
       {showEventDetail && selectedEvent && (
         <MemoizedEventDetail
+          calendarId={props.id}
           event={selectedEvent}
           onClose={() => setShowEventDetail(false)}
           onEdit={() => handleEventEdit(selectedEvent)}
+          onDelete={handleEventDelete}
         />
       )}
 

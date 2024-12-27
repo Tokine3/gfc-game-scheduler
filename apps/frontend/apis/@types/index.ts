@@ -176,6 +176,8 @@ export type PublicScheduleWithRelations = {
   isRecruiting: boolean;
   /** 個人予定フラグ */
   isPersonal: boolean;
+  /** 削除フラグ */
+  isDeleted: boolean;
   /** 参加者 */
   participants: Participant[];
 
@@ -293,4 +295,27 @@ export type AllUserSchedules = {
   publicSchedules: PublicScheduleWithRelations[];
 };
 
-export type UpdateScheduleDto = {};
+export type UpdatePublicScheduleDto = {
+  /** 日付 */
+  date?: string | undefined;
+  /** タイトル */
+  title?: string | undefined;
+  /** 説明 */
+  description?: string | undefined;
+  /** 募集人数 */
+  quota?: number | undefined;
+  /** カレンダーID */
+  calendarId: string;
+};
+
+export type RemovePublicScheduleDto = {
+  /** カレンダーID */
+  calendarId: string;
+  /** 削除フラグ */
+  isDeleted: boolean;
+};
+
+export type RemovePersonalScheduleDto = {
+  /** カレンダーID */
+  calendarId: string;
+};

@@ -3,14 +3,11 @@ import { CreateCalendarDto } from './dto/create-calendar.dto';
 import { UpdateCalendarDto } from './dto/update-calendar.dto';
 import { RequestWithUser } from '../types/request.types';
 import { PrismaService } from '../prisma/prisma.service';
-import { User } from '@prisma/client';
 import { logger } from 'src/utils/logger';
 import dayjs from 'dayjs';
 
 @Injectable()
 export class CalendarsService {
-  private userCache: Map<string, User> = new Map();
-
   constructor(private readonly prisma: PrismaService) {}
   create(req: RequestWithUser, body: CreateCalendarDto) {
     logger.log('CALENDARS SERVICE');
@@ -134,9 +131,5 @@ export class CalendarsService {
         name,
       },
     });
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} calendar`;
   }
 }

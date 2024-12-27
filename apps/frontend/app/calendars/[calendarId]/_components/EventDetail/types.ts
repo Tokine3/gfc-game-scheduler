@@ -7,7 +7,9 @@ export type Participant = {
 };
 
 export type Props = {
+  calendarId: string;
   event: CalendarEvent;
   onClose: () => void;
-  onEdit?: () => void;
+  onEdit: () => void;
+  onDelete: () => Promise<void>;
 };
