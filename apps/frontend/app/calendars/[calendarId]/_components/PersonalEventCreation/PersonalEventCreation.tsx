@@ -221,7 +221,9 @@ export const PersonalEventCreation: FC<Props> = ({
   const isAllSchedulesAvailable = () => {
     const days = getDaysInRange(currentDate, viewMode);
     return days.every(
-      (day) => schedules.find((s) => dayjs(s.date).isSame(day, 'day'))?.isFree
+      (day) =>
+        schedules.find((s) => dayjs.tz(s.date, 'Asia/Tokyo').isSame(day, 'day'))
+          ?.isFree
     );
   };
 
@@ -233,7 +235,7 @@ export const PersonalEventCreation: FC<Props> = ({
       const allChecked = isAllSchedulesAvailable();
 
       const newSchedules = days.map((day) => {
-        const dateStr = day.format('YYYY-MM-DD');
+        const dateStr = dayjs.tz(day, 'Asia/Tokyo').format('YYYY-MM-DD');
         const existing = schedules.find((s) => s.date === dateStr);
         return {
           date: dateStr,
@@ -254,7 +256,7 @@ export const PersonalEventCreation: FC<Props> = ({
     setIsSubmitting(true);
     try {
       const schedulesToSubmit = schedules.map((schedule) => ({
-        date: dayjs(schedule.date).format('YYYY-MM-DD'),
+        date: dayjs.tz(schedule.date, 'Asia/Tokyo').format('YYYY-MM-DD'),
         title: schedule.description,
         description: schedule.description,
         isPrivate: schedule.isPrivate,
@@ -262,9 +264,11 @@ export const PersonalEventCreation: FC<Props> = ({
       }));
 
       if (schedulesToSubmit.length > 0) {
+        console.log('pesonalSchedule post 実行開始');
         await client.schedules._calendarId(calendarId).personal.$post({
           body: schedulesToSubmit,
         });
+        console.log('pesonalSchedule post 実行完了');
         onSuccess?.();
         onClose();
       }
