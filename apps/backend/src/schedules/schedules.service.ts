@@ -58,7 +58,7 @@ export class SchedulesService {
 
     return this.prisma.publicSchedule.create({
       data: {
-        date: dayjs(date).toDate(),
+        date: dayjs.tz(date, 'Asia/Tokyo').startOf('day').toDate(),
         title,
         description,
         quota,
@@ -109,8 +109,8 @@ export class SchedulesService {
           calendarId: calendarId,
           userId: userId,
           date: {
-            gte: dayjs().startOf('month').toDate(),
-            lte: dayjs().endOf('month').toDate(),
+            gte: dayjs.tz(dayjs().startOf('month'), 'Asia/Tokyo').toDate(),
+            lte: dayjs.tz(dayjs().endOf('month'), 'Asia/Tokyo').toDate(),
           },
         },
         include: {
@@ -208,8 +208,8 @@ export class SchedulesService {
         calendarId,
         userId,
         date: {
-          gte: dayjs().startOf('month').toDate(),
-          lte: dayjs().endOf('month').toDate(),
+          gte: dayjs.tz(dayjs().startOf('month'), 'Asia/Tokyo').toDate(),
+          lte: dayjs.tz(dayjs().endOf('month'), 'Asia/Tokyo').toDate(),
         },
       },
       include: {
@@ -228,7 +228,10 @@ export class SchedulesService {
     const publicSchedules = await this.prisma.publicSchedule.findMany({
       where: {
         calendarId,
-        date: { gte: fromDate, lte: toDate },
+        date: {
+          gte: dayjs.tz(fromDate, 'Asia/Tokyo').toDate(),
+          lte: dayjs.tz(toDate, 'Asia/Tokyo').toDate(),
+        },
       },
       include: {
         participants: true,
@@ -251,7 +254,10 @@ export class SchedulesService {
       where: {
         calendarId,
         userId,
-        date: { gte: dayjs(fromDate).toDate(), lte: dayjs(toDate).toDate() },
+        date: {
+          gte: dayjs.tz(fromDate, 'Asia/Tokyo').toDate(),
+          lte: dayjs.tz(toDate, 'Asia/Tokyo').toDate(),
+        },
       },
       include: { serverUser: { include: { user: true } } },
     });
@@ -271,11 +277,24 @@ export class SchedulesService {
 
     const [personalSchedules, publicSchedules] = await Promise.all([
       this.prisma.personalSchedule.findMany({
-        where: { calendarId, userId, date: { gte: fromDate, lte: toDate } },
+        where: {
+          calendarId,
+          userId,
+          date: {
+            gte: dayjs.tz(fromDate, 'Asia/Tokyo').toDate(),
+            lte: dayjs.tz(toDate, 'Asia/Tokyo').toDate(),
+          },
+        },
         include: { serverUser: { include: { user: true } } },
       }),
       this.prisma.publicSchedule.findMany({
-        where: { calendarId, date: { gte: fromDate, lte: toDate } },
+        where: {
+          calendarId,
+          date: {
+            gte: dayjs.tz(fromDate, 'Asia/Tokyo').toDate(),
+            lte: dayjs.tz(toDate, 'Asia/Tokyo').toDate(),
+          },
+        },
         include: {
           participants: true,
           serverUser: { include: { user: true } },

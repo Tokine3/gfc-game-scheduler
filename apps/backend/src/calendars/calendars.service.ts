@@ -5,6 +5,14 @@ import { RequestWithUser } from '../types/request.types';
 import { PrismaService } from '../prisma/prisma.service';
 import { logger } from 'src/utils/logger';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+// プラグインを追加
+dayjs.extend(utc);
+dayjs.extend(timezone);
+// タイムゾーンを日本に設定
+dayjs.tz.setDefault('Asia/Tokyo');
 
 @Injectable()
 export class CalendarsService {
