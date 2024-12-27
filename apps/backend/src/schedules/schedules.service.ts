@@ -17,7 +17,8 @@ import { UpsertPersonalScheduleDto } from './dto/upsert-pesonalSchedule.dto';
 import { FindPublicSchedulesScheduleDto } from './dto/findPublicShedules-schedules.dto';
 import { Prisma } from '@prisma/client';
 import { RemovePublicScheduleDto } from './dto/remove-publicSchedule-schedules.dto';
-import { RemovePersonalScheduleDto } from './dto/remove-PersonalSchedule-schedules.dto';
+import { RemovePersonalScheduleDto } from './dto/remove-personalSchedule-schedules.dto';
+
 // プラグインを追加
 dayjs.extend(utc);
 dayjs.extend(timezone);
