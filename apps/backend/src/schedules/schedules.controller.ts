@@ -12,7 +12,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { SchedulesService } from './schedules.service';
-import { UpdateScheduleDto } from './dto/update-schedule.dto';
+import { UpdatePublicScheduleDto } from './dto/update-publicSchedule.dto';
 import { CreatePublicScheduleDto } from './dto/create-publicSchedule.dto';
 import { RequestWithUser } from 'src/types/request.types';
 import { ApiOperation, ApiResponse, ApiBody, ApiQuery } from '@nestjs/swagger';
@@ -144,17 +144,24 @@ export class SchedulesController {
     return this.schedulesService.findAllUserSchedules(req, calendarId, query);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.schedulesService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(
+  @ApiOperation({ summary: '公開スケジュール更新' })
+  @ApiResponse({
+    status: 200,
+    description: '公開スケジュール更新成功',
+    type: PublicScheduleWithRelations,
+  })
+  @ApiBody({
+    type: UpdatePublicScheduleDto,
+    description: '公開スケジュール更新リクエスト',
+  })
+  @UseGuards(DiscordAuthGuard)
+  @Patch(':id/public')
+  updatePublicSchedule(
+    @Req() req: RequestWithUser,
     @Param('id') id: string,
-    @Body() updateScheduleDto: UpdateScheduleDto
+    @Body() body: UpdatePublicScheduleDto
   ) {
-    return this.schedulesService.update(+id, updateScheduleDto);
+    return this.schedulesService.updatePublicSchedule(req, +id, body);
   }
 
   @ApiOperation({ summary: '公開スケジュール削除' })

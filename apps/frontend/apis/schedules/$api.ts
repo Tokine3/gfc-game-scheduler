@@ -255,6 +255,34 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
         },
         public: {
           /**
+           * @param option.body - 公開スケジュール更新リクエスト
+           * @returns 公開スケジュール更新成功
+           */
+          patch: (option: {
+            body: Methods_kq0c5l["patch"]["reqBody"];
+            config?: T | undefined;
+          }) =>
+            fetch<
+              Methods_kq0c5l["patch"]["resBody"],
+              BasicHeaders,
+              Methods_kq0c5l["patch"]["status"]
+            >(prefix, `${prefix0}${PATH4}`, PATCH, option).json(),
+          /**
+           * @param option.body - 公開スケジュール更新リクエスト
+           * @returns 公開スケジュール更新成功
+           */
+          $patch: (option: {
+            body: Methods_kq0c5l["patch"]["reqBody"];
+            config?: T | undefined;
+          }) =>
+            fetch<
+              Methods_kq0c5l["patch"]["resBody"],
+              BasicHeaders,
+              Methods_kq0c5l["patch"]["status"]
+            >(prefix, `${prefix0}${PATH4}`, PATCH, option)
+              .json()
+              .then((r) => r.body),
+          /**
            * @param option.body - 公開スケジュール削除リクエスト
            */
           delete: (option: {
@@ -296,28 +324,6 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
             prefix,
             prefix0,
             GET,
-            option,
-          )
-            .send()
-            .then((r) => r.body),
-        patch: (option: {
-          body: Methods_2yw7dz["patch"]["reqBody"];
-          config?: T | undefined;
-        }) =>
-          fetch<void, BasicHeaders, Methods_2yw7dz["patch"]["status"]>(
-            prefix,
-            prefix0,
-            PATCH,
-            option,
-          ).send(),
-        $patch: (option: {
-          body: Methods_2yw7dz["patch"]["reqBody"];
-          config?: T | undefined;
-        }) =>
-          fetch<void, BasicHeaders, Methods_2yw7dz["patch"]["status"]>(
-            prefix,
-            prefix0,
-            PATCH,
             option,
           )
             .send()

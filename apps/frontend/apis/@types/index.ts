@@ -295,7 +295,18 @@ export type AllUserSchedules = {
   publicSchedules: PublicScheduleWithRelations[];
 };
 
-export type UpdateScheduleDto = {};
+export type UpdatePublicScheduleDto = {
+  /** 日付 */
+  date?: string | undefined;
+  /** タイトル */
+  title?: string | undefined;
+  /** 説明 */
+  description?: string | undefined;
+  /** 募集人数 */
+  quota?: number | undefined;
+  /** カレンダーID */
+  calendarId: string;
+};
 
 export type RemovePublicScheduleDto = {
   /** カレンダーID */

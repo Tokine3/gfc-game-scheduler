@@ -14,6 +14,7 @@ import {
   CrosshairIcon,
   Info,
   Loader2,
+  Pencil,
 } from 'lucide-react';
 import { client } from '../../../../../lib/api';
 import { toast } from '../../../../components/ui/use-toast';
@@ -75,20 +76,19 @@ export const EventCreation: FC<Props> = ({
     async (values: FormValues) => {
       setIsSubmitting(true);
       try {
+        // 既にイベントがあるときは更新処理を行う
         if (event) {
-          // TODO: 共有イベントの更新処理を追加する
-          // await client.schedules
-          //   ._calendarId(calendarId)
-          //   .public._eventId(event.id)
-          //   .$patch({
-          //     body: {
-          //       title: values.title,
-          //       description: values.description || '',
-          //       date: dayjs(`${values.date} ${values.time}`).toISOString(),
-          //       quota: values.quota,
-          //     },
-          //   });
+          await client.schedules._id(event.id).public.$patch({
+            body: {
+              calendarId,
+              title: values.title,
+              description: values.description || '',
+              date: dayjs(`${values.date} ${values.time}`).toISOString(),
+              quota: values.quota,
+            },
+          });
         } else {
+          // イベントがないときは作成処理を行う
           await client.schedules._calendarId(calendarId).public.$post({
             body: {
               title: values.title,
@@ -207,11 +207,20 @@ export const EventCreation: FC<Props> = ({
                   className='flex-1 bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white shadow-lg shadow-violet-500/25 border border-violet-600/20'
                 >
                   {isSubmitting ? (
-                    <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+                    <>
+                      <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+                      {event ? 'イベントを更新中...' : 'イベントを作成中...'}
+                    </>
                   ) : (
-                    <CrosshairIcon className='w-4 h-4 mr-2' />
+                    <>
+                      {event ? (
+                        <Pencil className='w-4 h-4 mr-2' />
+                      ) : (
+                        <CrosshairIcon className='w-4 h-4 mr-2' />
+                      )}
+                      {event ? 'イベントを更新' : 'イベントを作成'}
+                    </>
                   )}
-                  イベントを作成
                 </Button>
                 <Button
                   type='button'

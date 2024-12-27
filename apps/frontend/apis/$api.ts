@@ -501,6 +501,34 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
           },
           public: {
             /**
+             * @param option.body - 公開スケジュール更新リクエスト
+             * @returns 公開スケジュール更新成功
+             */
+            patch: (option: {
+              body: Methods_17gmbg0["patch"]["reqBody"];
+              config?: T | undefined;
+            }) =>
+              fetch<
+                Methods_17gmbg0["patch"]["resBody"],
+                BasicHeaders,
+                Methods_17gmbg0["patch"]["status"]
+              >(prefix, `${prefix1}${PATH9}`, PATCH, option).json(),
+            /**
+             * @param option.body - 公開スケジュール更新リクエスト
+             * @returns 公開スケジュール更新成功
+             */
+            $patch: (option: {
+              body: Methods_17gmbg0["patch"]["reqBody"];
+              config?: T | undefined;
+            }) =>
+              fetch<
+                Methods_17gmbg0["patch"]["resBody"],
+                BasicHeaders,
+                Methods_17gmbg0["patch"]["status"]
+              >(prefix, `${prefix1}${PATH9}`, PATCH, option)
+                .json()
+                .then((r) => r.body),
+            /**
              * @param option.body - 公開スケジュール削除リクエスト
              */
             delete: (option: {
@@ -542,28 +570,6 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
               prefix,
               prefix1,
               GET,
-              option,
-            )
-              .send()
-              .then((r) => r.body),
-          patch: (option: {
-            body: Methods_11i9wjc["patch"]["reqBody"];
-            config?: T | undefined;
-          }) =>
-            fetch<void, BasicHeaders, Methods_11i9wjc["patch"]["status"]>(
-              prefix,
-              prefix1,
-              PATCH,
-              option,
-            ).send(),
-          $patch: (option: {
-            body: Methods_11i9wjc["patch"]["reqBody"];
-            config?: T | undefined;
-          }) =>
-            fetch<void, BasicHeaders, Methods_11i9wjc["patch"]["status"]>(
-              prefix,
-              prefix1,
-              PATCH,
               option,
             )
               .send()

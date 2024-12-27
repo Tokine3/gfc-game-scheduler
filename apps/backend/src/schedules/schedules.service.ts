@@ -1,5 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { UpdateScheduleDto } from './dto/update-schedule.dto';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { UpdatePublicScheduleDto } from './dto/update-publicSchedule.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePublicScheduleDto } from './dto/create-publicSchedule.dto';
 import { RequestWithUser } from 'src/types/request.types';
@@ -164,17 +168,20 @@ export class SchedulesService {
           // 既存のスケジュール更新処理
           existingSchedules.length > 0
             ? Promise.all(
-                existingSchedules.map(schedule => 
+                existingSchedules.map((schedule) =>
                   tx.personalSchedule.update({
                     where: { id: schedule.id },
                     data: {
-                      date: dayjs.tz(schedule.date, 'Asia/Tokyo').startOf('day').toDate(),
+                      date: dayjs
+                        .tz(schedule.date, 'Asia/Tokyo')
+                        .startOf('day')
+                        .toDate(),
                       title: schedule.title,
                       description: schedule.description,
                       isPrivate: schedule.isPrivate,
                       isFree: schedule.isFree,
                       updatedBy: userName,
-                    }
+                    },
                   })
                 )
               )
@@ -185,7 +192,7 @@ export class SchedulesService {
             ? tx.personalSchedule.createMany({
                 data: newSchedules,
               })
-            : Promise.resolve()
+            : Promise.resolve(),
         ]);
       },
       {
@@ -289,31 +296,61 @@ export class SchedulesService {
     return `This action returns a #${id} schedule`;
   }
 
-  update(id: number, updateScheduleDto: UpdateScheduleDto) {
-    return `This action updates a #${id} schedule`;
+  updatePublicSchedule(
+    req: RequestWithUser,
+    id: number,
+    body: UpdatePublicScheduleDto
+  ) {
+    const { calendarId } = body;
+    const { id: userId } = req.user;
+
+    return this.prisma.publicSchedule
+      .update({
+        where: { id, calendarId, serverUser: { userId } },
+        data: body,
+        include: {
+          participants: true,
+          serverUser: { include: { user: true } },
+        },
+      })
+      .catch((error) => {
+        throw new BadRequestException('スケジュール更新に失敗しました');
+      });
   }
 
-  removePublicSchedule(req: RequestWithUser, id: number, body: RemovePublicScheduleDto) {
+  removePublicSchedule(
+    req: RequestWithUser,
+    id: number,
+    body: RemovePublicScheduleDto
+  ) {
     const { calendarId, isDeleted } = body;
     const { id: userId } = req.user;
     // 論理削除
-    return this.prisma.publicSchedule.update({
-      where: { id, calendarId, serverUser: { userId } },
-      data: { isDeleted },
-    }).catch((error) => {
-      throw new BadRequestException('スケジュール削除に失敗しました');
-    });
+    return this.prisma.publicSchedule
+      .update({
+        where: { id, calendarId, serverUser: { userId } },
+        data: { isDeleted },
+      })
+      .catch((error) => {
+        throw new BadRequestException('スケジュール削除に失敗しました');
+      });
   }
 
-  removePersonalSchedule(req: RequestWithUser, id: number, body: RemovePersonalScheduleDto) {
-    const { calendarId} = body;
+  removePersonalSchedule(
+    req: RequestWithUser,
+    id: number,
+    body: RemovePersonalScheduleDto
+  ) {
+    const { calendarId } = body;
     const { id: userId } = req.user;
 
     // 物理削除
-    return this.prisma.personalSchedule.delete({
-      where: { id, calendarId, userId },
-    }).catch((error) => {
-      throw new BadRequestException('スケジュール削除に失敗しました');
-    });
+    return this.prisma.personalSchedule
+      .delete({
+        where: { id, calendarId, userId },
+      })
+      .catch((error) => {
+        throw new BadRequestException('スケジュール削除に失敗しました');
+      });
   }
 }
