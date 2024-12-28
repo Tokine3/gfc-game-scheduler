@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Reaction } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   ServerUser,
@@ -45,19 +46,31 @@ export class BaseSchedule {
 
 export class Participant {
   @ApiProperty({ description: '参加者ID' })
-  userId: string;
+  id: number;
 
-  @ApiProperty({ description: '参加者名' })
-  name: string;
+  @ApiProperty({ description: 'サーバーユーザーID' })
+  serverUserId: number;
 
-  @ApiProperty({ description: '参加者反応', enum: ['OK', 'UNDECIDED', 'NG'] })
-  reaction: 'OK' | 'UNDECIDED' | 'NG';
+  @ApiProperty({ description: '公開予定ID' })
+  publicScheduleId: number;
 
-  @ApiProperty({ description: '参加者反応日' })
+  @ApiProperty({ description: '参加者反応', enum: Reaction })
+  reaction: Reaction;
+
+  @ApiProperty({ description: '作成日時' })
   createdAt: Date;
 
-  @ApiProperty({ description: '参加者反応更新日' })
+  @ApiProperty({ description: '更新日時' })
   updatedAt: Date;
+}
+
+export class ParticipantWithRelations extends Participant {
+  @ApiProperty({
+    description: 'サーバーユーザー情報',
+    type: () => ServerUserWithRelations,
+  })
+  @Type(() => ServerUserWithRelations)
+  serverUser: ServerUserWithRelations;
 }
 
 export class PersonalSchedule extends BaseSchedule {
@@ -84,15 +97,21 @@ export class PublicSchedule extends BaseSchedule {
   @ApiProperty({ description: '削除フラグ', default: false })
   isDeleted: boolean;
 
-  @ApiProperty({ description: '参加者', type: () => [Participant] })
-  @Type(() => Participant)
-  participants: Participant[];
+  @ApiProperty({
+    description: '参加者',
+    type: () => [ParticipantWithRelations],
+  })
+  @Type(() => ParticipantWithRelations)
+  participants: ParticipantWithRelations[];
 }
 
 export class PublicScheduleWithRelations extends PublicSchedule {
-  @ApiProperty({ description: '参加者', type: () => [Participant] })
-  @Type(() => Participant)
-  participants: Participant[];
+  @ApiProperty({
+    description: '参加者',
+    type: () => [ParticipantWithRelations],
+  })
+  @Type(() => ParticipantWithRelations)
+  participants: ParticipantWithRelations[];
 
   @ApiProperty({
     description: 'サーバユーザ',

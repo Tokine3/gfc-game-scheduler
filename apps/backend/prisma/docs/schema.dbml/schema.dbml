@@ -4,7 +4,6 @@
 
 Table User {
   serverUsers ServerUser [not null]
-  personalSchedule PersonalSchedule [not null]
   participants Participant [not null]
   gameSetting GameSetting [not null]
   id String [pk]
@@ -13,10 +12,6 @@ Table User {
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
   lastLoggedInAt DateTime [default: `now()`, not null]
-  createdPublicSchedules PublicSchedule [not null]
-  updatedPublicSchedules PublicSchedule [not null]
-  createdPersonalSchedules PersonalSchedule [not null]
-  updatedPersonalSchedules PersonalSchedule [not null]
 }
 
 Table Server {
@@ -30,15 +25,20 @@ Table Server {
 }
 
 Table ServerUser {
+  personalSchedule PersonalSchedule [not null]
+  publicSchedule PublicSchedule [not null]
   server Server [not null]
   user User [not null]
+  id Int [pk, increment]
   userId String [not null]
   serverId String [not null]
+  isFavorite Boolean [not null, default: false]
+  isJoined Boolean [not null, default: false]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
 
   indexes {
-    (userId, serverId) [pk]
+    (userId, serverId) [unique]
   }
 }
 
@@ -56,17 +56,18 @@ Table Calendar {
 Table PublicSchedule {
   calendar Calendar [not null]
   participants Participant [not null]
+  serverUser ServerUser [not null]
   id Int [pk, increment]
   calendarId String [not null]
+  serverUserId Int [not null]
   date DateTime [not null]
   title String [not null]
   description String
-  recruitCount Int [not null]
+  quota Int [default: 0]
   isRecruiting Boolean [not null, default: true]
-  createdBy User [not null]
-  createdById String [not null]
-  updatedBy User [not null]
-  updatedById String [not null]
+  isDeleted Boolean [not null, default: false]
+  createdBy String [not null]
+  updatedBy String [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
   isPersonal Boolean [not null, default: false]
@@ -74,19 +75,18 @@ Table PublicSchedule {
 
 Table PersonalSchedule {
   calendar Calendar [not null]
-  user User [not null]
+  serverUser ServerUser [not null]
   id Int [pk, increment]
   calendarId String [not null]
+  serverUserId Int [not null]
   date DateTime [not null]
   title String [not null]
   userId String [not null]
   description String
   isPrivate Boolean [not null, default: false]
   isFree Boolean [not null, default: false]
-  createdBy User [not null]
-  createdById String [not null]
-  updatedBy User [not null]
-  updatedById String [not null]
+  createdBy String [not null]
+  updatedBy String [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
   isPersonal Boolean [not null, default: true]
@@ -127,7 +127,7 @@ Table GameSetting {
 
 Enum Reaction {
   OK
-  UNDECIDED
+  PENDING
   NG
 }
 
@@ -139,17 +139,11 @@ Ref: Calendar.serverId > Server.id
 
 Ref: PublicSchedule.calendarId > Calendar.id
 
-Ref: PublicSchedule.createdById > User.id
-
-Ref: PublicSchedule.updatedById > User.id
+Ref: PublicSchedule.serverUserId > ServerUser.id
 
 Ref: PersonalSchedule.calendarId > Calendar.id
 
-Ref: PersonalSchedule.userId > User.id
-
-Ref: PersonalSchedule.createdById > User.id
-
-Ref: PersonalSchedule.updatedById > User.id
+Ref: PersonalSchedule.serverUserId > ServerUser.id
 
 Ref: Participant.userId > User.id
 

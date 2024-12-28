@@ -3,7 +3,7 @@ import { CalendarEvent } from '../Calendar/_types/types';
 export type Participant = {
   userId: string;
   name: string;
-  reaction: 'OK' | 'UNDECIDED' | 'NG';
+  reaction: 'OK' | 'PENDING' | 'NG' | 'NONE';
 };
 
 export type Props = {

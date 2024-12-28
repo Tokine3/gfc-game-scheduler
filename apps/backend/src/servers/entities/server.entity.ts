@@ -1,6 +1,7 @@
 import { User } from 'src/user/entities/user.entity';
 import { Calendar } from '../../calendars/entities/calendar.entity';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class Server {
   @ApiProperty({ description: 'サーバーID' })
@@ -44,6 +45,7 @@ export class ServerWithRelations extends Server {
 
 export class ServerUserWithRelations extends ServerUser {
   @ApiProperty({ description: 'ユーザー' })
+  @Type(() => User)
   user: User;
 }
 

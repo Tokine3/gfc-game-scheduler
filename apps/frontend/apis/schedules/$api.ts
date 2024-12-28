@@ -6,6 +6,7 @@ import type { Methods as Methods_1tduqze } from "./_calendarId@string/personal";
 import type { Methods as Methods_7up0tv } from "./_calendarId@string/public";
 import type { Methods as Methods_mdoht4 } from "./_id@string/personal";
 import type { Methods as Methods_kq0c5l } from "./_id@string/public";
+import type { Methods as Methods_1cldan9 } from "./_id@string/public/reaction";
 
 const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
   const prefix = (baseURL === undefined ? "" : baseURL).replace(/\/$/, "");
@@ -14,6 +15,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
   const PATH2 = "/me/personal";
   const PATH3 = "/personal";
   const PATH4 = "/public";
+  const PATH5 = "/public/reaction";
   const GET = "GET";
   const POST = "POST";
   const DELETE = "DELETE";
@@ -252,6 +254,37 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
           $path: () => `${prefix}${prefix0}${PATH3}`,
         },
         public: {
+          reaction: {
+            /**
+             * @param option.body - 公開スケジュール参加者更新リクエスト
+             * @returns 公開スケジュール参加者更新成功
+             */
+            patch: (option: {
+              body: Methods_1cldan9["patch"]["reqBody"];
+              config?: T | undefined;
+            }) =>
+              fetch<
+                Methods_1cldan9["patch"]["resBody"],
+                BasicHeaders,
+                Methods_1cldan9["patch"]["status"]
+              >(prefix, `${prefix0}${PATH5}`, PATCH, option).json(),
+            /**
+             * @param option.body - 公開スケジュール参加者更新リクエスト
+             * @returns 公開スケジュール参加者更新成功
+             */
+            $patch: (option: {
+              body: Methods_1cldan9["patch"]["reqBody"];
+              config?: T | undefined;
+            }) =>
+              fetch<
+                Methods_1cldan9["patch"]["resBody"],
+                BasicHeaders,
+                Methods_1cldan9["patch"]["status"]
+              >(prefix, `${prefix0}${PATH5}`, PATCH, option)
+                .json()
+                .then((r) => r.body),
+            $path: () => `${prefix}${prefix0}${PATH5}`,
+          },
           /**
            * @param option.body - 公開スケジュール更新リクエスト
            * @returns 公開スケジュール更新成功

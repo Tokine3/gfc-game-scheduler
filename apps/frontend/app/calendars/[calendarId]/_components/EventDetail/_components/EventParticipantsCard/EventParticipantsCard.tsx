@@ -1,10 +1,10 @@
 import { FC } from 'react';
 import { Users } from 'lucide-react';
-import type { Participant } from '../../types';
 import { ParticipantList } from '../ParticipantList/ParticipantList';
+import { ParticipantWithRelations } from '../../../../../../../apis/@types';
 
 type Props = {
-  participants: Participant[];
+  participants: ParticipantWithRelations[];
   quota: number;
 };
 

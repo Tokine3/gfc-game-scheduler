@@ -66,7 +66,11 @@ export class CalendarsService {
             },
             participants: {
               include: {
-                user: true,
+                serverUser: {
+                  include: {
+                    user: true,
+                  },
+                },
               },
             },
           },

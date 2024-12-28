@@ -12,6 +12,7 @@ import type { Methods as Methods_zxijjv } from "./schedules/_calendarId@string/p
 import type { Methods as Methods_1ti6346 } from "./schedules/_calendarId@string/public";
 import type { Methods as Methods_32ivfh } from "./schedules/_id@string/personal";
 import type { Methods as Methods_17gmbg0 } from "./schedules/_id@string/public";
+import type { Methods as Methods_gltv9e } from "./schedules/_id@string/public/reaction";
 import type { Methods as Methods_fh3uxg } from "./servers/fav/_id@string";
 import type { Methods as Methods_dvs1gv } from "./servers/join";
 import type { Methods as Methods_m3tpez } from "./servers/me/server-user";
@@ -32,12 +33,13 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
   const PATH7 = "/me/personal";
   const PATH8 = "/personal";
   const PATH9 = "/public";
-  const PATH10 = "/servers/fav";
-  const PATH11 = "/servers/join";
-  const PATH12 = "/servers/me/server-user";
-  const PATH13 = "/user";
-  const PATH14 = "/user/login";
-  const PATH15 = "/user/me";
+  const PATH10 = "/public/reaction";
+  const PATH11 = "/servers/fav";
+  const PATH12 = "/servers/join";
+  const PATH13 = "/servers/me/server-user";
+  const PATH14 = "/user";
+  const PATH15 = "/user/login";
+  const PATH16 = "/user/me";
   const GET = "GET";
   const POST = "POST";
   const DELETE = "DELETE";
@@ -479,6 +481,37 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
             $path: () => `${prefix}${prefix1}${PATH8}`,
           },
           public: {
+            reaction: {
+              /**
+               * @param option.body - 公開スケジュール参加者更新リクエスト
+               * @returns 公開スケジュール参加者更新成功
+               */
+              patch: (option: {
+                body: Methods_gltv9e["patch"]["reqBody"];
+                config?: T | undefined;
+              }) =>
+                fetch<
+                  Methods_gltv9e["patch"]["resBody"],
+                  BasicHeaders,
+                  Methods_gltv9e["patch"]["status"]
+                >(prefix, `${prefix1}${PATH10}`, PATCH, option).json(),
+              /**
+               * @param option.body - 公開スケジュール参加者更新リクエスト
+               * @returns 公開スケジュール参加者更新成功
+               */
+              $patch: (option: {
+                body: Methods_gltv9e["patch"]["reqBody"];
+                config?: T | undefined;
+              }) =>
+                fetch<
+                  Methods_gltv9e["patch"]["resBody"],
+                  BasicHeaders,
+                  Methods_gltv9e["patch"]["status"]
+                >(prefix, `${prefix1}${PATH10}`, PATCH, option)
+                  .json()
+                  .then((r) => r.body),
+              $path: () => `${prefix}${prefix1}${PATH10}`,
+            },
             /**
              * @param option.body - 公開スケジュール更新リクエスト
              * @returns 公開スケジュール更新成功
@@ -543,7 +576,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
     servers: {
       fav: {
         _id: (val2: string) => {
-          const prefix2 = `${PATH10}/${val2}`;
+          const prefix2 = `${PATH11}/${val2}`;
 
           return {
             /**
@@ -588,7 +621,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
             Methods_dvs1gv["post"]["resBody"],
             BasicHeaders,
             Methods_dvs1gv["post"]["status"]
-          >(prefix, PATH11, POST, option).json(),
+          >(prefix, PATH12, POST, option).json(),
         /**
          * @returns サーバーに参加しました
          */
@@ -600,10 +633,10 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
             Methods_dvs1gv["post"]["resBody"],
             BasicHeaders,
             Methods_dvs1gv["post"]["status"]
-          >(prefix, PATH11, POST, option)
+          >(prefix, PATH12, POST, option)
             .json()
             .then((r) => r.body),
-        $path: () => `${prefix}${PATH11}`,
+        $path: () => `${prefix}${PATH12}`,
       },
       me: {
         server_user: {
@@ -618,7 +651,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
               Methods_m3tpez["get"]["resBody"],
               BasicHeaders,
               Methods_m3tpez["get"]["status"]
-            >(prefix, PATH12, GET, option).json(),
+            >(prefix, PATH13, GET, option).json(),
           /**
            * @returns サーバーに参加しているかどうか
            */
@@ -630,7 +663,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
               Methods_m3tpez["get"]["resBody"],
               BasicHeaders,
               Methods_m3tpez["get"]["status"]
-            >(prefix, PATH12, GET, option)
+            >(prefix, PATH13, GET, option)
               .json()
               .then((r) => r.body),
           $path: (
@@ -641,13 +674,13 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
                 }
               | undefined,
           ) =>
-            `${prefix}${PATH12}${option && option.query ? `?${dataToURLString(option.query)}` : ""}`,
+            `${prefix}${PATH13}${option && option.query ? `?${dataToURLString(option.query)}` : ""}`,
         },
       },
     },
     user: {
       _id: (val1: string) => {
-        const prefix1 = `${PATH13}/${val1}`;
+        const prefix1 = `${PATH14}/${val1}`;
 
         return {
           /**
@@ -724,7 +757,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
             Methods_1904ovn["get"]["resBody"],
             BasicHeaders,
             Methods_1904ovn["get"]["status"]
-          >(prefix, PATH14, GET, option).json(),
+          >(prefix, PATH15, GET, option).json(),
         /**
          * @returns 最終ログイン時間の更新と自身のデータ取得成功
          */
@@ -733,10 +766,10 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
             Methods_1904ovn["get"]["resBody"],
             BasicHeaders,
             Methods_1904ovn["get"]["status"]
-          >(prefix, PATH14, GET, option)
+          >(prefix, PATH15, GET, option)
             .json()
             .then((r) => r.body),
-        $path: () => `${prefix}${PATH14}`,
+        $path: () => `${prefix}${PATH15}`,
       },
       me: {
         /**
@@ -747,7 +780,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
             Methods_9k2hsc["get"]["resBody"],
             BasicHeaders,
             Methods_9k2hsc["get"]["status"]
-          >(prefix, PATH15, GET, option).json(),
+          >(prefix, PATH16, GET, option).json(),
         /**
          * @returns ログイン中のユーザの取得成功
          */
@@ -756,10 +789,10 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
             Methods_9k2hsc["get"]["resBody"],
             BasicHeaders,
             Methods_9k2hsc["get"]["status"]
-          >(prefix, PATH15, GET, option)
+          >(prefix, PATH16, GET, option)
             .json()
             .then((r) => r.body),
-        $path: () => `${prefix}${PATH15}`,
+        $path: () => `${prefix}${PATH16}`,
       },
       /**
        * @returns 検索条件に当てはまるユーザの取得成功
@@ -776,7 +809,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
           Methods_tli9od["get"]["resBody"],
           BasicHeaders,
           Methods_tli9od["get"]["status"]
-        >(prefix, PATH13, GET, option).json(),
+        >(prefix, PATH14, GET, option).json(),
       /**
        * @returns 検索条件に当てはまるユーザの取得成功
        */
@@ -792,7 +825,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
           Methods_tli9od["get"]["resBody"],
           BasicHeaders,
           Methods_tli9od["get"]["status"]
-        >(prefix, PATH13, GET, option)
+        >(prefix, PATH14, GET, option)
           .json()
           .then((r) => r.body),
       $path: (
@@ -803,7 +836,7 @@ const api = <T>({ baseURL, fetch }: AspidaClient<T>) => {
             }
           | undefined,
       ) =>
-        `${prefix}${PATH13}${option && option.query ? `?${dataToURLString(option.query)}` : ""}`,
+        `${prefix}${PATH14}${option && option.query ? `?${dataToURLString(option.query)}` : ""}`,
     },
   };
 };

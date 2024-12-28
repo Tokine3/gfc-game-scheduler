@@ -47,6 +47,9 @@ import {
   ReactionButton,
 } from './_components';
 import { cn } from '../../../../../lib/utils';
+import { client } from '../../../../../lib/api';
+
+type Reaction = 'OK' | 'NG' | 'PENDING' | 'NONE';
 
 export const EventDetail: FC<Props> = ({
   calendarId,
@@ -59,16 +62,47 @@ export const EventDetail: FC<Props> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const isOwner = event.serverUser?.userId === currentUser?.id;
-  const now = dayjs();
-  const isPast = dayjs(event.date).isBefore(now);
 
   const handleReaction = useCallback(
-    async (reaction: 'OK' | 'NG' | 'PENDING') => {
+    async (newReaction: Reaction) => {
       if (!isPublicSchedule(event)) return;
 
       setIsSubmitting(true);
       try {
-        // TODO: 参加状況更新処理を追加する
+        // 現在の自分のreactionを取得
+        const currentReaction = event.participants?.find(
+          (p) => p.serverUser.userId === currentUser?.id
+        )?.reaction as Reaction | undefined;
+
+        // 送信するreactionを決定
+        let reactionToSubmit: Reaction;
+
+        console.log('currentReaction', currentReaction);
+        console.log('newReaction', newReaction);
+
+        switch (true) {
+          case !currentReaction || currentReaction === 'NONE':
+            // 初回または'NONE'の場合は新しいreactionを送信
+            reactionToSubmit = newReaction;
+            break;
+          case currentReaction === newReaction:
+            // 同じreactionをクリックした場合は'NONE'にする
+            reactionToSubmit = 'NONE';
+            break;
+          default:
+            // 異なるreactionの場合は新しいreactionを送信
+            reactionToSubmit = newReaction;
+        }
+        console.log('reactionToSubmit', reactionToSubmit);
+
+        // APIリクエスト
+        await client.schedules._id(event.id).public.reaction.$patch({
+          body: {
+            calendarId,
+            reaction: reactionToSubmit,
+          },
+        });
+
         toast({
           title: '参加状況を更新しました',
           description: `イベント「${event.title}」の参加状況を更新しました`,
@@ -85,7 +119,7 @@ export const EventDetail: FC<Props> = ({
         setIsSubmitting(false);
       }
     },
-    [event, onClose]
+    [event, currentUser?.id, calendarId, onClose]
   );
 
   const handleDelete = async () => {
@@ -229,10 +263,10 @@ export const EventDetail: FC<Props> = ({
                     <span className='text-xs text-gray-400 w-14'>作成者</span>
                     <div className='flex items-center gap-2 min-w-0'>
                       <Avatar className='h-6 w-6 border border-gray-700/50'>
-                        {event.serverUser?.user.avatar ? (
+                        {event.serverUser?.user?.avatar ? (
                           <AvatarImage
                             src={`https://cdn.discordapp.com/avatars/${event.serverUser?.user.id}/${event.serverUser?.user.avatar}`}
-                            alt={event.serverUser?.user.name}
+                            alt={event.serverUser?.user?.name}
                           />
                         ) : (
                           <AvatarFallback>
@@ -241,7 +275,7 @@ export const EventDetail: FC<Props> = ({
                         )}
                       </Avatar>
                       <span className='text-base text-gray-200 truncate'>
-                        {event.serverUser?.user.name}
+                        {event.serverUser?.user?.name}
                       </span>
                     </div>
                   </div>

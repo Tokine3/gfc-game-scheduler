@@ -5,10 +5,10 @@ import {
   AvatarFallback,
   AvatarImage,
 } from '../../../../../../components/ui/avatar';
-import { Participant } from '../../types';
+import { ParticipantWithRelations } from '../../../../../../../apis/@types';
 
 type Props = {
-  participants: Participant[];
+  participants: ParticipantWithRelations[];
   quota: number;
 };
 
@@ -18,7 +18,7 @@ export const ParticipantList: FC<Props> = memo(({ participants, quota }) => {
     {
       key: 'PENDING',
       icon: HelpCircle,
-      label: '未回答',
+      label: '未定',
       color: 'text-amber-400',
     },
     { key: 'NG', icon: XCircle, label: '不参加', color: 'text-red-400' },
@@ -43,15 +43,20 @@ export const ParticipantList: FC<Props> = memo(({ participants, quota }) => {
             <div className='flex flex-wrap gap-2'>
               {filteredParticipants.map((participant) => (
                 <div
-                  key={participant.userId}
+                  key={participant.serverUser?.user?.id}
                   className='flex items-center gap-2 p-2 rounded-lg bg-gray-800/50'
                 >
                   <Avatar className='w-6 h-6'>
-                    <AvatarImage src={undefined} alt={participant.name} />
-                    <AvatarFallback>{participant.name}</AvatarFallback>
+                    <AvatarImage
+                      src={`https://cdn.discordapp.com/avatars/${participant.serverUser?.user?.id}/${participant.serverUser?.user?.avatar}`}
+                      alt={participant.serverUser?.user?.name}
+                    />
+                    <AvatarFallback>
+                      {participant.serverUser?.user?.name}
+                    </AvatarFallback>
                   </Avatar>
                   <span className='text-sm text-gray-300'>
-                    {participant.name}
+                    {participant.serverUser?.user?.name}
                   </span>
                 </div>
               ))}

@@ -14,15 +14,14 @@ generator client {
 
 // ユーザー
 model User {
-  serverUsers      ServerUser[]
-  participants     Participant[]
-  gameSetting      GameSetting[]
-  id               String             @id // Discord ID
-  name             String
-  avatar           String?
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
-  lastLoggedInAt   DateTime           @default(now())
+  serverUsers    ServerUser[]
+  gameSetting    GameSetting[]
+  id             String        @id // Discord ID
+  name           String
+  avatar         String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  lastLoggedInAt DateTime      @default(now())
 }
 
 model Server {
@@ -38,16 +37,18 @@ model Server {
 // サーバーとユーザーの中間テーブル
 model ServerUser {
   personalSchedule PersonalSchedule[]
-  publicSchedule PublicSchedule[]
-  server    Server   @relation(fields: [serverId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
-  id        Int   @id @default(autoincrement())
-  userId    String
-  serverId  String
-  isFavorite Boolean  @default(false)
-  isJoined  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  publicSchedule   PublicSchedule[]
+  participants     Participant[]
+  server           Server             @relation(fields: [serverId], references: [id])
+  user             User               @relation(fields: [userId], references: [id])
+  id               Int                @id @default(autoincrement())
+  userId           String
+  serverId         String
+  isFavorite       Boolean            @default(false)
+  isJoined         Boolean            @default(false)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
   @@unique([userId, serverId])
 }
 
@@ -85,30 +86,30 @@ model PublicSchedule {
 
 // 個人スケジュール
 model PersonalSchedule {
-  calendar    Calendar @relation(fields: [calendarId], references: [id])
-  serverUser  ServerUser @relation(fields: [serverUserId], references: [id])
-  id          Int      @id @default(autoincrement())
-  calendarId  String
+  calendar     Calendar   @relation(fields: [calendarId], references: [id])
+  serverUser   ServerUser @relation(fields: [serverUserId], references: [id])
+  id           Int        @id @default(autoincrement())
+  calendarId   String
   serverUserId Int
-  date        DateTime
-  title       String
-  userId      String
-  description String?
-  isPrivate   Boolean  @default(false)
-  isFree      Boolean  @default(false)
+  date         DateTime
+  title        String
+  userId       String
+  description  String?
+  isPrivate    Boolean    @default(false)
+  isFree       Boolean    @default(false)
   createdBy    String
   updatedBy    String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  isPersonal  Boolean  @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  isPersonal   Boolean    @default(true)
 }
 
-// UserとPublicScheduleの中間テーブル
+
 model Participant {
-  user             User           @relation(fields: [userId], references: [id])
+  serverUser       ServerUser     @relation(fields: [serverUserId], references: [id])
   publicSchedule   PublicSchedule @relation(fields: [publicScheduleId], references: [id])
   id               Int            @id @default(autoincrement())
-  userId           String
+  serverUserId     Int
   publicScheduleId Int
   reaction         Reaction
   createdAt        DateTime       @default(now())
@@ -118,8 +119,9 @@ model Participant {
 // 参加者の反応
 enum Reaction {
   OK // 行く
-  UNDECIDED // 行けたら行く（未定）
+  PENDING // 行けたら行く（未定）
   NG // 行かない
+  NONE // 未反応
 }
 
 // --- まだ使わないテーブル --- //

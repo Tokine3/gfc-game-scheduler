@@ -18,6 +18,7 @@ import { FindPublicSchedulesScheduleDto } from './dto/findPublicShedules-schedul
 import { Prisma } from '@prisma/client';
 import { RemovePublicScheduleDto } from './dto/remove-publicSchedule-schedules.dto';
 import { RemovePersonalScheduleDto } from './dto/remove-personalSchedule-schedules.dto';
+import { UpdateReactionDto } from './dto/update-reaction.dto';
 
 // プラグインを追加
 dayjs.extend(utc);
@@ -227,7 +228,7 @@ export class SchedulesService {
         },
       },
       include: {
-        participants: true,
+        participants: { include: { serverUser: { include: { user: true } } } },
         serverUser: { include: { user: true } },
       },
     });
@@ -289,7 +290,9 @@ export class SchedulesService {
           },
         },
         include: {
-          participants: true,
+          participants: {
+            include: { serverUser: { include: { user: true } } },
+          },
           serverUser: { include: { user: true } },
         },
       }),
@@ -314,13 +317,81 @@ export class SchedulesService {
         where: { id, calendarId, serverUser: { userId } },
         data: body,
         include: {
-          participants: true,
+          participants: {
+            include: { serverUser: { include: { user: true } } },
+          },
           serverUser: { include: { user: true } },
         },
       })
       .catch((error) => {
         throw new BadRequestException('スケジュール更新に失敗しました');
       });
+  }
+
+  async updateReaction(
+    req: RequestWithUser,
+    id: number,
+    body: UpdateReactionDto
+  ) {
+    const { calendarId, reaction } = body;
+    const { id: userId } = req.user;
+
+    console.log('reaction', reaction);
+
+    // 既存の参加者を確認
+    const existingParticipant = await this.prisma.participant.findFirst({
+      where: {
+        publicSchedule: {
+          id,
+          calendarId,
+        },
+        serverUser: {
+          userId,
+        },
+      },
+    });
+
+    if (existingParticipant) {
+      // 既存の参加者を更新
+      return this.prisma.participant.update({
+        where: { id: existingParticipant.id },
+        data: { reaction },
+        include: {
+          publicSchedule: true,
+          serverUser: { include: { user: true } },
+        },
+      });
+    }
+
+    // 新規参加者を作成
+    const serverUser = await this.prisma.serverUser.findFirst({
+      where: {
+        userId,
+        server: {
+          calendars: {
+            some: {
+              id: calendarId,
+            },
+          },
+        },
+      },
+    });
+
+    if (!serverUser) {
+      throw new Error('Server user not found');
+    }
+
+    return this.prisma.participant.create({
+      data: {
+        serverUserId: serverUser.id,
+        publicScheduleId: id,
+        reaction,
+      },
+      include: {
+        publicSchedule: true,
+        serverUser: { include: { user: true } },
+      },
+    });
   }
 
   removePublicSchedule(

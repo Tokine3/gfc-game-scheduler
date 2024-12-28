@@ -5,7 +5,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import jaLocale from '@fullcalendar/core/locales/ja';
 import { DateSelectArg, EventContentArg } from '@fullcalendar/core';
-import { User, Crosshair, UserCircle2, Users, Lock } from 'lucide-react';
+import { User, Crosshair, UserCircle2, Lock } from 'lucide-react';
 import { cn } from '../../../../../lib/utils';
 import { useRef, useMemo, useCallback, useState, useEffect } from 'react';
 import {
@@ -18,13 +18,15 @@ import holidays from '@holiday-jp/holiday_jp';
 import dayjs from 'dayjs';
 import dynamic from 'next/dynamic';
 import { debounce, rafThrottle } from '../../../../../lib/utils';
-import { Participant } from '../../../../../apis/@types';
 import {
   Availability,
   CalendarEvent,
   isPublicSchedule,
 } from '../Calendar/_types/types';
-import { CalendarWithRelations } from '../../../../../apis/@types';
+import {
+  CalendarWithRelations,
+  ParticipantWithRelations,
+} from '../../../../../apis/@types';
 
 interface CalendarViewProps {
   date: Date | undefined;
@@ -35,7 +37,7 @@ interface CalendarViewProps {
     title: string;
     extendedProps: {
       isPersonal: boolean;
-      participants: Participant[] | undefined;
+      participants: ParticipantWithRelations[] | undefined;
       quota: number | undefined;
       originalEvent: CalendarEvent;
     };
@@ -112,8 +114,8 @@ export function CalendarView({
     const isFull =
       participants &&
       quota &&
-      participants.filter((p: Participant) => p.reaction === 'OK').length >=
-        quota;
+      participants.filter((p: ParticipantWithRelations) => p.reaction === 'OK')
+        .length >= quota;
     const isOwnPersonalSchedule =
       !isPublicSchedule(originalEvent) &&
       originalEvent.serverUser?.userId === userId;
@@ -185,28 +187,39 @@ export function CalendarView({
                   </div>
                   <div className='space-y-1'>
                     {participants.filter(
-                      (p: Participant) => p.reaction === 'OK'
+                      (p: ParticipantWithRelations) => p.reaction === 'OK'
                     ).length > 0 && (
                       <div className='text-xs'>
                         <span className='text-green-400 font-medium'>
                           参加者:{' '}
                         </span>
                         {participants
-                          .filter((p: Participant) => p.reaction === 'OK')
-                          .map((p: Participant) => p.name)
+                          .filter(
+                            (p: ParticipantWithRelations) => p.reaction === 'OK'
+                          )
+                          .map(
+                            (p: ParticipantWithRelations) =>
+                              p.serverUser?.user?.name
+                          )
                           .join(', ')}
                       </div>
                     )}
                     {participants.filter(
-                      (p: Participant) => p.reaction === 'PENDING'
+                      (p: ParticipantWithRelations) => p.reaction === 'PENDING'
                     ).length > 0 && (
                       <div className='text-xs'>
                         <span className='text-yellow-400 font-medium'>
                           未定:{' '}
                         </span>
                         {participants
-                          .filter((p: Participant) => p.reaction === 'PENDING')
-                          .map((p: Participant) => p.name)
+                          .filter(
+                            (p: ParticipantWithRelations) =>
+                              p.reaction === 'PENDING'
+                          )
+                          .map(
+                            (p: ParticipantWithRelations) =>
+                              p.serverUser?.user?.name
+                          )
                           .join(', ')}
                       </div>
                     )}

@@ -1,7 +1,6 @@
 import {
   PersonalScheduleWithRelations,
   PublicScheduleWithRelations,
-  Participant,
 } from '../../../../../../apis/@types';
 
 export type CalendarEvent =

@@ -122,19 +122,6 @@ export type Server = {
   icon: string | null;
 };
 
-export type Participant = {
-  /** 参加者ID */
-  userId: string;
-  /** 参加者名 */
-  name: string;
-  /** 参加者反応 */
-  reaction: "OK" | "UNDECIDED" | "NG";
-  /** 参加者反応日 */
-  createdAt: string;
-  /** 参加者反応更新日 */
-  updatedAt: string;
-};
-
 export type ServerUserWithRelations = {
   /** サーバーに参加しているユーザーID */
   userId: string;
@@ -151,6 +138,24 @@ export type ServerUserWithRelations = {
 
   /** ユーザー */
   user: User;
+};
+
+export type ParticipantWithRelations = {
+  /** 参加者ID */
+  id: number;
+  /** サーバーユーザーID */
+  serverUserId: number;
+  /** 公開予定ID */
+  publicScheduleId: number;
+  /** 参加者反応 */
+  reaction: "OK" | "PENDING" | "NG" | "NONE";
+  /** 作成日時 */
+  createdAt: string;
+  /** 更新日時 */
+  updatedAt: string;
+
+  /** サーバーユーザー情報 */
+  serverUser: ServerUserWithRelations;
 };
 
 export type PublicScheduleWithRelations = {
@@ -179,7 +184,7 @@ export type PublicScheduleWithRelations = {
   /** 削除フラグ */
   isDeleted: boolean;
   /** 参加者 */
-  participants: Participant[];
+  participants: ParticipantWithRelations[];
 
   /** サーバユーザ */
   serverUser: ServerUserWithRelations;
@@ -306,6 +311,13 @@ export type UpdatePublicScheduleDto = {
   quota?: number | undefined;
   /** カレンダーID */
   calendarId: string;
+};
+
+export type UpdateReactionDto = {
+  /** カレンダーID */
+  calendarId: string;
+  /** 参加者反応 */
+  reaction: "OK" | "PENDING" | "NG" | "NONE";
 };
 
 export type RemovePublicScheduleDto = {
