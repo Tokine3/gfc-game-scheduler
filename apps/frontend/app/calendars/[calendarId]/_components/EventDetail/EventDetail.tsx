@@ -190,8 +190,29 @@ export const EventDetail: FC<Props> = ({
     try {
       console.log('削除開始');
       await onDelete?.();
-      console.log('削除API完了');
 
+      // キャッシュの完全な更新
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['calendar', calendarId],
+          refetchType: 'all',
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['schedules', calendarId],
+          refetchType: 'all',
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['personalSchedules', calendarId],
+          refetchType: 'all',
+        }),
+      ]);
+
+      // データの再フェッチが完了するまで待機
+      await queryClient.refetchQueries({
+        queryKey: ['calendar', calendarId],
+      });
+
+      console.log('削除API完了');
       onClose();
       setShowDeleteDialog(false);
 

@@ -9,7 +9,7 @@ import { useCalendar } from '../../../hooks/useCalendar';
 import { useServerMembership } from '../../../hooks/useServerMembership';
 import { Calendar } from './_components';
 import Header from '../../components/Header';
-import { Calendar as CalendarIcon, ChevronLeft } from 'lucide-react';
+import { CalendarDays, ChevronLeft } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { JoinServerPrompt } from '../../servers/_components/JoinServerPrompt/JoinServerPrompt';
 import type { CalendarWithRelations } from '../../../apis/@types';
@@ -32,7 +32,9 @@ export default function CalendarPage({
     isLoading: isCalendarLoading,
     isError,
   } = useCalendar(resolvedParams.calendarId);
-  const { isMember, isLoading: isMembershipLoading } = useServerMembership(calendar?.serverId);
+  const { isMember, isLoading: isMembershipLoading } = useServerMembership(
+    calendar?.serverId
+  );
 
   useEffect(() => {
     if (isError instanceof UnauthorizedError) {
@@ -157,13 +159,10 @@ function CalendarInfo({ calendar }: { calendar?: CalendarWithRelations }) {
 
   return (
     <div className='space-y-1'>
-      <h1 className='text-lg font-semibold text-gray-100 truncate'>
+      <h1 className='flex gap-2 text-lg font-semibold text-gray-100 truncate'>
+        <CalendarDays className='w-6 h-6' />
         {calendar.name}
       </h1>
-      <p className='text-sm text-gray-400 flex items-center gap-2'>
-        <CalendarIcon className='w-4 h-4' />
-        カレンダー
-      </p>
     </div>
   );
 }

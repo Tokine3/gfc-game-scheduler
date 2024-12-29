@@ -66,7 +66,6 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
           },
         });
 
-        // サーバーアクセスチェックを並列で実行
         const [hasServerAccess] = await Promise.all([
           client.servers.me.server_user.$get({
             query: { serverId: calendar.serverId },
@@ -84,8 +83,9 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
         throw error;
       }
     },
-    staleTime: 30000, // 30秒間はキャッシュを新鮮とみなす
-    gcTime: 5 * 60 * 1000, // 5分間キャッシュを保持
+    staleTime: 0, // キャッシュの有効期限を0に設定
+    gcTime: 0, // ガベージコレクションの時間も0に設定
+    refetchOnWindowFocus: true,
   });
 
   // スケジュールデータのフェッチを最適化
@@ -102,9 +102,10 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
         });
       return response;
     },
-    staleTime: 30000,
-    gcTime: 5 * 60 * 1000,
-    enabled: !!calendar, // カレンダーデータ取得後に実行
+    staleTime: 0,
+    gcTime: 0,
+    enabled: !!calendar,
+    refetchOnWindowFocus: true,
   });
 
   // 個人スケジュールのフェッチを最適化
@@ -125,25 +126,47 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
         });
       return response;
     },
-    staleTime: 30000,
-    gcTime: 5 * 60 * 1000,
-    enabled: !!calendar, // カレンダーデータ取得後に実行
+    staleTime: 0,
+    gcTime: 0,
+    enabled: !!calendar,
+    refetchOnWindowFocus: true,
   });
 
   // 最適化されたリフレッシュ関数
   const refresh = useCallback(async () => {
     try {
+      // すべてのクエリを無効化
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.calendar }),
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.schedules }),
         queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.calendar,
+          refetchType: 'all',
+        }),
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.schedules,
+          refetchType: 'all',
+        }),
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.personalSchedules,
+          refetchType: 'all',
+        }),
+      ]);
+
+      // データの再フェッチを確実に実行
+      await Promise.all([
+        queryClient.refetchQueries({
+          queryKey: QUERY_KEYS.calendar,
+        }),
+        queryClient.refetchQueries({
+          queryKey: QUERY_KEYS.schedules,
+        }),
+        queryClient.refetchQueries({
           queryKey: QUERY_KEYS.personalSchedules,
         }),
       ]);
     } catch (error) {
       logger.error('Failed to refresh calendar data:', error);
     }
-  }, [queryClient]);
+  }, [queryClient, QUERY_KEYS]);
 
   return {
     calendar,

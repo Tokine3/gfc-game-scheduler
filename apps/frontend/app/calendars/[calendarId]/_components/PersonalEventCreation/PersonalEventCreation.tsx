@@ -1,6 +1,6 @@
 'use client';
 
-import { FC, useState, useEffect, useCallback } from 'react';
+import { FC, useState, useEffect, useCallback, useMemo, memo } from 'react';
 import dayjs from 'dayjs';
 import { motion } from 'framer-motion';
 import { logger } from '../../../../../lib/logger';
@@ -9,10 +9,10 @@ import {
   CalendarIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  Lock,
   CheckIcon,
   Info,
   Loader2,
+  Lock,
 } from 'lucide-react';
 import { cn } from '../../../../../lib/utils';
 import {
@@ -25,16 +25,18 @@ import {
 } from '../../../../components/ui/dialog';
 import { Segment } from '../../../../components/ui/segment';
 import { Button } from '../../../../components/ui/button';
+import { getDaysInRange } from '../../../../../lib/dateUtils';
+import { ScheduleRow } from './_components';
+import { toast } from '../../../../components/ui/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '../../../../components/ui/tooltip';
-import { getDaysInRange } from '../../../../../lib/dateUtils';
-import { ScheduleRow } from './_components';
-import { z } from 'zod';
 
+// 型定義
 type Props = {
   onClose: () => void;
   date?: Date;
@@ -49,25 +51,20 @@ type Props = {
 };
 
 type DaySchedule = {
-  /** 予定の日付 (YYYY-MM-DD形式) */
+  /** 日付 */
   date: string;
   /** 空き予定かどうか */
   isFree: boolean;
-  /** 予定の説明 */
+  /** 予定の内容 */
   description: string;
-  /** 非公開予定かどうか */
+  /** 非公開かどうか */
   isPrivate: boolean;
 };
 
 type ViewMode = 'month' | 'week';
 
-const formSchema = z.object({
-  title: z
-    .string()
-    .min(1, '必須項目です')
-    .max(30, 'タイトルは30文字以内で入力してください'),
-  description: z.string().optional(),
-});
+// メモ化されたコンポーネント
+const MemoizedScheduleRow = memo(ScheduleRow);
 
 export const PersonalEventCreation: FC<Props> = ({
   onClose,
@@ -76,6 +73,7 @@ export const PersonalEventCreation: FC<Props> = ({
   initialSchedules,
   onSuccess,
 }) => {
+  const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [currentDate, setCurrentDate] = useState(() =>
     dayjs(date || new Date())
@@ -90,18 +88,14 @@ export const PersonalEventCreation: FC<Props> = ({
       isPrivate: schedule.isPrivate,
     }))
   );
-  const [hasChanges, setHasChanges] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [scheduleCache, setScheduleCache] = useState<
-    Record<string, DaySchedule[]>
-  >({});
+  const [hasChanges, setHasChanges] = useState(false);
 
-  // 開発環境でのみ実行される初期化時のログ
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      logger.log('PersonalEventCreation initialized:', calendarId ?? 'Nothing');
-    }
-  }, [calendarId]);
+  // 日付範囲の計算をメモ化
+  const dateRange = useMemo(
+    () => getDaysInRange(currentDate, viewMode),
+    [currentDate, viewMode]
+  );
 
   // スケジュール表示部分を最適化
   const getDaySchedule = useCallback(
@@ -119,37 +113,22 @@ export const PersonalEventCreation: FC<Props> = ({
     [schedules]
   );
 
-  // 初期データの取得を修正
+  // 初期データの取得を最適化
   useEffect(() => {
     const fetchExistingSchedules = async () => {
-      const monthKey = currentDate.format('YYYY-MM');
-
-      // キャッシュにデータがある場合はそれを使用
-      if (scheduleCache[monthKey]) {
-        setSchedules(scheduleCache[monthKey]);
-        return;
-      }
-
-      // 初期データの月と同じ場合は初期データを使用
-      if (initialSchedules && currentDate.isSame(dayjs(date), 'month')) {
-        const initialData = initialSchedules.map((schedule) => ({
-          date: dayjs(schedule.date).tz('Asia/Tokyo').format('YYYY-MM-DD'),
-          isFree: schedule.isFree,
-          description: schedule.title || '',
-          isPrivate: schedule.isPrivate,
-        }));
-        setSchedules(initialData);
-        setScheduleCache((prev) => ({ ...prev, [monthKey]: initialData }));
-        return;
-      }
+      if (!calendarId) return;
 
       try {
         const response = await client.schedules
           ._calendarId(calendarId)
           .me.personal.$get({
             query: {
-              fromDate: currentDate.startOf(viewMode).utc().format(),
-              toDate: currentDate.endOf(viewMode).utc().format(),
+              fromDate: currentDate
+                .startOf(viewMode)
+                .subtract(1, 'hour')
+                .utc()
+                .format(),
+              toDate: currentDate.endOf(viewMode).add(1, 'hour').utc().format(),
             },
           });
 
@@ -161,14 +140,13 @@ export const PersonalEventCreation: FC<Props> = ({
         }));
 
         setSchedules(newSchedules);
-        setScheduleCache((prev) => ({ ...prev, [monthKey]: newSchedules }));
         setHasChanges(false);
       } catch (error) {
         logger.error('Failed to fetch personal schedules:', error);
       }
     };
 
-    if (calendarId) {
+    if (!initialSchedules || !currentDate.isSame(dayjs(date), 'month')) {
       fetchExistingSchedules();
     }
   }, [calendarId, currentDate, viewMode, initialSchedules, date]);
@@ -180,7 +158,6 @@ export const PersonalEventCreation: FC<Props> = ({
       field: 'isFree' | 'description' | 'isPrivate',
       value: boolean | string
     ) => {
-      const monthKey = currentDate.format('YYYY-MM');
       setSchedules((prev) => {
         const dateStr = day.format('YYYY-MM-DD');
         const existingIndex = prev.findIndex((s) => s.date === dateStr);
@@ -201,67 +178,60 @@ export const PersonalEventCreation: FC<Props> = ({
           });
         }
 
-        // キャッシュも更新
-        setScheduleCache((cache) => ({
-          ...cache,
-          [monthKey]: newSchedules,
-        }));
-
         return newSchedules;
       });
       setHasChanges(true);
     },
-    [currentDate]
+    []
   );
 
   // 月/週の移動処理を最適化
   const handleDateChange = useCallback(
     (direction: 'prev' | 'next') => {
-      setCurrentDate((prev) => {
-        return direction === 'prev'
+      setCurrentDate((prev) =>
+        direction === 'prev'
           ? prev.subtract(1, viewMode).startOf(viewMode)
-          : prev.add(1, viewMode).startOf(viewMode);
-      });
+          : prev.add(1, viewMode).startOf(viewMode)
+      );
     },
     [viewMode]
   );
 
-  // 全ての予定が空きかどうかをチェックする関数
-  const isAllSchedulesAvailable = () => {
-    const days = getDaysInRange(currentDate, viewMode);
-    return days.every(
-      (day) =>
-        schedules.find((s) => dayjs.tz(s.date, 'Asia/Tokyo').isSame(day, 'day'))
-          ?.isFree
-    );
-  };
+  // 一括チェック機能を最適化
+  const handleBulkCheck = useCallback(() => {
+    const allChecked = dateRange.every((day) => getDaySchedule(day).isFree);
 
-  // 一括チェック機能も修正
-  const handleBulkCheck = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      const days = getDaysInRange(currentDate, viewMode);
-      const allChecked = isAllSchedulesAvailable();
+    setSchedules((prev) => {
+      const newSchedules = [...prev];
+      dateRange.forEach((day) => {
+        const dateStr = day.format('YYYY-MM-DD');
+        const existingIndex = newSchedules.findIndex((s) => s.date === dateStr);
 
-      const newSchedules = days.map((day) => {
-        const dateStr = dayjs.tz(day, 'Asia/Tokyo').format('YYYY-MM-DD');
-        const existing = schedules.find((s) => s.date === dateStr);
-        return {
-          date: dateStr,
-          isFree: !allChecked,
-          description: existing?.description || '',
-          isPrivate: existing?.isPrivate || false,
-        };
+        if (existingIndex >= 0) {
+          newSchedules[existingIndex] = {
+            ...newSchedules[existingIndex],
+            isFree: !allChecked,
+          };
+        } else {
+          newSchedules.push({
+            date: dateStr,
+            isFree: !allChecked,
+            description: '',
+            isPrivate: false,
+          });
+        }
       });
 
-      setSchedules(newSchedules);
-      setHasChanges(true);
-    },
-    [currentDate, viewMode, schedules, isAllSchedulesAvailable]
-  );
+      return newSchedules;
+    });
+    setHasChanges(true);
+  }, [dateRange, getDaySchedule]);
 
+  // 送信処理を最適化
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
     setIsSubmitting(true);
     try {
       const schedulesToSubmit = schedules.map((schedule) => ({
@@ -273,16 +243,33 @@ export const PersonalEventCreation: FC<Props> = ({
       }));
 
       if (schedulesToSubmit.length > 0) {
-        console.log('pesonalSchedule post 実行開始');
         await client.schedules._calendarId(calendarId).personal.$post({
           body: schedulesToSubmit,
         });
-        console.log('pesonalSchedule post 実行完了');
+
+        // キャッシュの更新を最適化
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: ['personalSchedules', calendarId],
+          }),
+          queryClient.invalidateQueries({
+            queryKey: ['calendar', calendarId],
+          }),
+          queryClient.invalidateQueries({
+            queryKey: ['schedules', calendarId],
+          }),
+        ]);
+
         onSuccess?.();
         onClose();
       }
     } catch (error) {
       logger.error('Failed to create personal events:', error);
+      toast({
+        title: 'エラー',
+        description: '予定の更新に失敗しました',
+        variant: 'destructive',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -367,7 +354,7 @@ export const PersonalEventCreation: FC<Props> = ({
                     onClick={handleBulkCheck}
                     className={cn(
                       'text-xs sm:text-sm whitespace-nowrap',
-                      isAllSchedulesAvailable()
+                      dateRange.every((day) => getDaySchedule(day).isFree)
                         ? 'bg-gradient-to-r from-violet-500 to-indigo-500 text-white border-transparent'
                         : 'hover:bg-gray-800/60 border-gray-700'
                     )}
@@ -420,10 +407,10 @@ export const PersonalEventCreation: FC<Props> = ({
                 </div>
 
                 <div className='max-h-[calc(100vh-420px)] sm:max-h-[420px] overflow-y-auto p-2 space-y-1.5'>
-                  {getDaysInRange(currentDate, viewMode).map((day) => {
+                  {dateRange.map((day) => {
                     const schedule = getDaySchedule(day);
                     return (
-                      <ScheduleRow
+                      <MemoizedScheduleRow
                         key={day.format()}
                         day={day}
                         schedule={schedule}
