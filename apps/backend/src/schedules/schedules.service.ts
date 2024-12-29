@@ -134,7 +134,9 @@ export class SchedulesService {
       const creates: Prisma.PersonalScheduleCreateManyInput[] = [];
 
       body.forEach((schedule) => {
-        const scheduleDate = dayjs(schedule.date).startOf('day');
+        const scheduleDate = dayjs(schedule.date)
+          .tz('Asia/Tokyo')
+          .startOf('day');
         const existing = existingSchedules.find((e) =>
           dayjs(e.date).isSame(scheduleDate, 'day')
         );
@@ -221,8 +223,8 @@ export class SchedulesService {
       where: {
         calendarId,
         date: {
-          gte: dayjs(fromDate).toDate(),
-          lte: dayjs(toDate).toDate(),
+          gte: dayjs(fromDate).tz('Asia/Tokyo').toDate(),
+          lte: dayjs(toDate).tz('Asia/Tokyo').toDate(),
         },
       },
       include: {
@@ -247,8 +249,8 @@ export class SchedulesService {
         calendarId,
         userId,
         date: {
-          gte: dayjs(fromDate).toDate(),
-          lte: dayjs(toDate).toDate(),
+          gte: dayjs(fromDate).tz('Asia/Tokyo').toDate(),
+          lte: dayjs(toDate).tz('Asia/Tokyo').toDate(),
         },
       },
       include: { serverUser: { include: { user: true } } },
@@ -273,8 +275,8 @@ export class SchedulesService {
           calendarId,
           userId,
           date: {
-            gte: dayjs(fromDate).toDate(),
-            lte: dayjs(toDate).toDate(),
+            gte: dayjs(fromDate).tz('Asia/Tokyo').toDate(),
+            lte: dayjs(toDate).tz('Asia/Tokyo').toDate(),
           },
         },
         include: { serverUser: { include: { user: true } } },
@@ -283,8 +285,8 @@ export class SchedulesService {
         where: {
           calendarId,
           date: {
-            gte: dayjs(fromDate).toDate(),
-            lte: dayjs(toDate).toDate(),
+            gte: dayjs(fromDate).tz('Asia/Tokyo').toDate(),
+            lte: dayjs(toDate).tz('Asia/Tokyo').toDate(),
           },
         },
         include: {

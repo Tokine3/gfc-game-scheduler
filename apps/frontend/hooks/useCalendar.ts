@@ -42,8 +42,8 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
       try {
         return await client.calendars._id(calendarId).$get({
           query: {
-            fromDate: dayjs(date).startOf('month').format(),
-            toDate: dayjs(date).endOf('month').format(),
+            fromDate: dayjs(date).tz('Asia/Tokyo').startOf('month').format(),
+            toDate: dayjs(date).tz('Asia/Tokyo').endOf('month').format(),
           },
         });
       } catch (error) {
@@ -72,8 +72,14 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
           queryFn: () =>
             client.calendars._id(calendarId).$get({
               query: {
-                fromDate: dayjs(targetDate).startOf('month').format(),
-                toDate: dayjs(targetDate).endOf('month').format(),
+                fromDate: dayjs(targetDate)
+                  .tz('Asia/Tokyo')
+                  .startOf('month')
+                  .format(),
+                toDate: dayjs(targetDate)
+                  .tz('Asia/Tokyo')
+                  .endOf('month')
+                  .format(),
               },
             }),
         });
@@ -100,8 +106,11 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
       return [
         'personalSchedules',
         {
-          fromDate: dayjs(targetDate).startOf('month').format(),
-          toDate: dayjs(targetDate).endOf('month').format(),
+          fromDate: dayjs(targetDate)
+            .tz('Asia/Tokyo')
+            .startOf('month')
+            .format(),
+          toDate: dayjs(targetDate).tz('Asia/Tokyo').endOf('month').format(),
         },
       ] as const;
     },

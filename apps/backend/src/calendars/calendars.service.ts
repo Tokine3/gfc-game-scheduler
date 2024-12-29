@@ -20,7 +20,7 @@ export class CalendarsService {
   create(req: RequestWithUser, body: CreateCalendarDto) {
     logger.log('CALENDARS SERVICE');
     logger.log(body);
-    const { name, serverId, serverName } = body;
+    const { name, serverId } = body;
     return this.prisma.calendar.create({
       data: {
         name,
@@ -49,10 +49,12 @@ export class CalendarsService {
     // イベントの取得範囲を指定する
     // 先月の1週間前から翌月の1週間後までの範囲を取得する
     const startDate = dayjs(fromDate ?? dayjs())
+      .tz('Asia/Tokyo')
       .subtract(1, 'week')
       .startOf('month')
       .toDate();
     const endDate = dayjs(toDate ?? dayjs())
+      .tz('Asia/Tokyo')
       .add(1, 'week')
       .endOf('month')
       .toDate();

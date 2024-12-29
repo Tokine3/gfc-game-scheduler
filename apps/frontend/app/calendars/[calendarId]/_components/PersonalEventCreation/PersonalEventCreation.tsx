@@ -100,7 +100,7 @@ export const PersonalEventCreation: FC<Props> = ({
   // スケジュール表示部分を最適化
   const getDaySchedule = useCallback(
     (day: dayjs.Dayjs): DaySchedule => {
-      const dateStr = day.format('YYYY-MM-DD');
+      const dateStr = day.tz('Asia/Tokyo').format('YYYY-MM-DD');
       return (
         schedules.find((s) => s.date === dateStr) || {
           date: dateStr,
@@ -126,14 +126,18 @@ export const PersonalEventCreation: FC<Props> = ({
               fromDate: currentDate
                 .startOf(viewMode)
                 .subtract(1, 'hour')
-                .utc()
+                .tz('Asia/Tokyo')
                 .format(),
-              toDate: currentDate.endOf(viewMode).add(1, 'hour').utc().format(),
+              toDate: currentDate
+                .endOf(viewMode)
+                .add(1, 'hour')
+                .tz('Asia/Tokyo')
+                .format(),
             },
           });
 
         const newSchedules = response.map((schedule) => ({
-          date: dayjs.utc(schedule.date).tz('Asia/Tokyo').format('YYYY-MM-DD'),
+          date: dayjs(schedule.date).tz('Asia/Tokyo').format('YYYY-MM-DD'),
           isFree: schedule.isFree,
           description: schedule.title || '',
           isPrivate: schedule.isPrivate,

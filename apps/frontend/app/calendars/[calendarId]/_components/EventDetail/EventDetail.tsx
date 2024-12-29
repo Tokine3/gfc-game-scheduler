@@ -161,7 +161,11 @@ export const EventDetail: FC<Props> = ({
             ...event,
             participants: event.participants.map((participant) => {
               if (participant.serverUser.userId === currentUser?.id) {
-                return { ...participant, reaction: reactionToSubmit };
+                return {
+                  ...participant,
+                  reaction: reactionToSubmit,
+                  updatedAt: dayjs().toISOString(),
+                };
               }
               return participant;
             }),
