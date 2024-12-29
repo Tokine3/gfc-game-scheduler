@@ -275,8 +275,8 @@ export function CalendarView({
   const dayCellContent = (arg: { date: Date; dayNumberText: string }) => {
     const availability = availabilities.find(
       (a) =>
-        dayjs(a.date).tz('Asia/Tokyo').format('YYYY-MM-DD') ===
-        dayjs(arg.date).tz('Asia/Tokyo').format('YYYY-MM-DD')
+        dayjs.utc(a.date).format('YYYY-MM-DD') ===
+        dayjs.utc(arg.date).format('YYYY-MM-DD')
     );
 
     const count = availability?.count || 0;
@@ -322,12 +322,12 @@ export function CalendarView({
           const date = new Date(dateStr);
           const availability = availabilities.find(
             (a) =>
-              dayjs(a.date).tz('Asia/Tokyo').format('YYYY-MM-DD') ===
-              dayjs(date).tz('Asia/Tokyo').format('YYYY-MM-DD')
+              dayjs.utc(a.date).format('YYYY-MM-DD') ===
+              dayjs.utc(date).format('YYYY-MM-DD')
           );
           if (availability) {
             setSelectedAvailability({
-              date: dayjs(date).tz('Asia/Tokyo').format('YYYY-MM-DD'),
+              date: dayjs.utc(date).tz('Asia/Tokyo').format('YYYY-MM-DD'),
               count: availability.count,
               users: availability.users.map((user) => ({
                 id: user.id,
@@ -371,11 +371,9 @@ export function CalendarView({
     (date: Date) => {
       // debounceを使用して複数回の呼び出しを防ぐ
       const debouncedUpdate = debounce((targetDate: Date) => {
-        const firstDayOfMonth = dayjs(targetDate)
-          .tz('Asia/Tokyo')
-          .startOf('month')
-          .toDate();
-        const currentMonthKey = dayjs(firstDayOfMonth)
+        const firstDayOfMonth = dayjs.utc(targetDate).startOf('month').toDate();
+        const currentMonthKey = dayjs
+          .utc(firstDayOfMonth)
           .tz('Asia/Tokyo')
           .format('YYYY-MM');
 
@@ -395,9 +393,7 @@ export function CalendarView({
   // datesSetイベントハンドラを最適化
   const handleDatesSet = useCallback(
     (dateInfo: { view: { currentStart: Date } }) => {
-      const targetDate = dayjs(dateInfo.view.currentStart)
-        .tz('Asia/Tokyo')
-        .toDate();
+      const targetDate = dayjs.utc(dateInfo.view.currentStart).toDate();
       handleMonthChange(targetDate);
     },
     [handleMonthChange]

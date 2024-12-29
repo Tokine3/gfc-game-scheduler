@@ -78,11 +78,12 @@ export const PersonalEventCreation: FC<Props> = ({
   const [currentDate, setCurrentDate] = useState(() =>
     dayjs(date || new Date())
       .tz('Asia/Tokyo')
+      .utc()
       .startOf('day')
   );
   const [schedules, setSchedules] = useState<DaySchedule[]>(() =>
     (initialSchedules || []).map((schedule) => ({
-      date: dayjs(schedule.date).tz('Asia/Tokyo').format('YYYY-MM-DD'),
+      date: dayjs.utc(schedule.date).tz('Asia/Tokyo').format('YYYY-MM-DD'),
       isFree: schedule.isFree,
       description: schedule.title || '',
       isPrivate: schedule.isPrivate,
@@ -100,7 +101,7 @@ export const PersonalEventCreation: FC<Props> = ({
   // スケジュール表示部分を最適化
   const getDaySchedule = useCallback(
     (day: dayjs.Dayjs): DaySchedule => {
-      const dateStr = day.tz('Asia/Tokyo').format('YYYY-MM-DD');
+      const dateStr = day.utc().tz('Asia/Tokyo').format('YYYY-MM-DD');
       return (
         schedules.find((s) => s.date === dateStr) || {
           date: dateStr,
@@ -127,17 +128,19 @@ export const PersonalEventCreation: FC<Props> = ({
                 .startOf(viewMode)
                 .subtract(1, 'hour')
                 .tz('Asia/Tokyo')
+                .utc()
                 .format(),
               toDate: currentDate
                 .endOf(viewMode)
                 .add(1, 'hour')
                 .tz('Asia/Tokyo')
+                .utc()
                 .format(),
             },
           });
 
         const newSchedules = response.map((schedule) => ({
-          date: dayjs(schedule.date).tz('Asia/Tokyo').format('YYYY-MM-DD'),
+          date: dayjs.utc(schedule.date).tz('Asia/Tokyo').format('YYYY-MM-DD'),
           isFree: schedule.isFree,
           description: schedule.title || '',
           isPrivate: schedule.isPrivate,
@@ -163,7 +166,7 @@ export const PersonalEventCreation: FC<Props> = ({
       value: boolean | string
     ) => {
       setSchedules((prev) => {
-        const dateStr = day.format('YYYY-MM-DD');
+        const dateStr = day.utc().tz('Asia/Tokyo').format('YYYY-MM-DD');
         const existingIndex = prev.findIndex((s) => s.date === dateStr);
         const newSchedules = [...prev];
 
@@ -239,7 +242,7 @@ export const PersonalEventCreation: FC<Props> = ({
     setIsSubmitting(true);
     try {
       const schedulesToSubmit = schedules.map((schedule) => ({
-        date: dayjs.tz(schedule.date, 'Asia/Tokyo').format('YYYY-MM-DD'),
+        date: dayjs.utc(schedule.date).tz('Asia/Tokyo').format('YYYY-MM-DD'),
         title: schedule.description,
         description: schedule.description,
         isPrivate: schedule.isPrivate,

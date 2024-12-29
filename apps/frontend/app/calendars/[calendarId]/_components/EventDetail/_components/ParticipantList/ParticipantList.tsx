@@ -64,6 +64,7 @@ export const ParticipantList: FC<Props> = memo(({ participants, quota }) => {
                   <time className='text-xs text-gray-500'>
                     {'更新日：' +
                       dayjs(participant.updatedAt)
+                        .utc()
                         .tz('Asia/Tokyo')
                         .format('MM/DD HH:mm')}
                   </time>

@@ -59,7 +59,7 @@ export class SchedulesService {
 
     return this.prisma.publicSchedule.create({
       data: {
-        date: dayjs(date).startOf('day').toDate(),
+        date: dayjs.utc(date).startOf('day').toDate(),
         title,
         description,
         quota,
@@ -118,8 +118,8 @@ export class SchedulesService {
             calendarId,
             userId,
             date: {
-              gte: minDate.toDate(),
-              lte: maxDate.toDate(),
+              gte: dayjs.utc(minDate).toDate(),
+              lte: dayjs.utc(maxDate).toDate(),
             },
           },
           select: {
@@ -134,11 +134,9 @@ export class SchedulesService {
       const creates: Prisma.PersonalScheduleCreateManyInput[] = [];
 
       body.forEach((schedule) => {
-        const scheduleDate = dayjs(schedule.date)
-          .tz('Asia/Tokyo')
-          .startOf('day');
+        const scheduleDate = dayjs.utc(schedule.date).startOf('day');
         const existing = existingSchedules.find((e) =>
-          dayjs(e.date).isSame(scheduleDate, 'day')
+          dayjs.utc(e.date).isSame(scheduleDate, 'day')
         );
 
         const scheduleData = {
@@ -190,8 +188,8 @@ export class SchedulesService {
           calendarId,
           userId,
           date: {
-            gte: minDate.toDate(),
-            lte: maxDate.toDate(),
+            gte: dayjs.utc(minDate).toDate(),
+            lte: dayjs.utc(maxDate).toDate(),
           },
         },
         include: {
@@ -223,8 +221,8 @@ export class SchedulesService {
       where: {
         calendarId,
         date: {
-          gte: dayjs(fromDate).tz('Asia/Tokyo').toDate(),
-          lte: dayjs(toDate).tz('Asia/Tokyo').toDate(),
+          gte: dayjs.utc(fromDate).toDate(),
+          lte: dayjs.utc(toDate).toDate(),
         },
       },
       include: {
@@ -249,8 +247,8 @@ export class SchedulesService {
         calendarId,
         userId,
         date: {
-          gte: dayjs(fromDate).tz('Asia/Tokyo').toDate(),
-          lte: dayjs(toDate).tz('Asia/Tokyo').toDate(),
+          gte: dayjs.utc(fromDate).toDate(),
+          lte: dayjs.utc(toDate).toDate(),
         },
       },
       include: { serverUser: { include: { user: true } } },
@@ -275,8 +273,8 @@ export class SchedulesService {
           calendarId,
           userId,
           date: {
-            gte: dayjs(fromDate).tz('Asia/Tokyo').toDate(),
-            lte: dayjs(toDate).tz('Asia/Tokyo').toDate(),
+            gte: dayjs.utc(fromDate).toDate(),
+            lte: dayjs.utc(toDate).toDate(),
           },
         },
         include: { serverUser: { include: { user: true } } },
@@ -285,8 +283,8 @@ export class SchedulesService {
         where: {
           calendarId,
           date: {
-            gte: dayjs(fromDate).tz('Asia/Tokyo').toDate(),
-            lte: dayjs(toDate).tz('Asia/Tokyo').toDate(),
+            gte: dayjs.utc(fromDate).toDate(),
+            lte: dayjs.utc(toDate).toDate(),
           },
         },
         include: {

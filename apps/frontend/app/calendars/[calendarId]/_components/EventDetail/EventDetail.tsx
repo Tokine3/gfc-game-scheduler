@@ -164,7 +164,7 @@ export const EventDetail: FC<Props> = ({
                 return {
                   ...participant,
                   reaction: reactionToSubmit,
-                  updatedAt: dayjs().toISOString(),
+                  updatedAt: dayjs.utc().tz('Asia/Tokyo').toISOString(),
                 };
               }
               return participant;
@@ -185,7 +185,7 @@ export const EventDetail: FC<Props> = ({
               [
                 'schedules',
                 calendarId,
-                dayjs(event.date).tz('Asia/Tokyo').format('YYYY-MM'),
+                dayjs.utc(event.date).tz('Asia/Tokyo').format('YYYY-MM'),
               ],
               (oldData: any) => {
                 if (!oldData) return oldData;
@@ -298,7 +298,8 @@ export const EventDetail: FC<Props> = ({
                   <EventInfoCard
                     icon={CalendarDays}
                     label='開催日'
-                    value={dayjs(event.date)
+                    value={dayjs
+                      .utc(event.date)
                       .tz('Asia/Tokyo')
                       .format('YYYY年MM月DD日')}
                     iconColor='text-purple-400'
@@ -306,7 +307,10 @@ export const EventDetail: FC<Props> = ({
                   <EventInfoCard
                     icon={Clock}
                     label='時間'
-                    value={dayjs(event.date).tz('Asia/Tokyo').format('HH:mm')}
+                    value={dayjs
+                      .utc(event.date)
+                      .tz('Asia/Tokyo')
+                      .format('HH:mm')}
                     iconColor='text-cyan-400'
                   />
                 </div>

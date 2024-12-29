@@ -22,31 +22,35 @@ interface Props {
   onClose: () => void;
 }
 
-export const AvailableUsers: FC<Props> = ({ personalSchedules, date, onClose }) => {
+export const AvailableUsers: FC<Props> = ({
+  personalSchedules,
+  date,
+  onClose,
+}) => {
   // 空き予定のあるユーザーを抽出
   const availableUsers = useMemo(() => {
     const targetDate = dayjs(date).startOf('day');
-    
+
     // その日の予定を持つユーザーを抽出
     const usersWithSchedule = personalSchedules
-      .filter(schedule => dayjs(schedule.date).isSame(targetDate, 'day'))
-      .map(schedule => ({
+      .filter((schedule) => dayjs(schedule.date).isSame(targetDate, 'day'))
+      .map((schedule) => ({
         id: schedule.serverUser.userId,
         name: schedule.serverUser.user.name,
         avatar: schedule.serverUser.user.avatar,
         isFree: schedule.isFree,
-        isJoined: true
+        isJoined: true,
       }));
 
     // 空き予定（isFree = true）のユーザーのみを返す
-    return usersWithSchedule.filter(user => user.isFree);
+    return usersWithSchedule.filter((user) => user.isFree);
   }, [personalSchedules, date]);
 
   const handleClose = useCallback(() => {
     Promise.resolve().then(onClose);
   }, [onClose]);
 
-  const formattedDate = dayjs(date).format('YYYY年M月D日');
+  const formattedDate = dayjs.utc(date).tz('Asia/Tokyo').format('YYYY年M月D日');
 
   return (
     <Dialog open onOpenChange={handleClose}>

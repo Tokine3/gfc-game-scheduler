@@ -70,14 +70,14 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
         setCalendarDate(newDate);
 
         // 次の月のデータをプリフェッチ
-        const nextMonth = dayjs(newDate).add(1, 'month');
+        const nextMonth = dayjs.utc(newDate).add(1, 'month');
         queryClient.prefetchQuery({
           queryKey: ['schedules', props.id, nextMonth.format('YYYY-MM')],
           queryFn: () =>
             client.schedules._calendarId(props.id).public.$get({
               query: {
-                fromDate: nextMonth.startOf('month').utc().format(),
-                toDate: nextMonth.endOf('month').utc().format(),
+                fromDate: nextMonth.startOf('month').format(),
+                toDate: nextMonth.endOf('month').format(),
               },
             }),
         });
@@ -131,7 +131,10 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
     return Object.values(
       personalSchedules.reduce(
         (acc, schedule) => {
-          const dateStr = dayjs(schedule.date).format('YYYY-MM-DD');
+          const dateStr = dayjs
+            .utc(schedule.date)
+            .tz('Asia/Tokyo')
+            .format('YYYY-MM-DD');
 
           if (!acc[dateStr]) {
             acc[dateStr] = {
@@ -193,7 +196,8 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
         return event.isPersonal && !!event.title;
       })
       .map((event) => {
-        const eventDate = dayjs(event.date)
+        const eventDate = dayjs
+          .utc(event.date)
           .tz('Asia/Tokyo')
           .startOf('day')
           .toDate();

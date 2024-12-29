@@ -48,13 +48,13 @@ export class CalendarsService {
 
     // イベントの取得範囲を指定する
     // 先月の1週間前から翌月の1週間後までの範囲を取得する
-    const startDate = dayjs(fromDate ?? dayjs())
-      .tz('Asia/Tokyo')
+    const startDate = dayjs
+      .utc(fromDate ?? dayjs())
       .subtract(1, 'week')
       .startOf('month')
       .toDate();
-    const endDate = dayjs(toDate ?? dayjs())
-      .tz('Asia/Tokyo')
+    const endDate = dayjs
+      .utc(toDate ?? dayjs())
       .add(1, 'week')
       .endOf('month')
       .toDate();

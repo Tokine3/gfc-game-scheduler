@@ -42,8 +42,12 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
       try {
         return await client.calendars._id(calendarId).$get({
           query: {
-            fromDate: dayjs(date).tz('Asia/Tokyo').startOf('month').format(),
-            toDate: dayjs(date).tz('Asia/Tokyo').endOf('month').format(),
+            fromDate: dayjs(date)
+              .tz('Asia/Tokyo')
+              .utc()
+              .startOf('month')
+              .format(),
+            toDate: dayjs(date).tz('Asia/Tokyo').utc().endOf('month').format(),
           },
         });
       } catch (error) {
@@ -74,10 +78,12 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
               query: {
                 fromDate: dayjs(targetDate)
                   .tz('Asia/Tokyo')
+                  .utc()
                   .startOf('month')
                   .format(),
                 toDate: dayjs(targetDate)
                   .tz('Asia/Tokyo')
+                  .utc()
                   .endOf('month')
                   .format(),
               },
@@ -109,8 +115,13 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
           fromDate: dayjs(targetDate)
             .tz('Asia/Tokyo')
             .startOf('month')
+            .utc()
             .format(),
-          toDate: dayjs(targetDate).tz('Asia/Tokyo').endOf('month').format(),
+          toDate: dayjs(targetDate)
+            .tz('Asia/Tokyo')
+            .utc()
+            .endOf('month')
+            .format(),
         },
       ] as const;
     },

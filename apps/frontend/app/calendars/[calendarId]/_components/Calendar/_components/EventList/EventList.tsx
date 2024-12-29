@@ -28,7 +28,7 @@ export const EventList: FC<Props> = memo(
         }
 
         const now = dayjs().tz('Asia/Tokyo');
-        const eventDate = dayjs(event.date).tz('Asia/Tokyo');
+        const eventDate = dayjs.utc(event.date);
         const isPast = eventDate.isBefore(now, 'day');
         return type === 'past' ? isPast : !isPast;
       })
@@ -120,7 +120,12 @@ export const EventList: FC<Props> = memo(
                     )}
                   </div>
                   <div className='text-sm text-gray-400 flex items-center gap-2'>
-                    <span>{dayjs(event.date).format('YYYY年MM月DD日')}</span>
+                    <span>
+                      {dayjs
+                        .utc(event.date)
+                        .tz('Asia/Tokyo')
+                        .format('YYYY年MM月DD日')}
+                    </span>
                     {isPublicSchedule(event) && (
                       <span className='flex items-center gap-1'>
                         <UsersIcon className='w-3 h-3' />
