@@ -66,11 +66,13 @@ export const EventCreation: FC<Props> = ({
       title: event?.title || '',
       description: event?.description || '',
       date: event
-        ? dayjs(event.date).format('YYYY-MM-DD')
+        ? dayjs(event.date).tz('Asia/Tokyo').format('YYYY-MM-DD')
         : date
-          ? dayjs(date).format('YYYY-MM-DD')
-          : dayjs().format('YYYY-MM-DD'),
-      time: event ? dayjs(event.date).format('HH:mm') : dayjs().format('HH:mm'),
+          ? dayjs(date).tz('Asia/Tokyo').format('YYYY-MM-DD')
+          : dayjs().tz('Asia/Tokyo').format('YYYY-MM-DD'),
+      time: event
+        ? dayjs(event.date).tz('Asia/Tokyo').format('HH:mm')
+        : dayjs().tz('Asia/Tokyo').format('HH:mm'),
       quota: event && isPublicSchedule(event) ? event.quota : 1,
     },
   });
@@ -86,7 +88,9 @@ export const EventCreation: FC<Props> = ({
               calendarId,
               title: values.title,
               description: values.description || '',
-              date: dayjs(`${values.date} ${values.time}`).toISOString(),
+              date: dayjs(`${values.date} ${values.time}`)
+                .tz('Asia/Tokyo')
+                .toISOString(),
               quota: values.quota,
             },
           });
@@ -96,7 +100,9 @@ export const EventCreation: FC<Props> = ({
             body: {
               title: values.title,
               description: values.description || '',
-              date: dayjs(`${values.date} ${values.time}`).toISOString(),
+              date: dayjs(`${values.date} ${values.time}`)
+                .tz('Asia/Tokyo')
+                .toISOString(),
               quota: values.quota,
             },
           });

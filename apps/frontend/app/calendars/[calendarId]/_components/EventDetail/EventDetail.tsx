@@ -182,7 +182,11 @@ export const EventDetail: FC<Props> = ({
             setEvent(newEvent);
 
             queryClient.setQueryData(
-              ['schedules', calendarId, dayjs(event.date).format('YYYY-MM')],
+              [
+                'schedules',
+                calendarId,
+                dayjs(event.date).tz('Asia/Tokyo').format('YYYY-MM'),
+              ],
               (oldData: any) => {
                 if (!oldData) return oldData;
                 return oldData.map((e: any) =>
@@ -294,13 +298,15 @@ export const EventDetail: FC<Props> = ({
                   <EventInfoCard
                     icon={CalendarDays}
                     label='開催日'
-                    value={dayjs(event.date).format('YYYY年MM月DD日')}
+                    value={dayjs(event.date)
+                      .tz('Asia/Tokyo')
+                      .format('YYYY年MM月DD日')}
                     iconColor='text-purple-400'
                   />
                   <EventInfoCard
                     icon={Clock}
                     label='時間'
-                    value={dayjs(event.date).format('HH:mm')}
+                    value={dayjs(event.date).tz('Asia/Tokyo').format('HH:mm')}
                     iconColor='text-cyan-400'
                   />
                 </div>
@@ -345,7 +351,9 @@ export const EventDetail: FC<Props> = ({
                       <div className='flex items-center gap-2'>
                         <Calendar className='w-4 h-4 text-gray-400 flex-shrink-0' />
                         <time className='text-sm text-gray-200 whitespace-nowrap'>
-                          {dayjs(event.createdAt).format('YYYY年MM月DD日')}
+                          {dayjs(event.createdAt)
+                            .tz('Asia/Tokyo')
+                            .format('YYYY年MM月DD日')}
                         </time>
                       </div>
                     </div>
@@ -354,7 +362,9 @@ export const EventDetail: FC<Props> = ({
                       <div className='flex items-center gap-2'>
                         <Calendar className='w-4 h-4 text-gray-400 flex-shrink-0' />
                         <time className='text-sm text-gray-200 whitespace-nowrap'>
-                          {dayjs(event.updatedAt).format('YYYY年MM月DD日')}
+                          {dayjs(event.updatedAt)
+                            .tz('Asia/Tokyo')
+                            .format('YYYY年MM月DD日')}
                         </time>
                       </div>
                     </div>
