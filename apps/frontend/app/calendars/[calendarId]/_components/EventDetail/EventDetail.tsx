@@ -61,6 +61,7 @@ export const EventDetail: FC<Props> = ({
   onDelete,
 }) => {
   const { currentUser } = useCurrentUser();
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const queryClient = useQueryClient();
@@ -186,7 +187,7 @@ export const EventDetail: FC<Props> = ({
   const MemoizedReactionButton = useMemo(() => memo(ReactionButton), []);
 
   const handleDelete = async () => {
-    setIsSubmitting(true);
+    setIsDeleting(true);
     try {
       console.log('削除開始');
       await onDelete?.();
@@ -228,7 +229,7 @@ export const EventDetail: FC<Props> = ({
         variant: 'destructive',
       });
     } finally {
-      setIsSubmitting(false);
+      setIsDeleting(false);
     }
   };
 
@@ -293,7 +294,7 @@ export const EventDetail: FC<Props> = ({
                         <Trash2 className='w-4 h-4 mr-1.5' />
                         削除済み
                       </div>
-                    ) : isSubmitting ? (
+                    ) : isDeleting ? (
                       <div className='flex items-center gap-2'>
                         <Loader2 className='w-4 h-4 animate-spin' />
                         削除中...
