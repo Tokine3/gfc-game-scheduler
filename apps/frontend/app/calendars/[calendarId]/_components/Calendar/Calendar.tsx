@@ -50,26 +50,16 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
     refresh,
   } = useCalendar(props.id);
 
-  // イベントの表示条件を判定するユーティリティ関数
+  // イベントの表示条件を判定するユーティリティ関数を最適化
   const isVisibleEvent = useCallback(
     (event: CalendarEvent) => {
-      // 共有イベントは常に表示
-      if (isPublicSchedule(event)) {
-        return true;
-      }
-
-      // 自分の個人予定の場合のみタイトルチェック
-      if (event.serverUser?.userId === user?.id) {
-        return !!event.title;
-      }
-
-      // 他人の予定は既にフィルタリング済み
-      return true;
+      if (isPublicSchedule(event)) return true;
+      return event.serverUser?.userId === user?.id ? !!event.title : true;
     },
     [user?.id]
   );
 
-  // 月が変更された時
+  // 月が変更された時の処理を最適化
   const handleMonthChange = useCallback(
     (newDate: Date) => {
       if (
@@ -77,35 +67,40 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
         date?.getFullYear() !== newDate.getFullYear()
       ) {
         setDate(newDate);
-        setCalendarDate(newDate); // これにより新しい月のデータを取得
+        setCalendarDate(newDate);
+
+        // 次の月のデータをプリフェッチ
+        const nextMonth = dayjs(newDate).add(1, 'month');
+        queryClient.prefetchQuery({
+          queryKey: ['schedules', props.id, nextMonth.format('YYYY-MM')],
+          queryFn: () =>
+            client.schedules._calendarId(props.id).public.$get({
+              query: {
+                fromDate: nextMonth.startOf('month').utc().format(),
+                toDate: nextMonth.endOf('month').utc().format(),
+              },
+            }),
+        });
       }
     },
-    [date, setCalendarDate]
+    [date, setCalendarDate, queryClient, props.id]
   );
 
-  // calendar.publicSchedules と publicSchedules を組み合わせて使用
+  // events の計算を最適化
   const events = useMemo(() => {
-    // 既存のイベントのIDを記録するSet
-    const existingIds = new Set(
-      personalSchedules?.map((schedule) => schedule.id) || []
-    );
-
-    // calendar.personalSchedulesから他人の非公開でない予定を取得
+    const existingIds = new Set(personalSchedules?.map((s) => s.id) || []);
     const otherUsersSchedules = (calendar?.personalSchedules || []).filter(
       (schedule) =>
-        // 他人の予定で非公開でないもの、かつまだ追加されていないもの
+        !existingIds.has(schedule.id) &&
         schedule.serverUser?.userId !== user?.id &&
-        !schedule.isPrivate &&
-        !existingIds.has(schedule.id)
+        !schedule.isPrivate
     );
 
-    // 自分の予定と他人の予定を結合
-    const allPersonalSchedules = [
+    return [
+      ...(publicSchedules || []),
       ...(personalSchedules || []),
       ...otherUsersSchedules,
     ];
-
-    return [...(publicSchedules || []), ...allPersonalSchedules];
   }, [
     publicSchedules,
     personalSchedules,

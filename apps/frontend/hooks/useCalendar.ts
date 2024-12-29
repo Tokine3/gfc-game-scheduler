@@ -35,44 +35,26 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
   const [date, setDate] = useState(() => new Date());
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    logger.info('Calendar hook initialized:', {
+  // クエリキーを定数として定義
+  const QUERY_KEYS = {
+    calendar: ['calendar', calendarId] as const,
+    schedules: [
+      'schedules',
       calendarId,
-      date: date.toISOString(),
-    });
-  }, [calendarId, date]);
+      dayjs(date).format('YYYY-MM'),
+    ] as const,
+    personalSchedules: [
+      'personalSchedules',
+      calendarId,
+      dayjs(date).format('YYYY-MM'),
+    ] as const,
+  };
 
-  // クエリキー
-  const calendarKey = ['calendar', calendarId];
-  const schedulesKey = ['schedules', calendarId, dayjs(date).format('YYYY-MM')];
-  const personalSchedulesKey = [
-    'personalSchedules',
-    calendarId,
-    dayjs(date).format('YYYY-MM'),
-  ];
-
-  const getPersonalScheduleKey = useCallback(
-    (targetDate: Date) => {
-      if (!calendarId) return null;
-      const query = {
-        fromDate: dayjs(targetDate)
-          .startOf('month')
-          .subtract(1, 'hour')
-          .utc()
-          .format(),
-        toDate: dayjs(targetDate).endOf('month').add(1, 'hour').utc().format(),
-      };
-      return [`/schedules/${calendarId}/me/personal`, query] as const;
-    },
-    [calendarId]
-  );
-
-  // データフェッチ
+  // カレンダーデータのフェッチを最適化
   const { data: calendar, error } = useQuery({
-    queryKey: calendarKey,
+    queryKey: QUERY_KEYS.calendar,
     queryFn: async () => {
       try {
-        logger.info('Fetching calendar data:', { calendarId });
         const calendar = await client.calendars._id(calendarId).$get({
           query: {
             fromDate: dayjs(date)
@@ -84,117 +66,84 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
           },
         });
 
-        logger.info('Checking server access:', { serverId: calendar.serverId });
-        const hasServerAccess = await client.servers.me.server_user.$get({
-          query: { serverId: calendar.serverId },
-        });
+        // サーバーアクセスチェックを並列で実行
+        const [hasServerAccess] = await Promise.all([
+          client.servers.me.server_user.$get({
+            query: { serverId: calendar.serverId },
+          }),
+        ]);
 
         if (!hasServerAccess) {
-          logger.error('No server access:', { serverId: calendar.serverId });
-          throw new UnauthorizedError(
-            `サーバー "${calendar.serverId}" へのアクセス権限がありません`
-          );
+          throw new UnauthorizedError();
         }
 
-        logger.info('Calendar data fetched successfully');
         return calendar;
       } catch (error) {
-        if (error instanceof UnauthorizedError) {
-          throw error;
-        }
-        logger.error('Calendar fetch error:', {
-          error,
-          calendarId,
-          authState: {
-            hasDiscordId: !!localStorage.getItem('discord_id'),
-            hasDiscordToken: !!localStorage.getItem('discord_token'),
-          },
-        });
+        if (error instanceof UnauthorizedError) throw error;
+        logger.error('Calendar fetch error:', error);
         throw error;
       }
     },
-    retry: false,
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnWindowFocus: true,
+    staleTime: 30000, // 30秒間はキャッシュを新鮮とみなす
+    gcTime: 5 * 60 * 1000, // 5分間キャッシュを保持
   });
 
+  // スケジュールデータのフェッチを最適化
   const { data: publicSchedules } = useQuery({
-    queryKey: schedulesKey,
+    queryKey: QUERY_KEYS.schedules,
     queryFn: async () => {
       const response = await client.schedules
         ._calendarId(calendarId)
         .public.$get({
           query: {
-            fromDate: dayjs(date)
-              .tz('Asia/Tokyo')
-              .startOf('month')
-              .utc()
-              .format(),
-            toDate: dayjs(date)
-              .tz('Asia/Tokyo')
-              .endOf('month')
-              .utc()
-              .format(),
+            fromDate: dayjs(date).startOf('month').utc().format(),
+            toDate: dayjs(date).endOf('month').utc().format(),
           },
         });
       return response;
     },
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnWindowFocus: true,
+    staleTime: 30000,
+    gcTime: 5 * 60 * 1000,
+    enabled: !!calendar, // カレンダーデータ取得後に実行
   });
 
+  // 個人スケジュールのフェッチを最適化
   const { data: personalSchedules } = useQuery({
-    queryKey: personalSchedulesKey,
+    queryKey: QUERY_KEYS.personalSchedules,
     queryFn: async () => {
       const response = await client.schedules
         ._calendarId(calendarId)
         .me.personal.$get({
           query: {
             fromDate: dayjs(date)
-              .tz('Asia/Tokyo')
               .startOf('month')
               .subtract(1, 'hour')
               .utc()
               .format(),
-            toDate: dayjs(date)
-              .tz('Asia/Tokyo')
-              .endOf('month')
-              .add(1, 'hour')
-              .utc()
-              .format(),
+            toDate: dayjs(date).endOf('month').add(1, 'hour').utc().format(),
           },
         });
       return response;
     },
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnWindowFocus: true,
+    staleTime: 30000,
+    gcTime: 5 * 60 * 1000,
+    enabled: !!calendar, // カレンダーデータ取得後に実行
   });
 
   // 最適化されたリフレッシュ関数
   const refresh = useCallback(async () => {
     try {
-      // すべてのクエリを無効化して再フェッチ
-      return Promise.all([
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.calendar }),
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.schedules }),
         queryClient.invalidateQueries({
-          queryKey: calendarKey,
-          refetchType: 'active',
-        }),
-        queryClient.invalidateQueries({
-          queryKey: schedulesKey,
-          refetchType: 'active',
-        }),
-        queryClient.invalidateQueries({
-          queryKey: personalSchedulesKey,
-          refetchType: 'active',
+          queryKey: QUERY_KEYS.personalSchedules,
         }),
       ]);
     } catch (error) {
       logger.error('Failed to refresh calendar data:', error);
     }
-  }, [queryClient, calendarKey, schedulesKey, personalSchedulesKey]);
+  }, [queryClient]);
 
   return {
     calendar,
@@ -204,6 +153,24 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
     isError: error,
     refresh,
     setDate,
-    getPersonalScheduleKey,
+    getPersonalScheduleKey: useCallback(
+      (targetDate: Date) => {
+        if (!calendarId) return null;
+        const query = {
+          fromDate: dayjs(targetDate)
+            .startOf('month')
+            .subtract(1, 'hour')
+            .utc()
+            .format(),
+          toDate: dayjs(targetDate)
+            .endOf('month')
+            .add(1, 'hour')
+            .utc()
+            .format(),
+        };
+        return [`/schedules/${calendarId}/me/personal`, query] as const;
+      },
+      [calendarId]
+    ),
   };
 }
