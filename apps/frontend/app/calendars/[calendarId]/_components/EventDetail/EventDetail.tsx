@@ -28,6 +28,7 @@ import {
   Calendar,
   Trash2,
   Loader2,
+  User,
 } from 'lucide-react';
 import { toast } from '../../../../components/ui/use-toast';
 import type { Props } from './types';
@@ -253,12 +254,25 @@ export const EventDetail: FC<Props> = ({
       <Dialog open={true} onOpenChange={handleDialogOpenChange}>
         <DialogContent className='bg-gray-900/95 backdrop-blur-md border-gray-800 sm:max-w-xl max-h-[95vh] sm:max-h-[85vh] overflow-hidden flex flex-col m-0 sm:m-4 rounded-none sm:rounded-lg border-0 sm:border'>
           <DialogHeader className='flex-shrink-0'>
-            <DialogTitle className='text-lg sm:text-xl font-bold text-gray-100 flex items-center gap-3'>
-              <div className='p-2 rounded-lg bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/20'>
-                <CrosshairIcon className='w-5 h-5 text-blue-400' />
-              </div>
-              {event.title}
-            </DialogTitle>
+            <div className='flex items-start justify-between gap-4'>
+              <DialogTitle className='text-lg sm:text-xl font-bold text-gray-100 flex items-center gap-3 pr-8'>
+                {isPublicSchedule(event) ? (
+                  <div className='p-2 rounded-lg bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/20'>
+                    <CrosshairIcon className='w-5 h-5 text-blue-400' />
+                  </div>
+                ) : isOwner ? (
+                  <div className='p-2 rounded-lg bg-gradient-to-r from-indigo-500/20 to-indigo-500/20 border border-indigo-500/20'>
+                    <User className='w-5 h-5 text-indigo-400' />
+                  </div>
+                ) : (
+                  <div className='p-2 rounded-lg bg-gradient-to-r from-purple-500/20 to-purple-500/20 border border-purple-500/20'>
+                    <UserCircle2 className='w-5 h-5 text-purple-400' />
+                  </div>
+                )}
+                <span className='break-all'>{event.title}</span>
+              </DialogTitle>
+            </div>
+
             <div className='flex items-center justify-end'>
               <div className='flex items-center gap-2'>
                 {isPublicSchedule(event) && !event.isDeleted && (
