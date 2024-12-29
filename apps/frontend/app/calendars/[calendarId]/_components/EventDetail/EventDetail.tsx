@@ -1,6 +1,6 @@
 'use client';
 
-import { FC, useState, useCallback } from 'react';
+import { FC, useState, useCallback, useMemo } from 'react';
 import dayjs from 'dayjs';
 import {
   Dialog,
@@ -48,6 +48,8 @@ import {
 } from './_components';
 import { cn } from '../../../../../lib/utils';
 import { client } from '../../../../../lib/api';
+import { useQueryClient } from '@tanstack/react-query';
+import { memo } from 'react';
 
 type Reaction = 'OK' | 'NG' | 'PENDING' | 'NONE';
 
@@ -61,41 +63,81 @@ export const EventDetail: FC<Props> = ({
   const { currentUser } = useCurrentUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const queryClient = useQueryClient();
   const isOwner = event.serverUser?.userId === currentUser?.id;
+
+  const currentReaction = useMemo(
+    () =>
+      isPublicSchedule(event)
+        ? (event.participants?.find(
+            (p) => p.serverUser.userId === currentUser?.id
+          )?.reaction as Reaction | undefined)
+        : undefined,
+    [event, currentUser?.id]
+  );
 
   const handleReaction = useCallback(
     async (newReaction: Reaction) => {
-      if (!isPublicSchedule(event)) return;
+      if (!isPublicSchedule(event) || isSubmitting) return;
 
       setIsSubmitting(true);
+
       try {
-        // 現在の自分のreactionを取得
-        const currentReaction = event.participants?.find(
-          (p) => p.serverUser.userId === currentUser?.id
-        )?.reaction as Reaction | undefined;
+        const reactionToSubmit =
+          !currentReaction || currentReaction === 'NONE'
+            ? newReaction
+            : currentReaction === newReaction
+              ? 'NONE'
+              : newReaction;
 
-        // 送信するreactionを決定
-        let reactionToSubmit: Reaction;
+        const optimisticParticipants = isPublicSchedule(event)
+          ? event.participants.map((participant) => {
+              if (participant.serverUser.userId === currentUser?.id) {
+                return {
+                  ...participant,
+                  reaction: reactionToSubmit,
+                };
+              }
+              return participant;
+            })
+          : [];
 
-        console.log('currentReaction', currentReaction);
-        console.log('newReaction', newReaction);
-
-        switch (true) {
-          case !currentReaction || currentReaction === 'NONE':
-            // 初回または'NONE'の場合は新しいreactionを送信
-            reactionToSubmit = newReaction;
-            break;
-          case currentReaction === newReaction:
-            // 同じreactionをクリックした場合は'NONE'にする
-            reactionToSubmit = 'NONE';
-            break;
-          default:
-            // 異なるreactionの場合は新しいreactionを送信
-            reactionToSubmit = newReaction;
+        if (
+          !optimisticParticipants.some(
+            (p) => p.serverUser.userId === currentUser?.id
+          )
+        ) {
+          optimisticParticipants.push({
+            id: 0,
+            reaction: reactionToSubmit,
+            serverUserId: 0,
+            publicScheduleId: Number(event.id),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            serverUser: {
+              userId: currentUser?.id!,
+              user: currentUser!,
+              isJoined: true,
+              serverId: 'temp-id',
+              isFavorite: false,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+          });
         }
-        console.log('reactionToSubmit', reactionToSubmit);
 
-        // APIリクエスト
+        queryClient.setQueryData(
+          ['schedules', calendarId, dayjs(event.date).format('YYYY-MM')],
+          (oldData: any) => {
+            if (!oldData) return oldData;
+            return oldData.map((e: any) =>
+              e.id === event.id
+                ? { ...e, participants: optimisticParticipants }
+                : e
+            );
+          }
+        );
+
         await client.schedules._id(event.id).public.reaction.$patch({
           body: {
             calendarId,
@@ -107,8 +149,19 @@ export const EventDetail: FC<Props> = ({
           title: '参加状況を更新しました',
           description: `イベント「${event.title}」の参加状況を更新しました`,
         });
+
         onClose();
+
+        await queryClient.invalidateQueries({
+          queryKey: ['schedules', calendarId],
+          exact: false,
+        });
       } catch (error) {
+        queryClient.invalidateQueries({
+          queryKey: ['schedules', calendarId],
+          exact: false,
+        });
+
         console.error('Failed to update reaction:', error);
         toast({
           title: 'エラー',
@@ -119,8 +172,18 @@ export const EventDetail: FC<Props> = ({
         setIsSubmitting(false);
       }
     },
-    [event, currentUser?.id, calendarId, onClose]
+    [
+      event,
+      currentUser?.id,
+      calendarId,
+      onClose,
+      queryClient,
+      currentReaction,
+      isSubmitting,
+    ]
   );
+
+  const MemoizedReactionButton = useMemo(() => memo(ReactionButton), []);
 
   const handleDelete = async () => {
     setIsSubmitting(true);
@@ -129,11 +192,9 @@ export const EventDetail: FC<Props> = ({
       await onDelete?.();
       console.log('削除API完了');
 
-      // 成功時のみ状態を更新（順序を変更）
-      onClose(); // 先にイベント詳細モーダルを閉じる
-      setShowDeleteDialog(false); // 次に削除ダイアログを閉じる
+      onClose();
+      setShowDeleteDialog(false);
 
-      // 最後にトースト表示
       toast({
         title: '予定を削除しました',
         description: `${event.title || '無題の予定'}を削除しました`,
@@ -150,7 +211,6 @@ export const EventDetail: FC<Props> = ({
     }
   };
 
-  // Dialog の onOpenChange を修正
   const handleDialogOpenChange = useCallback(
     (open: boolean) => {
       console.log('handleDialogOpenChange', {
@@ -159,7 +219,6 @@ export const EventDetail: FC<Props> = ({
         isSubmitting,
       });
 
-      // 削除ダイアログが開いていない場合のみ閉じる操作を許可
       if (!open && !showDeleteDialog && !isSubmitting) {
         onClose();
       }
@@ -171,34 +230,36 @@ export const EventDetail: FC<Props> = ({
     <>
       <Dialog open={true} onOpenChange={handleDialogOpenChange}>
         <DialogContent className='bg-gray-900/95 backdrop-blur-md border-gray-800 sm:max-w-xl max-h-[95vh] sm:max-h-[85vh] overflow-hidden flex flex-col m-0 sm:m-4 rounded-none sm:rounded-lg border-0 sm:border'>
-          <DialogHeader className='flex-shrink-0 p-1 sm:p-2'>
+          <DialogHeader className='flex-shrink-0'>
             <DialogTitle className='text-lg sm:text-xl font-bold text-gray-100 flex items-center gap-3'>
               <div className='p-2 rounded-lg bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/20'>
                 <CrosshairIcon className='w-5 h-5 text-blue-400' />
               </div>
               {event.title}
             </DialogTitle>
-            <div className='flex items-center justify-between mt-1'>
-              <DialogDescription className='text-sm text-gray-400'>
-                イベントの詳細情報
-              </DialogDescription>
-              {isOwner && (
-                <div className='flex items-center gap-2'>
-                  {isPublicSchedule(event) && !event.isDeleted && (
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={onEdit}
-                      className='h-7 px-2.5 rounded-lg bg-gradient-to-r from-cyan-500/10 to-indigo-500/10 hover:from-cyan-500/20 hover:to-indigo-500/20 text-cyan-400 hover:text-cyan-300 border border-cyan-500/20'
-                    >
-                      <Edit3 className='w-4 h-4 mr-1.5' />
-                      編集
-                    </Button>
-                  )}
+            <div className='flex items-center justify-end'>
+              <div className='flex items-center gap-2'>
+                {isPublicSchedule(event) && !event.isDeleted && (
+                  <Button
+                    variant='ghost'
+                    disabled={
+                      !isOwner || (isPublicSchedule(event) && event.isDeleted)
+                    }
+                    size='sm'
+                    onClick={onEdit}
+                    className='h-7 px-2.5 rounded-lg bg-gradient-to-r from-cyan-500/10 to-indigo-500/10 hover:from-cyan-500/20 hover:to-indigo-500/20 text-cyan-400 hover:text-cyan-300 border border-cyan-500/20'
+                  >
+                    <Edit3 className='w-4 h-4 mr-1.5' />
+                    編集
+                  </Button>
+                )}
+                {(isOwner || (isPublicSchedule(event) && !event.isDeleted)) && (
                   <Button
                     variant='ghost'
                     size='sm'
-                    disabled={isPublicSchedule(event) && event.isDeleted}
+                    disabled={
+                      !isOwner || (isPublicSchedule(event) && event.isDeleted)
+                    }
                     onClick={() => setShowDeleteDialog(true)}
                     className={cn(
                       isPublicSchedule(event) && event.isDeleted
@@ -223,13 +284,13 @@ export const EventDetail: FC<Props> = ({
                       </div>
                     )}
                   </Button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </DialogHeader>
 
           <div className='flex-1 overflow-y-auto px-3 sm:px-4'>
-            <div className='space-y-4 py-3'>
+            <div className='space-y-3'>
               <div className='space-y-3'>
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
                   <EventInfoCard
@@ -308,20 +369,23 @@ export const EventDetail: FC<Props> = ({
           {isPublicSchedule(event) && (
             <div className='flex-shrink-0 border-t border-gray-800/60 bg-gray-900/95 backdrop-blur-md p-3 sm:p-4'>
               <div className='flex flex-col sm:flex-row gap-2'>
-                <ReactionButton
+                <MemoizedReactionButton
                   type='OK'
                   onClick={() => handleReaction('OK')}
                   disabled={isSubmitting || event.isDeleted}
+                  isActive={currentReaction === 'OK'}
                 />
-                <ReactionButton
+                <MemoizedReactionButton
                   type='PENDING'
                   onClick={() => handleReaction('PENDING')}
                   disabled={isSubmitting || event.isDeleted}
+                  isActive={currentReaction === 'PENDING'}
                 />
-                <ReactionButton
+                <MemoizedReactionButton
                   type='NG'
                   onClick={() => handleReaction('NG')}
                   disabled={isSubmitting || event.isDeleted}
+                  isActive={currentReaction === 'NG'}
                 />
               </div>
             </div>

@@ -6,6 +6,7 @@ import {
   AvatarImage,
 } from '../../../../../../components/ui/avatar';
 import { ParticipantWithRelations } from '../../../../../../../apis/@types';
+import dayjs from 'dayjs';
 
 type Props = {
   participants: ParticipantWithRelations[];
@@ -40,24 +41,30 @@ export const ParticipantList: FC<Props> = memo(({ participants, quota }) => {
                 {label}（{filteredParticipants.length}）
               </span>
             </div>
-            <div className='flex flex-wrap gap-2'>
+            <div className='flex flex-col gap-2'>
               {filteredParticipants.map((participant) => (
                 <div
                   key={participant.serverUser?.user?.id}
-                  className='flex items-center gap-2 p-2 rounded-lg bg-gray-800/50'
+                  className='flex items-center justify-between p-2 rounded-lg bg-gray-800/50'
                 >
-                  <Avatar className='w-6 h-6'>
-                    <AvatarImage
-                      src={`https://cdn.discordapp.com/avatars/${participant.serverUser?.user?.id}/${participant.serverUser?.user?.avatar}`}
-                      alt={participant.serverUser?.user?.name}
-                    />
-                    <AvatarFallback>
+                  <div className='flex items-center gap-2'>
+                    <Avatar className='w-6 h-6'>
+                      <AvatarImage
+                        src={`https://cdn.discordapp.com/avatars/${participant.serverUser?.user?.id}/${participant.serverUser?.user?.avatar}`}
+                        alt={participant.serverUser?.user?.name}
+                      />
+                      <AvatarFallback>
+                        {participant.serverUser?.user?.name}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className='text-sm text-gray-300'>
                       {participant.serverUser?.user?.name}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className='text-sm text-gray-300'>
-                    {participant.serverUser?.user?.name}
-                  </span>
+                    </span>
+                  </div>
+                  <time className='text-xs text-gray-500'>
+                    {'更新日：' +
+                      dayjs(participant.updatedAt).format('MM/DD HH:mm')}
+                  </time>
                 </div>
               ))}
             </div>

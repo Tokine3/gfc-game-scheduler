@@ -122,6 +122,15 @@ export function CalendarView({
     const isDeleted =
       isPublicSchedule(originalEvent) && originalEvent.isDeleted;
     const isPrivate = isOwnPersonalSchedule && originalEvent.isPrivate;
+    const joinCount = participants?.filter(
+      (p: ParticipantWithRelations) => p.reaction === 'OK'
+    ).length;
+    const pendingCount = participants?.filter(
+      (p: ParticipantWithRelations) => p.reaction === 'PENDING'
+    ).length;
+    const ngCount = participants?.filter(
+      (p: ParticipantWithRelations) => p.reaction === 'NG'
+    ).length;
 
     const handleEventClick = (e: React.MouseEvent) => {
       e.stopPropagation(); // 日付セルのクリックイベントを防ぐ
@@ -162,7 +171,7 @@ export function CalendarView({
                     )}
                     {!isPersonal && (
                       <span className='text-[9px] sm:text-[10px] opacity-80'>
-                        {participants.length}/{quota}
+                        {joinCount}/{quota}
                       </span>
                     )}
                   </div>
@@ -182,13 +191,11 @@ export function CalendarView({
                   <div className='text-gray-400 flex items-center gap-1'>
                     <User className='h-3 w-3' />
                     <span>
-                      {participants.length}/{quota}
+                      {joinCount}/{quota}
                     </span>
                   </div>
                   <div className='space-y-1'>
-                    {participants.filter(
-                      (p: ParticipantWithRelations) => p.reaction === 'OK'
-                    ).length > 0 && (
+                    {joinCount > 0 && (
                       <div className='text-xs'>
                         <span className='text-green-400 font-medium'>
                           参加者:{' '}
@@ -204,9 +211,7 @@ export function CalendarView({
                           .join(', ')}
                       </div>
                     )}
-                    {participants.filter(
-                      (p: ParticipantWithRelations) => p.reaction === 'PENDING'
-                    ).length > 0 && (
+                    {pendingCount > 0 && (
                       <div className='text-xs'>
                         <span className='text-yellow-400 font-medium'>
                           未定:{' '}
@@ -215,6 +220,22 @@ export function CalendarView({
                           .filter(
                             (p: ParticipantWithRelations) =>
                               p.reaction === 'PENDING'
+                          )
+                          .map(
+                            (p: ParticipantWithRelations) =>
+                              p.serverUser?.user?.name
+                          )
+                          .join(', ')}
+                      </div>
+                    )}
+                    {ngCount > 0 && (
+                      <div className='text-xs'>
+                        <span className='text-red-400 font-medium'>
+                          不参加:{' '}
+                        </span>
+                        {participants
+                          .filter(
+                            (p: ParticipantWithRelations) => p.reaction === 'NG'
                           )
                           .map(
                             (p: ParticipantWithRelations) =>

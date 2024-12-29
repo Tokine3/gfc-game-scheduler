@@ -1,44 +1,59 @@
-import { FC } from 'react';
+import { FC, memo } from 'react';
 import { Button } from '../../../../../../components/ui/button';
 import { CheckCircle, XCircle, HelpCircle } from 'lucide-react';
+import { cn } from '../../../../../../../lib/utils';
 
 type Props = {
   type: 'OK' | 'PENDING' | 'NG';
   onClick: () => void;
   disabled?: boolean;
+  isActive?: boolean;
 };
 
 const buttonConfig = {
   OK: {
     icon: CheckCircle,
     label: '参加する',
-    className:
-      'flex-1 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white',
-    variant: 'default' as const,
+    baseClassName:
+      'border-emerald-500/30 text-emerald-200 hover:bg-emerald-500/10',
+    activeClassName:
+      'bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white border-transparent',
+    variant: 'outline' as const,
   },
   PENDING: {
     icon: HelpCircle,
     label: '未定',
-    className:
-      'flex-1 border-amber-500/30 text-amber-200 hover:bg-amber-500/10',
+    baseClassName: 'border-amber-500/30 text-amber-200 hover:bg-amber-500/10',
+    activeClassName:
+      'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-transparent',
     variant: 'outline' as const,
   },
   NG: {
     icon: XCircle,
     label: '不参加',
-    className: 'flex-1 border-red-500/30 text-red-200 hover:bg-red-500/10',
+    baseClassName: 'border-red-500/30 text-red-200 hover:bg-red-500/10',
+    activeClassName:
+      'bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-transparent',
     variant: 'outline' as const,
   },
 };
 
-export const ReactionButton: FC<Props> = ({ type, onClick, disabled }) => {
+export const ReactionButton: FC<Props> = memo(function ReactionButton({
+  type,
+  onClick,
+  disabled,
+  isActive,
+}) {
   const config = buttonConfig[type];
   const Icon = config.icon;
 
   return (
     <Button
       variant={config.variant}
-      className={config.className}
+      className={cn(
+        'flex-1',
+        isActive ? config.activeClassName : config.baseClassName
+      )}
       onClick={onClick}
       disabled={disabled}
     >
@@ -46,4 +61,4 @@ export const ReactionButton: FC<Props> = ({ type, onClick, disabled }) => {
       {config.label}
     </Button>
   );
-};
+});
