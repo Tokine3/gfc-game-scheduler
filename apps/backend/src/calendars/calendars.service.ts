@@ -43,6 +43,22 @@ export class CalendarsService {
     fromDate?: string,
     toDate?: string
   ) {
+    console.log('fromDate', fromDate);
+    console.log('toDate', toDate);
+
+    // イベントの取得範囲を指定する
+    // 先月の1週間前から翌月の1週間後までの範囲を取得する
+    const startDate = dayjs(fromDate ?? dayjs())
+      .subtract(1, 'week')
+      .startOf('month')
+      .toDate();
+    const endDate = dayjs(toDate ?? dayjs())
+      .add(1, 'week')
+      .endOf('month')
+      .toDate();
+
+    console.log('startDate', startDate);
+    console.log('endDate', endDate);
     const data = await this.prisma.calendar.findUnique({
       where: { id },
       include: {
@@ -50,12 +66,8 @@ export class CalendarsService {
         publicSchedules: {
           where: {
             date: {
-              gte:
-                dayjs.tz(fromDate, 'Asia/Tokyo').startOf('day').toDate() ??
-                dayjs.tz(dayjs(), 'Asia/Tokyo').startOf('day').toDate(),
-              lte:
-                dayjs.tz(toDate, 'Asia/Tokyo').endOf('day').toDate() ??
-                dayjs.tz(dayjs(), 'Asia/Tokyo').endOf('day').toDate(),
+              gte: startDate,
+              lte: endDate,
             },
           },
           include: {
@@ -87,15 +99,8 @@ export class CalendarsService {
                   },
                   {
                     date: {
-                      gte:
-                        dayjs
-                          .tz(fromDate, 'Asia/Tokyo')
-                          .startOf('day')
-                          .toDate() ??
-                        dayjs.tz(dayjs(), 'Asia/Tokyo').startOf('day').toDate(),
-                      lte:
-                        dayjs.tz(toDate, 'Asia/Tokyo').endOf('day').toDate() ??
-                        dayjs.tz(dayjs(), 'Asia/Tokyo').endOf('day').toDate(),
+                      gte: startDate,
+                      lte: endDate,
                     },
                   },
                 ],

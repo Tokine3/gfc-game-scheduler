@@ -56,17 +56,20 @@ type Reaction = 'OK' | 'NG' | 'PENDING' | 'NONE';
 
 export const EventDetail: FC<Props> = ({
   calendarId,
-  event,
+  event: initialEvent,
   onClose,
   onEdit,
   onDelete,
+  onSuccess,
 }) => {
   const { currentUser } = useCurrentUser();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const queryClient = useQueryClient();
-  const isOwner = event.serverUser?.userId === currentUser?.id;
+  const isOwner = initialEvent.serverUser?.userId === currentUser?.id;
+
+  const [event, setEvent] = useState(initialEvent);
 
   const currentReaction = useMemo(
     () =>
@@ -78,161 +81,46 @@ export const EventDetail: FC<Props> = ({
     [event, currentUser?.id]
   );
 
-  const handleReaction = useCallback(
-    async (newReaction: Reaction) => {
-      if (!isPublicSchedule(event) || isSubmitting) return;
+  const handleDelete = useCallback(async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    console.log('EventDetail: 削除処理開始');
 
-      setIsSubmitting(true);
-
-      try {
-        const reactionToSubmit =
-          !currentReaction || currentReaction === 'NONE'
-            ? newReaction
-            : currentReaction === newReaction
-              ? 'NONE'
-              : newReaction;
-
-        const optimisticParticipants = isPublicSchedule(event)
-          ? event.participants.map((participant) => {
-              if (participant.serverUser.userId === currentUser?.id) {
-                return {
-                  ...participant,
-                  reaction: reactionToSubmit,
-                };
-              }
-              return participant;
-            })
-          : [];
-
-        if (
-          !optimisticParticipants.some(
-            (p) => p.serverUser.userId === currentUser?.id
-          )
-        ) {
-          optimisticParticipants.push({
-            id: 0,
-            reaction: reactionToSubmit,
-            serverUserId: 0,
-            publicScheduleId: Number(event.id),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            serverUser: {
-              userId: currentUser?.id!,
-              user: currentUser!,
-              isJoined: true,
-              serverId: 'temp-id',
-              isFavorite: false,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            },
-          });
-        }
-
-        queryClient.setQueryData(
-          ['schedules', calendarId, dayjs(event.date).format('YYYY-MM')],
-          (oldData: any) => {
-            if (!oldData) return oldData;
-            return oldData.map((e: any) =>
-              e.id === event.id
-                ? { ...e, participants: optimisticParticipants }
-                : e
-            );
-          }
-        );
-
-        await client.schedules._id(event.id).public.reaction.$patch({
-          body: {
-            calendarId,
-            reaction: reactionToSubmit,
-          },
-        });
-
-        toast({
-          title: '参加状況を更新しました',
-          description: `イベント「${event.title}」の参加状況を更新しました`,
-        });
-
-        onClose();
-
-        await queryClient.invalidateQueries({
-          queryKey: ['schedules', calendarId],
-          exact: false,
-        });
-      } catch (error) {
-        queryClient.invalidateQueries({
-          queryKey: ['schedules', calendarId],
-          exact: false,
-        });
-
-        console.error('Failed to update reaction:', error);
-        toast({
-          title: 'エラー',
-          description: '参加状況の更新に失敗しました',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsSubmitting(false);
-      }
-    },
-    [
-      event,
-      currentUser?.id,
-      calendarId,
-      onClose,
-      queryClient,
-      currentReaction,
-      isSubmitting,
-    ]
-  );
-
-  const MemoizedReactionButton = useMemo(() => memo(ReactionButton), []);
-
-  const handleDelete = async () => {
-    setIsDeleting(true);
     try {
-      console.log('削除開始');
-      await onDelete?.();
+      if (isPublicSchedule(event)) {
+        await client.schedules._id(event.id).public.$delete({
+          body: { calendarId, isDeleted: true },
+        });
+      } else {
+        await client.schedules._id(event.id).personal.$delete({
+          body: { calendarId },
+        });
+      }
+      console.log('EventDetail: API削除完了');
 
-      // キャッシュの完全な更新
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: ['calendar', calendarId],
-          refetchType: 'all',
-        }),
-        queryClient.invalidateQueries({
-          queryKey: ['schedules', calendarId],
-          refetchType: 'all',
-        }),
-        queryClient.invalidateQueries({
-          queryKey: ['personalSchedules', calendarId],
-          refetchType: 'all',
-        }),
-      ]);
+      if (onDelete) {
+        await onDelete();
+      }
+      console.log('EventDetail: 親コンポーネントコールバック完了');
 
-      // データの再フェッチが完了するまで待機
-      await queryClient.refetchQueries({
-        queryKey: ['calendar', calendarId],
-      });
-
-      console.log('削除API完了');
-      onClose();
       setShowDeleteDialog(false);
 
-      toast({
-        title: '予定を削除しました',
-        description: `${event.title || '無題の予定'}を削除しました`,
-      });
+      setTimeout(() => {
+        onClose();
+        console.log('EventDetail: モーダル閉じる完了');
+      }, 100);
     } catch (error) {
-      console.error('削除エラー:', error);
+      console.error('EventDetail: エラー発生', error);
       toast({
-        title: '削除に失敗しました',
-        description: 'もう一度お試しください',
+        title: 'エラーが発生しました',
+        description: 'イベントの削除に失敗しました',
         variant: 'destructive',
       });
     } finally {
-      setIsDeleting(false);
+      setIsSubmitting(false);
+      console.log('EventDetail: 処理完了');
     }
-  };
+  }, [event, calendarId, onClose, onDelete, isSubmitting]);
 
   const handleDialogOpenChange = useCallback(
     (open: boolean) => {
@@ -249,11 +137,81 @@ export const EventDetail: FC<Props> = ({
     [showDeleteDialog, isSubmitting, onClose]
   );
 
+  const handleReactionChange = useCallback(
+    async (reaction: Reaction) => {
+      try {
+        if (isPublicSchedule(event)) {
+          const reactionToSubmit =
+            !currentReaction || currentReaction === 'NONE'
+              ? reaction
+              : currentReaction === reaction
+                ? 'NONE'
+                : reaction;
+
+          const updatedEvent = await client.schedules
+            ._id(event.id)
+            .public.reaction.$patch({
+              body: {
+                calendarId,
+                reaction: reactionToSubmit,
+              },
+            });
+
+          const optimisticEvent = {
+            ...event,
+            participants: event.participants.map((participant) => {
+              if (participant.serverUser.userId === currentUser?.id) {
+                return { ...participant, reaction: reactionToSubmit };
+              }
+              return participant;
+            }),
+          };
+
+          setEvent(optimisticEvent);
+
+          if (updatedEvent.participants) {
+            const newEvent = {
+              ...event,
+              participants: updatedEvent.participants,
+            };
+
+            setEvent(newEvent);
+
+            queryClient.setQueryData(
+              ['schedules', calendarId, dayjs(event.date).format('YYYY-MM')],
+              (oldData: any) => {
+                if (!oldData) return oldData;
+                return oldData.map((e: any) =>
+                  e.id === event.id ? newEvent : e
+                );
+              }
+            );
+          }
+          toast({
+            title: 'リアクションを更新しました',
+            description: 'リアクションを更新しました',
+          });
+
+          await onSuccess();
+        }
+      } catch (error) {
+        setEvent(initialEvent);
+        toast({
+          title: 'エラーが発生しました',
+          description: 'リアクションの更新に失敗しました',
+          variant: 'destructive',
+        });
+      }
+    },
+    [event, calendarId, onSuccess, queryClient, currentUser?.id, initialEvent]
+  );
+
   return (
     <>
       <Dialog open={true} onOpenChange={handleDialogOpenChange}>
         <DialogContent className='bg-gray-900/95 backdrop-blur-md border-gray-800 sm:max-w-xl max-h-[95vh] sm:max-h-[85vh] overflow-hidden flex flex-col m-0 sm:m-4 rounded-none sm:rounded-lg border-0 sm:border'>
           <DialogHeader className='flex-shrink-0'>
+            <DialogDescription className='sr-only' />
             <div className='flex items-start justify-between gap-4'>
               <DialogTitle className='text-lg sm:text-xl font-bold text-gray-100 flex items-center gap-3 pr-8'>
                 {isPublicSchedule(event) ? (
@@ -405,21 +363,21 @@ export const EventDetail: FC<Props> = ({
           {isPublicSchedule(event) && (
             <div className='flex-shrink-0 border-t border-gray-800/60 bg-gray-900/95 backdrop-blur-md p-3 sm:p-4'>
               <div className='flex flex-col sm:flex-row gap-2'>
-                <MemoizedReactionButton
+                <ReactionButton
                   type='OK'
-                  onClick={() => handleReaction('OK')}
+                  onClick={() => handleReactionChange('OK')}
                   disabled={isSubmitting || event.isDeleted}
                   isActive={currentReaction === 'OK'}
                 />
-                <MemoizedReactionButton
+                <ReactionButton
                   type='PENDING'
-                  onClick={() => handleReaction('PENDING')}
+                  onClick={() => handleReactionChange('PENDING')}
                   disabled={isSubmitting || event.isDeleted}
                   isActive={currentReaction === 'PENDING'}
                 />
-                <MemoizedReactionButton
+                <ReactionButton
                   type='NG'
-                  onClick={() => handleReaction('NG')}
+                  onClick={() => handleReactionChange('NG')}
                   disabled={isSubmitting || event.isDeleted}
                   isActive={currentReaction === 'NG'}
                 />

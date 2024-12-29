@@ -13,7 +13,7 @@ type Props = {
 const buttonConfig = {
   OK: {
     icon: CheckCircle,
-    label: '参加する',
+    label: '参加',
     baseClassName:
       'border-emerald-500/30 text-emerald-200 hover:bg-emerald-500/10',
     activeClassName:

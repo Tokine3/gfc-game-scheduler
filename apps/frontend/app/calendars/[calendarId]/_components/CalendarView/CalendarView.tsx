@@ -364,6 +364,38 @@ export function CalendarView({
     });
   }, [events]);
 
+  // 前回の日付を保持するref
+  const previousDateRef = useRef<string>();
+
+  const handleMonthChange = useCallback(
+    (date: Date) => {
+      // debounceを使用して複数回の呼び出しを防ぐ
+      const debouncedUpdate = debounce((targetDate: Date) => {
+        const firstDayOfMonth = dayjs(targetDate).startOf('month').toDate();
+        const currentMonthKey = dayjs(firstDayOfMonth).format('YYYY-MM');
+
+        if (previousDateRef.current === currentMonthKey) {
+          return;
+        }
+
+        previousDateRef.current = currentMonthKey;
+        onMonthChange(firstDayOfMonth);
+      }, 100);
+
+      debouncedUpdate(date);
+    },
+    [onMonthChange]
+  );
+
+  // datesSetイベントハンドラを最適化
+  const handleDatesSet = useCallback(
+    (dateInfo: { view: { currentStart: Date } }) => {
+      const targetDate = dayjs(dateInfo.view.currentStart).toDate();
+      handleMonthChange(targetDate);
+    },
+    [handleMonthChange]
+  );
+
   return (
     <div className='w-full h-full'>
       <style jsx global>{`
@@ -428,9 +460,7 @@ export function CalendarView({
         dayCellClassNames={dayCellClassNames}
         dayHeaderClassNames='!cursor-default hover:!bg-transparent'
         dayCellContent={dayCellContent}
-        datesSet={(dateInfo) => {
-          onMonthChange(dateInfo.start);
-        }}
+        datesSet={handleDatesSet}
       />
       {selectedAvailability && (
         <AvailableUsers

@@ -59,7 +59,7 @@ export class SchedulesService {
 
     return this.prisma.publicSchedule.create({
       data: {
-        date: dayjs.tz(date, 'Asia/Tokyo').startOf('day').toDate(),
+        date: dayjs(date).startOf('day').toDate(),
         title,
         description,
         quota,
@@ -91,7 +91,7 @@ export class SchedulesService {
     const { id: userId, name: userName } = req.user;
 
     // 送信されたスケジュールの日付範囲を取得
-    const dates = body.map((s) => dayjs.tz(s.date, 'Asia/Tokyo'));
+    const dates = body.map((s) => dayjs(s.date));
     const minDate = dates
       .reduce((min, curr) => (curr.isBefore(min) ? curr : min))
       .startOf('month');
@@ -134,11 +134,9 @@ export class SchedulesService {
       const creates: Prisma.PersonalScheduleCreateManyInput[] = [];
 
       body.forEach((schedule) => {
-        const scheduleDate = dayjs
-          .tz(schedule.date, 'Asia/Tokyo')
-          .startOf('day');
+        const scheduleDate = dayjs(schedule.date).startOf('day');
         const existing = existingSchedules.find((e) =>
-          dayjs.tz(e.date, 'Asia/Tokyo').isSame(scheduleDate, 'day')
+          dayjs(e.date).isSame(scheduleDate, 'day')
         );
 
         const scheduleData = {
@@ -223,8 +221,8 @@ export class SchedulesService {
       where: {
         calendarId,
         date: {
-          gte: dayjs.tz(fromDate, 'Asia/Tokyo').toDate(),
-          lte: dayjs.tz(toDate, 'Asia/Tokyo').toDate(),
+          gte: dayjs(fromDate).toDate(),
+          lte: dayjs(toDate).toDate(),
         },
       },
       include: {
@@ -249,8 +247,8 @@ export class SchedulesService {
         calendarId,
         userId,
         date: {
-          gte: dayjs.tz(fromDate, 'Asia/Tokyo').toDate(),
-          lte: dayjs.tz(toDate, 'Asia/Tokyo').toDate(),
+          gte: dayjs(fromDate).toDate(),
+          lte: dayjs(toDate).toDate(),
         },
       },
       include: { serverUser: { include: { user: true } } },
@@ -275,8 +273,8 @@ export class SchedulesService {
           calendarId,
           userId,
           date: {
-            gte: dayjs.tz(fromDate, 'Asia/Tokyo').toDate(),
-            lte: dayjs.tz(toDate, 'Asia/Tokyo').toDate(),
+            gte: dayjs(fromDate).toDate(),
+            lte: dayjs(toDate).toDate(),
           },
         },
         include: { serverUser: { include: { user: true } } },
@@ -285,8 +283,8 @@ export class SchedulesService {
         where: {
           calendarId,
           date: {
-            gte: dayjs.tz(fromDate, 'Asia/Tokyo').toDate(),
-            lte: dayjs.tz(toDate, 'Asia/Tokyo').toDate(),
+            gte: dayjs(fromDate).toDate(),
+            lte: dayjs(toDate).toDate(),
           },
         },
         include: {

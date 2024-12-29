@@ -12,4 +12,5 @@ export type Props = {
   onClose: () => void;
   onEdit: () => void;
   onDelete: () => Promise<void>;
+  onSuccess: () => void;
 };

@@ -221,43 +221,22 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
     setShowEventDetail(false);
   }, []);
 
-  // イベント削除ハンドラー
+  // イベント削除ハンドラーを修正
   const handleEventDelete = useCallback(async () => {
     try {
-      console.log('Calendar: 削除開始');
-      if (!selectedEvent) return;
+      console.log('Calendar: handleEventDelete start');
 
-      // APIコール
-      if (isPublicSchedule(selectedEvent)) {
-        await client.schedules._id(selectedEvent.id).public.$delete({
-          body: { calendarId: props.id, isDeleted: true },
-        });
-      } else {
-        await client.schedules._id(selectedEvent.id).personal.$delete({
-          body: { calendarId: props.id },
-        });
-      }
-
-      console.log('Calendar: API完了');
-
-      // 更新
-      await queryClient.invalidateQueries({
-        queryKey: ['schedules', props.id],
-      });
-      await refresh();
-
+      // データを更新
+      await refresh(date);
       console.log('Calendar: データ更新完了');
 
-      // 最後にモーダルを閉じる
-      setShowEventDetail(false);
-      setSelectedEvent(null);
-
-      console.log('Calendar: モーダル閉じた');
+      // モーダルを閉じる処理は EventDetail 側で行うため削除
+      // setShowEventDetail(false);
+      // setSelectedEvent(null);
     } catch (error) {
-      console.error('Calendar: 削除エラー:', error);
-      throw error;
+      console.error('Calendar: エラー発生', error);
     }
-  }, [selectedEvent, props.id, queryClient, refresh]);
+  }, [refresh, date]);
 
   return (
     <div className='space-y-6'>
@@ -338,7 +317,7 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
           date={date}
           calendarId={props.id}
           onSuccess={() => {
-            refresh();
+            refresh(date);
             toast({
               title: 'イベントを作成しました',
               description: 'カレンダーを更新しました',
@@ -353,7 +332,7 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
           calendarId={props.id}
           initialSchedules={personalSchedules}
           onSuccess={() => {
-            refresh();
+            refresh(date);
             toast({
               title: '個人予定を更新しました',
               description: 'カレンダーを更新しました',
@@ -368,6 +347,7 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
           onClose={() => setShowEventDetail(false)}
           onEdit={() => handleEventEdit(selectedEvent)}
           onDelete={handleEventDelete}
+          onSuccess={() => refresh(date)}
         />
       )}
 
@@ -378,7 +358,7 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
           calendarId={props.id}
           event={editingEvent} // 編集対象のイベント
           onSuccess={() => {
-            refresh();
+            refresh(date);
             toast({
               title: 'イベントを更新しました',
               description: 'カレンダーを更新しました',
