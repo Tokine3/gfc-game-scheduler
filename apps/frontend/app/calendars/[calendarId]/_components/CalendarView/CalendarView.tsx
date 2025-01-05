@@ -283,11 +283,12 @@ export function CalendarView({
   );
 
   const dayCellContent = (arg: { date: Date; dayNumberText: string }) => {
-    const availability = availabilities.find(
-      (a) =>
-        dayjs.utc(a.date).format('YYYY-MM-DD') ===
-        dayjs.utc(arg.date).format('YYYY-MM-DD')
-    );
+    const availability = availabilities.find((a) => {
+      // 両方の日付を日本時間に変換して比較
+      const availabilityDate = dateUtils.fromUTC(a.date).format('YYYY-MM-DD');
+      const cellDate = dayjs(arg.date).tz('Asia/Tokyo').format('YYYY-MM-DD');
+      return availabilityDate === cellDate;
+    });
 
     const count = availability?.count || 0;
     const users = availability?.users || [];
@@ -306,7 +307,7 @@ export function CalendarView({
           <div class="flex-1 flex items-center justify-center">
             <div class="flex items-center gap-1 ${colorClass} text-lg font-medium ${
               count > 0 ? 'cursor-pointer availability-count' : ''
-            }" ${count > 0 ? `data-date="${arg.date.toISOString()}"` : ''}>
+            }" ${count > 0 ? `data-date="${dateUtils.toUTCString(arg.date)}"` : ''}>
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 <path d="M12 14C8.13401 14 5 17.134 5 21H19C19 17.134 15.866 14 12 14Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
