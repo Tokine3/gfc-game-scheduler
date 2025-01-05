@@ -9,6 +9,7 @@ import {
 } from '../../../../../../components/ui/form';
 import { Input } from '../../../../../../components/ui/input';
 import { Textarea } from '../../../../../../components/ui/textarea';
+import { TimeSelect } from '../../../../../../components/ui/time-select';
 
 type Props = {
   control: any;
@@ -47,6 +48,8 @@ export const EventFormField: FC<Props> = ({
               className='bg-gray-800/50 border-gray-700/50 text-gray-100 min-h-[120px] resize-none'
               {...field}
             />
+          ) : type === 'time' ? (
+            <TimeSelect value={field.value} onChange={field.onChange} />
           ) : (
             <Input
               maxLength={30}
