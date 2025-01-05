@@ -6,13 +6,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import { logger } from 'src/utils/logger';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
 
 // プラグインを追加
 dayjs.extend(utc);
-dayjs.extend(timezone);
-// タイムゾーンを日本に設定
-dayjs.tz.setDefault('Asia/Tokyo');
 
 @Injectable()
 export class CalendarsService {
@@ -47,16 +43,15 @@ export class CalendarsService {
     console.log('toDate', toDate);
 
     // イベントの取得範囲を指定する
-    // 先月の1週間前から翌月の1週間後までの範囲を取得する
     const startDate = dayjs
-      .utc(fromDate ?? dayjs())
-      .subtract(1, 'week')
+      .utc(fromDate ?? dayjs.utc())
       .startOf('month')
+      .subtract(1, 'week')
       .toDate();
     const endDate = dayjs
-      .utc(toDate ?? dayjs())
-      .add(1, 'week')
+      .utc(toDate ?? dayjs.utc())
       .endOf('month')
+      .add(1, 'week')
       .toDate();
 
     console.log('startDate', startDate);

@@ -1,6 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+
+// UTCプラグインを追加
+dayjs.extend(utc);
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

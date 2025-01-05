@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
+import { dateUtils } from '../../../../../lib/dateUtils';
 
 import { CalendarDays, CrosshairIcon } from 'lucide-react';
 import CalendarView from '../CalendarView/CalendarView';
@@ -24,12 +23,6 @@ import { toast } from '../../../../components/ui/use-toast';
 import { useAuth } from '../../../../hooks/useAuth';
 import { useQueryClient } from '@tanstack/react-query';
 import { client } from '../../../../../lib/api';
-
-// プラグインを追加
-dayjs.extend(utc);
-dayjs.extend(timezone);
-// タイムゾーンを日本に設定
-dayjs.tz.setDefault('Asia/Tokyo');
 
 // サブコンポーネントをメモ化
 const MemoizedCalendarView = memo(CalendarView);
@@ -59,7 +52,7 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
     [user?.id]
   );
 
-  // 月が変更された時の処理を最適化
+  // 月が変更された時の処理を修正
   const handleMonthChange = useCallback(
     (newDate: Date) => {
       if (
@@ -70,14 +63,21 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
         setCalendarDate(newDate);
 
         // 次の月のデータをプリフェッチ
-        const nextMonth = dayjs.utc(newDate).add(1, 'month');
+        const nextMonth = dateUtils
+          .fromUTC(dateUtils.toUTCString(newDate))
+          .add(1, 'month');
+
         queryClient.prefetchQuery({
           queryKey: ['schedules', props.id, nextMonth.format('YYYY-MM')],
           queryFn: () =>
             client.schedules._calendarId(props.id).public.$get({
               query: {
-                fromDate: nextMonth.startOf('month').format(),
-                toDate: nextMonth.endOf('month').format(),
+                fromDate: dateUtils.toUTCString(
+                  nextMonth.startOf('month').toDate()
+                ),
+                toDate: dateUtils.toUTCString(
+                  nextMonth.endOf('month').toDate()
+                ),
               },
             }),
         });
@@ -119,22 +119,20 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
   const [showTypeSelector, setShowTypeSelector] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
-  // 空き予定の集計を最適化
+  // 空き予定の集計を修正
   const availabilities = useMemo(() => {
-    // PersonalScheduleのみをフィルタリング
     const personalSchedules = events.filter(
       (event): event is PersonalScheduleWithRelations =>
         !isPublicSchedule(event)
     );
 
-    // 日付ごとの空き予定を集計
     return Object.values(
       personalSchedules.reduce(
         (acc, schedule) => {
-          const dateStr = dayjs
-            .utc(schedule.date)
-            .tz('Asia/Tokyo')
-            .format('YYYY-MM-DD');
+          const dateStr = dateUtils.formatToDisplay(
+            schedule.date,
+            'YYYY-MM-DD'
+          );
 
           if (!acc[dateStr]) {
             acc[dateStr] = {
@@ -171,7 +169,7 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
         {} as Record<string, Availability>
       )
     );
-  }, [events]); // eventsの変更時のみ再計算
+  }, [events]);
 
   // コールバック関数をメモ化
   const handleDateSelect = useCallback((date: Date | undefined) => {
@@ -188,35 +186,41 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
 
   // CalendarViewに渡すイベントデータを変換
   const calendarEvents = useMemo(() => {
-    return events
-      .filter((event) => {
-        // 共有イベントは常に表示
-        if (!event.isPersonal) return true;
-        // 個人予定はタイトルがある場合のみ表示
-        return event.isPersonal && !!event.title;
-      })
-      .map((event) => {
-        const eventDate = dayjs
-          .utc(event.date)
-          .tz('Asia/Tokyo')
-          .startOf('day')
-          .toDate();
+    console.log('全イベント', events);
+    const filteredEvents = events.filter((event) => {
+      // 共有イベントは常に表示（削除済みは除く）
+      if (isPublicSchedule(event)) {
+        console.log('共有イベント', event);
+        console.log('表示するか', !event.isDeleted);
+        return !event.isDeleted;
+      }
+      // 個人予定はタイトルがある場合のみ表示
+      return !!event.title && event.isPersonal;
+    });
 
-        return {
-          id: String(event.id),
-          start: eventDate,
-          end: eventDate,
-          title: event.title,
-          extendedProps: {
-            isPersonal: event.isPersonal,
-            participants: isPublicSchedule(event)
-              ? event.participants
-              : undefined,
-            quota: isPublicSchedule(event) ? event.quota : undefined,
-            originalEvent: event,
-          },
-        };
-      });
+    console.log('フィルター後', filteredEvents);
+
+    const mappedEvents = filteredEvents.map((event) => {
+      console.log('event.date', event.date);
+      const calendarEvent = {
+        id: String(event.id),
+        start: dateUtils.toCalendarDate(event.date),
+        end: dateUtils.toCalendarDate(event.date),
+        title: event.title,
+        extendedProps: {
+          isPersonal: event.isPersonal,
+          participants: isPublicSchedule(event)
+            ? event.participants
+            : undefined,
+          quota: isPublicSchedule(event) ? event.quota : undefined,
+          originalEvent: event,
+        },
+      };
+      console.log('変換後のイベント', calendarEvent);
+      return calendarEvent;
+    });
+
+    return mappedEvents;
   }, [events]);
 
   // イベント編集ハンドラー

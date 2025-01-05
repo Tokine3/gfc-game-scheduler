@@ -6,7 +6,7 @@ import {
   AvatarImage,
 } from '../../../../../../components/ui/avatar';
 import { ParticipantWithRelations } from '../../../../../../../apis/@types';
-import dayjs from 'dayjs';
+import { dateUtils } from '../../../../../../../lib/dateUtils';
 
 type Props = {
   participants: ParticipantWithRelations[];
@@ -63,10 +63,10 @@ export const ParticipantList: FC<Props> = memo(({ participants, quota }) => {
                   </div>
                   <time className='text-xs text-gray-500'>
                     {'更新日：' +
-                      dayjs(participant.updatedAt)
-                        .utc()
-                        .tz('Asia/Tokyo')
-                        .format('MM/DD HH:mm')}
+                      dateUtils.formatToDisplay(
+                        participant.updatedAt,
+                        'MM/DD HH:mm'
+                      )}
                   </time>
                 </div>
               ))}

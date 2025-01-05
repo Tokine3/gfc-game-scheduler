@@ -14,7 +14,7 @@ import { Calendar, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserCard } from './_components';
 import { PersonalScheduleWithRelations } from '../../../../../apis/@types';
-import dayjs from 'dayjs';
+import { dateUtils } from '../../../../../lib/dateUtils';
 
 interface Props {
   personalSchedules: PersonalScheduleWithRelations[];
@@ -29,11 +29,13 @@ export const AvailableUsers: FC<Props> = ({
 }) => {
   // 空き予定のあるユーザーを抽出
   const availableUsers = useMemo(() => {
-    const targetDate = dayjs(date).startOf('day');
+    const targetDate = dateUtils.fromUTC(dateUtils.toUTCString(date));
 
     // その日の予定を持つユーザーを抽出
     const usersWithSchedule = personalSchedules
-      .filter((schedule) => dayjs(schedule.date).isSame(targetDate, 'day'))
+      .filter((schedule) =>
+        dateUtils.fromUTC(schedule.date).isSame(targetDate, 'day')
+      )
       .map((schedule) => ({
         id: schedule.serverUser.userId,
         name: schedule.serverUser.user.name,
@@ -50,7 +52,8 @@ export const AvailableUsers: FC<Props> = ({
     Promise.resolve().then(onClose);
   }, [onClose]);
 
-  const formattedDate = dayjs.utc(date).tz('Asia/Tokyo').format('YYYY年M月D日');
+  // 日付表示も日本時間で
+  const formattedDate = dateUtils.formatToDisplay(date, 'YYYY年M月D日');
 
   return (
     <Dialog open onOpenChange={handleClose}>

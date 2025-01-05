@@ -2,6 +2,8 @@
 
 import { FC, useState, useEffect, useCallback, useMemo, memo } from 'react';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 import { motion } from 'framer-motion';
 import { logger } from '../../../../../lib/logger';
 import { client } from '../../../../../lib/api';
@@ -35,6 +37,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '../../../../components/ui/tooltip';
+import { dateUtils } from '../../../../../lib/dateUtils';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 // 型定義
 type Props = {
@@ -76,14 +82,11 @@ export const PersonalEventCreation: FC<Props> = ({
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<ViewMode>('month');
   const [currentDate, setCurrentDate] = useState(() =>
-    dayjs(date || new Date())
-      .tz('Asia/Tokyo')
-      .utc()
-      .startOf('day')
+    dayjs(date || new Date()).startOf('day')
   );
   const [schedules, setSchedules] = useState<DaySchedule[]>(() =>
     (initialSchedules || []).map((schedule) => ({
-      date: dayjs.utc(schedule.date).tz('Asia/Tokyo').format('YYYY-MM-DD'),
+      date: dateUtils.formatToDisplay(schedule.date, 'YYYY-MM-DD'),
       isFree: schedule.isFree,
       description: schedule.title || '',
       isPrivate: schedule.isPrivate,
@@ -124,23 +127,17 @@ export const PersonalEventCreation: FC<Props> = ({
           ._calendarId(calendarId)
           .me.personal.$get({
             query: {
-              fromDate: currentDate
-                .startOf(viewMode)
-                .subtract(1, 'hour')
-                .tz('Asia/Tokyo')
-                .utc()
-                .format(),
-              toDate: currentDate
-                .endOf(viewMode)
-                .add(1, 'hour')
-                .tz('Asia/Tokyo')
-                .utc()
-                .format(),
+              fromDate: dateUtils.toUTCString(
+                dayjs(currentDate).startOf(viewMode).toDate()
+              ),
+              toDate: dateUtils.toUTCString(
+                dayjs(currentDate).endOf(viewMode).toDate()
+              ),
             },
           });
 
         const newSchedules = response.map((schedule) => ({
-          date: dayjs.utc(schedule.date).tz('Asia/Tokyo').format('YYYY-MM-DD'),
+          date: dateUtils.formatToDisplay(schedule.date, 'YYYY-MM-DD'),
           isFree: schedule.isFree,
           description: schedule.title || '',
           isPrivate: schedule.isPrivate,
@@ -242,7 +239,7 @@ export const PersonalEventCreation: FC<Props> = ({
     setIsSubmitting(true);
     try {
       const schedulesToSubmit = schedules.map((schedule) => ({
-        date: dayjs.utc(schedule.date).tz('Asia/Tokyo').format('YYYY-MM-DD'),
+        date: dayjs.tz(schedule.date, 'Asia/Tokyo').startOf('day').format(),
         title: schedule.description,
         description: schedule.description,
         isPrivate: schedule.isPrivate,

@@ -27,6 +27,7 @@ import {
   CalendarWithRelations,
   ParticipantWithRelations,
 } from '../../../../../apis/@types';
+import { dateUtils } from '../../../../../lib/dateUtils';
 
 interface CalendarViewProps {
   date: Date | undefined;
@@ -73,6 +74,7 @@ export function CalendarView({
   onMonthChange,
   userId,
 }: CalendarViewProps) {
+  console.log('CalendarViewが受け取ったイベント', events);
   const calendarRef = useRef<any>(null);
   const lastTapRef = useRef<number>(0);
   const [selectedAvailability, setSelectedAvailability] =
@@ -109,6 +111,14 @@ export function CalendarView({
   };
 
   const renderEventContent = (eventContent: EventContentArg) => {
+    console.log('renderEventContent', {
+      event: eventContent.event,
+      timeText: eventContent.timeText,
+      isStart: eventContent.isStart,
+      isEnd: eventContent.isEnd,
+      extendedProps: eventContent.event.extendedProps,
+    });
+
     const { isPersonal, participants, quota, originalEvent } =
       eventContent.event.extendedProps;
     const isFull =
@@ -322,12 +332,18 @@ export function CalendarView({
           const date = new Date(dateStr);
           const availability = availabilities.find(
             (a) =>
-              dayjs.utc(a.date).format('YYYY-MM-DD') ===
-              dayjs.utc(date).format('YYYY-MM-DD')
+              dateUtils.formatToDisplay(a.date, 'YYYY-MM-DD') ===
+              dateUtils.formatToDisplay(
+                dateUtils.toUTCString(date),
+                'YYYY-MM-DD'
+              )
           );
           if (availability) {
             setSelectedAvailability({
-              date: dayjs.utc(date).tz('Asia/Tokyo').format('YYYY-MM-DD'),
+              date: dateUtils.formatToDisplay(
+                dateUtils.toUTCString(date),
+                'YYYY-MM-DD'
+              ),
               count: availability.count,
               users: availability.users.map((user) => ({
                 id: user.id,
@@ -369,13 +385,16 @@ export function CalendarView({
 
   const handleMonthChange = useCallback(
     (date: Date) => {
-      // debounceを使用して複数回の呼び出しを防ぐ
       const debouncedUpdate = debounce((targetDate: Date) => {
-        const firstDayOfMonth = dayjs.utc(targetDate).startOf('month').toDate();
-        const currentMonthKey = dayjs
-          .utc(firstDayOfMonth)
-          .tz('Asia/Tokyo')
-          .format('YYYY-MM');
+        const firstDayOfMonth = dateUtils
+          .fromUTC(dateUtils.toUTCString(targetDate))
+          .startOf('month')
+          .toDate();
+
+        const currentMonthKey = dateUtils.formatToDisplay(
+          dateUtils.toUTCString(firstDayOfMonth),
+          'YYYY-MM'
+        );
 
         if (previousDateRef.current === currentMonthKey) {
           return;

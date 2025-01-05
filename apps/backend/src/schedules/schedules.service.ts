@@ -10,7 +10,6 @@ import { RequestWithUser } from 'src/types/request.types';
 import { logger } from 'src/utils/logger';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
 import { FindAllUserSchedulesSchedulesDto } from './dto/findAllUserSchedules-schedules.dto';
 import { FindMyPersonalSchedulesScheduleDto } from './dto/findMyPersonalSchedules-schedule.dto';
 import { UpsertPersonalScheduleDto } from './dto/upsert-pesonalSchedule.dto';
@@ -22,9 +21,6 @@ import { UpdateReactionDto } from './dto/update-reaction.dto';
 
 // プラグインを追加
 dayjs.extend(utc);
-dayjs.extend(timezone);
-// タイムゾーンを日本に設定
-dayjs.tz.setDefault('Asia/Tokyo');
 
 @Injectable()
 export class SchedulesService {
@@ -35,7 +31,7 @@ export class SchedulesService {
     calendarId: string,
     body: CreatePublicScheduleDto
   ) {
-    logger.log('createPublicSchedule', req, body);
+    logger.log('createPublicSchedule', body);
     const { date, title, description, quota } = body;
     const { id: userId, name: userName } = req.user;
 
@@ -59,7 +55,7 @@ export class SchedulesService {
 
     return this.prisma.publicSchedule.create({
       data: {
-        date: dayjs.utc(date).startOf('day').toDate(),
+        date: dayjs.utc(date).toDate(),
         title,
         description,
         quota,
@@ -91,13 +87,16 @@ export class SchedulesService {
     const { id: userId, name: userName } = req.user;
 
     // 送信されたスケジュールの日付範囲を取得
-    const dates = body.map((s) => dayjs(s.date));
+    const dates = body.map((s) => dayjs.utc(s.date));
     const minDate = dates
       .reduce((min, curr) => (curr.isBefore(min) ? curr : min))
       .startOf('month');
     const maxDate = dates
       .reduce((max, curr) => (curr.isAfter(max) ? curr : max))
       .endOf('month');
+
+    console.log('minDate', minDate);
+    console.log('maxDate', maxDate);
 
     try {
       // サーバーユーザーと既存のスケジュールを並行で取得
@@ -134,9 +133,13 @@ export class SchedulesService {
       const creates: Prisma.PersonalScheduleCreateManyInput[] = [];
 
       body.forEach((schedule) => {
-        const scheduleDate = dayjs.utc(schedule.date).startOf('day');
+        // タイムゾーン付きの日付文字列をUTCに変換し、その日の0時に設定
+        const scheduleDate = dayjs(schedule.date)
+          .utc(true) // タイムゾーン情報を保持したままUTCに変換
+          .startOf('day');
+
         const existing = existingSchedules.find((e) =>
-          dayjs.utc(e.date).isSame(scheduleDate, 'day')
+          dayjs.utc(e.date).startOf('day').isSame(scheduleDate, 'day')
         );
 
         const scheduleData = {

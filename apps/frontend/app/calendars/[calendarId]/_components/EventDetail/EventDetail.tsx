@@ -50,7 +50,7 @@ import {
 import { cn } from '../../../../../lib/utils';
 import { client } from '../../../../../lib/api';
 import { useQueryClient } from '@tanstack/react-query';
-import { memo } from 'react';
+import { dateUtils } from '../../../../../lib/dateUtils';
 
 type Reaction = 'OK' | 'NG' | 'PENDING' | 'NONE';
 
@@ -298,19 +298,16 @@ export const EventDetail: FC<Props> = ({
                   <EventInfoCard
                     icon={CalendarDays}
                     label='開催日'
-                    value={dayjs
-                      .utc(event.date)
-                      .tz('Asia/Tokyo')
-                      .format('YYYY年MM月DD日')}
+                    value={dateUtils.formatToDisplay(
+                      event.date,
+                      'YYYY年MM月DD日'
+                    )}
                     iconColor='text-purple-400'
                   />
                   <EventInfoCard
                     icon={Clock}
                     label='時間'
-                    value={dayjs
-                      .utc(event.date)
-                      .tz('Asia/Tokyo')
-                      .format('HH:mm')}
+                    value={dateUtils.formatToDisplay(event.date, 'HH:mm')}
                     iconColor='text-cyan-400'
                   />
                 </div>
@@ -355,9 +352,10 @@ export const EventDetail: FC<Props> = ({
                       <div className='flex items-center gap-2'>
                         <Calendar className='w-4 h-4 text-gray-400 flex-shrink-0' />
                         <time className='text-sm text-gray-200 whitespace-nowrap'>
-                          {dayjs(event.createdAt)
-                            .tz('Asia/Tokyo')
-                            .format('YYYY年MM月DD日')}
+                          {dateUtils.formatToDisplay(
+                            event.createdAt,
+                            'YYYY年MM月DD日'
+                          )}
                         </time>
                       </div>
                     </div>
@@ -366,9 +364,10 @@ export const EventDetail: FC<Props> = ({
                       <div className='flex items-center gap-2'>
                         <Calendar className='w-4 h-4 text-gray-400 flex-shrink-0' />
                         <time className='text-sm text-gray-200 whitespace-nowrap'>
-                          {dayjs(event.updatedAt)
-                            .tz('Asia/Tokyo')
-                            .format('YYYY年MM月DD日')}
+                          {dateUtils.formatToDisplay(
+                            event.updatedAt,
+                            'YYYY年MM月DD日'
+                          )}
                         </time>
                       </div>
                     </div>

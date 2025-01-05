@@ -29,6 +29,7 @@ import { Button } from '../../../../components/ui/button';
 import { Form } from '../../../../components/ui/form';
 import { EventFormField } from './_components';
 import { CalendarEvent, isPublicSchedule } from '../Calendar/_types/types';
+import { dateUtils } from '../../../../../lib/dateUtils';
 
 const formSchema = z.object({
   title: z
@@ -66,13 +67,16 @@ export const EventCreation: FC<Props> = ({
       title: event?.title || '',
       description: event?.description || '',
       date: event
-        ? dayjs.utc(event.date).tz('Asia/Tokyo').format('YYYY-MM-DD')
+        ? dateUtils.formatToDisplay(event.date, 'YYYY-MM-DD')
         : date
-          ? dayjs.utc(date).tz('Asia/Tokyo').format('YYYY-MM-DD')
-          : dayjs.utc().tz('Asia/Tokyo').format('YYYY-MM-DD'),
+          ? dateUtils.formatToDisplay(dateUtils.toUTCString(date), 'YYYY-MM-DD')
+          : dateUtils.formatToDisplay(
+              dateUtils.toUTCString(new Date()),
+              'YYYY-MM-DD'
+            ),
       time: event
-        ? dayjs.utc(event.date).tz('Asia/Tokyo').format('HH:mm')
-        : dayjs.utc().tz('Asia/Tokyo').format('HH:mm'),
+        ? dateUtils.formatToDisplay(event.date, 'HH:mm')
+        : dateUtils.formatToDisplay(dateUtils.toUTCString(new Date()), 'HH:mm'),
       quota: event && isPublicSchedule(event) ? event.quota : 1,
     },
   });
@@ -81,30 +85,26 @@ export const EventCreation: FC<Props> = ({
     async (values: FormValues) => {
       setIsSubmitting(true);
       try {
-        // 既にイベントがあるときは更新処理を行う
+        const eventDate = dateUtils.toUTCString(
+          `${values.date} ${values.time}`
+        );
+
         if (event) {
           await client.schedules._id(event.id).public.$patch({
             body: {
               calendarId,
               title: values.title,
               description: values.description || '',
-              date: dayjs(`${values.date} ${values.time}`)
-                .tz('Asia/Tokyo')
-                .utc()
-                .toISOString(),
+              date: eventDate,
               quota: values.quota,
             },
           });
         } else {
-          // イベントがないときは作成処理を行う
           await client.schedules._calendarId(calendarId).public.$post({
             body: {
               title: values.title,
               description: values.description || '',
-              date: dayjs(`${values.date} ${values.time}`)
-                .tz('Asia/Tokyo')
-                .utc()
-                .toISOString(),
+              date: eventDate,
               quota: values.quota,
             },
           });

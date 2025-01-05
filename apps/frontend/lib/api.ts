@@ -1,6 +1,7 @@
 import aspida from '@aspida/axios';
 import axios from 'axios';
 import api from '../apis/$api';
+import { dateUtils } from './dateUtils';
 
 const axiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -39,6 +40,22 @@ axiosInstance.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// APIリクエスト時の日付変換を一元管理
+const transformRequest = (config: any) => {
+  if (config.body?.date) {
+    config.body.date = dateUtils.toUTCString(config.body.date);
+  }
+  return config;
+};
+
+// APIレスポンスの日付変換を一元管理
+const transformResponse = (response: any) => {
+  if (response.date) {
+    response.displayDate = dateUtils.fromUTC(response.date);
+  }
+  return response;
+};
 
 export const client = api(aspida(axiosInstance));
 

@@ -3,13 +3,16 @@ import {
   PersonalScheduleWithRelations,
 } from '../apis/@types';
 import dayjs from 'dayjs';
+import { dateUtils } from '../lib/dateUtils';
 
 export const mockPublicEvent: PublicScheduleWithRelations = {
   id: '1',
   title: 'スクリム練習会',
   description:
     '参加者を募集中です！\n初心者歓迎、みんなで楽しく練習しましょう。\n\n持ち物：\n- ボイスチャット可能な環境\n- やる気',
-  date: dayjs().add(2, 'day').hour(20).minute(0).second(0).toISOString(),
+  date: dateUtils.toUTCString(
+    dayjs().add(2, 'day').hour(20).minute(0).toDate()
+  ),
   quota: 5,
   isPersonal: false,
   createdBy: 'ときね',
@@ -137,7 +140,9 @@ export const mockPublicEvent: PublicScheduleWithRelations = {
 export const mockPersonalEvent: PersonalScheduleWithRelations = {
   id: '2',
   title: '個人練習',
-  date: dayjs().add(1, 'day').hour(15).minute(0).second(0).toISOString(),
+  date: dateUtils.toUTCString(
+    dayjs().add(1, 'day').hour(15).minute(0).toDate()
+  ),
   isPersonal: true,
   isFree: true,
   description:

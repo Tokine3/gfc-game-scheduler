@@ -11,6 +11,7 @@ import { cn } from '../../../../../../../lib/utils';
 import dayjs from 'dayjs';
 import { CalendarEvent } from '../../_types/types';
 import { isPublicSchedule } from '../../_utils/utils';
+import { dateUtils } from '../../../../../../../lib/dateUtils';
 
 type Props = {
   events: CalendarEvent[];
@@ -27,13 +28,15 @@ export const EventList: FC<Props> = memo(
           return false;
         }
 
-        const now = dayjs().tz('Asia/Tokyo');
-        const eventDate = dayjs.utc(event.date);
+        const now = dateUtils.fromUTC(dateUtils.toUTCString(new Date()));
+        const eventDate = dateUtils.fromUTC(event.date);
         const isPast = eventDate.isBefore(now, 'day');
         return type === 'past' ? isPast : !isPast;
       })
       .sort((a, b) => {
-        const diff = dayjs(a.date).valueOf() - dayjs(b.date).valueOf();
+        const diff =
+          dateUtils.fromUTC(a.date).valueOf() -
+          dateUtils.fromUTC(b.date).valueOf();
         return type === 'past' ? -diff : diff;
       });
 
@@ -122,8 +125,7 @@ export const EventList: FC<Props> = memo(
                   <div className='text-sm text-gray-400 flex items-center gap-2'>
                     <span>
                       {dayjs
-                        .utc(event.date)
-                        .tz('Asia/Tokyo')
+                        .tz(event.date, 'Asia/Tokyo')
                         .format('YYYY年MM月DD日')}
                     </span>
                     {isPublicSchedule(event) && (

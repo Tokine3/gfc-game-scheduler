@@ -9,6 +9,7 @@ import type {
   PersonalScheduleWithRelations,
   PublicScheduleWithRelations,
 } from '../apis/@types';
+import { dateUtils } from '../lib/dateUtils';
 
 type UseCalendarReturn = {
   calendar: CalendarWithRelations | undefined;
@@ -37,17 +38,15 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
 
   // カレンダーデータのフェッチを最適化
   const { data: calendar, error } = useQuery({
-    queryKey: ['calendar', calendarId, dayjs(date).format('YYYY-MM')],
+    queryKey: ['calendar', calendarId],
     queryFn: async () => {
       try {
         return await client.calendars._id(calendarId).$get({
           query: {
-            fromDate: dayjs(date)
-              .tz('Asia/Tokyo')
-              .utc()
-              .startOf('month')
-              .format(),
-            toDate: dayjs(date).tz('Asia/Tokyo').utc().endOf('month').format(),
+            fromDate: dateUtils.toUTCString(
+              dayjs(date).startOf('month').toDate()
+            ),
+            toDate: dateUtils.toUTCString(dayjs(date).endOf('month').toDate()),
           },
         });
       } catch (error) {
@@ -68,24 +67,16 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
         });
 
         await queryClient.fetchQuery({
-          queryKey: [
-            'calendar',
-            calendarId,
-            dayjs(targetDate).format('YYYY-MM'),
-          ],
+          queryKey: ['calendar', calendarId, dateUtils.toUTCString(targetDate)],
           queryFn: () =>
             client.calendars._id(calendarId).$get({
               query: {
-                fromDate: dayjs(targetDate)
-                  .tz('Asia/Tokyo')
-                  .utc()
-                  .startOf('month')
-                  .format(),
-                toDate: dayjs(targetDate)
-                  .tz('Asia/Tokyo')
-                  .utc()
-                  .endOf('month')
-                  .format(),
+                fromDate: dateUtils.toUTCString(
+                  dayjs(targetDate).startOf('month').toDate()
+                ),
+                toDate: dateUtils.toUTCString(
+                  dayjs(targetDate).endOf('month').toDate()
+                ),
               },
             }),
         });
@@ -112,16 +103,12 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
       return [
         'personalSchedules',
         {
-          fromDate: dayjs(targetDate)
-            .tz('Asia/Tokyo')
-            .startOf('month')
-            .utc()
-            .format(),
-          toDate: dayjs(targetDate)
-            .tz('Asia/Tokyo')
-            .utc()
-            .endOf('month')
-            .format(),
+          fromDate: dateUtils.toUTCString(
+            dayjs(targetDate).startOf('month').toDate()
+          ),
+          toDate: dateUtils.toUTCString(
+            dayjs(targetDate).endOf('month').toDate()
+          ),
         },
       ] as const;
     },
