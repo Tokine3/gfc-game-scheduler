@@ -45,7 +45,7 @@ export class CalendarsService {
     // イベントの取得範囲を指定する
     const startDate = dayjs
       .utc(fromDate ?? dayjs.utc())
-      .startOf('month')
+      .endOf('month')
       .subtract(1, 'week')
       .toDate();
     const endDate = dayjs
@@ -116,13 +116,11 @@ export class CalendarsService {
                   },
                 ],
               },
-              {
-                date: {
-                  gte: startDate,
-                  lte: endDate,
-                },
-              },
             ],
+            date: {
+              gte: startDate,
+              lte: endDate,
+            },
           },
           include: {
             serverUser: {
@@ -134,6 +132,8 @@ export class CalendarsService {
         },
       },
     });
+
+    console.log('data', data);
 
     if (!data) {
       throw new NotFoundException('カレンダーが見つかりません');

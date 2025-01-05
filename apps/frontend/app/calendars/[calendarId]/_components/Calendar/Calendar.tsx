@@ -52,6 +52,11 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
     [user?.id]
   );
 
+  // 自分の個人予定を取得
+  const myPersonalSchedules = personalSchedules?.filter(
+    (schedule) => schedule.serverUser?.userId === user?.id
+  );
+
   // 月が変更された時の処理を修正
   const handleMonthChange = useCallback(
     (newDate: Date) => {
@@ -340,7 +345,7 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
           onClose={() => setShowPersonalEventCreation(false)}
           date={date}
           calendarId={props.id}
-          initialSchedules={personalSchedules}
+          initialSchedules={myPersonalSchedules}
           onSuccess={() => {
             refresh(date);
             toast({
