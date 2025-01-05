@@ -24,7 +24,7 @@ const getTimeZone = () => {
   }
 };
 
-const APP_TIMEZONE = process.env.NEXT_PUBLIC_APP_TIMEZONE || getTimeZone();
+const APP_TIMEZONE = 'Asia/Tokyo';
 
 const weekdayMap: { [key: string]: string } = {
   Sun: '日',

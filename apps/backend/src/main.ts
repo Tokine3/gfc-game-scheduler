@@ -8,6 +8,8 @@ import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
 
 async function bootstrap() {
+  // タイムゾーンを明示的に設定
+  process.env.TZ = 'Asia/Tokyo';
   const app = await NestFactory.create(AppModule);
 
   const config = new DocumentBuilder()
