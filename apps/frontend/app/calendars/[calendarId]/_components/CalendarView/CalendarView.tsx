@@ -93,8 +93,23 @@ export function CalendarView({
   );
 
   const handleDateClick = (arg: { date: Date; jsEvent: MouseEvent }) => {
+    // イベントの伝播を止める
+    arg.jsEvent.preventDefault();
+    arg.jsEvent.stopPropagation();
+
     if ((arg.jsEvent.target as Element).closest('.availability-count')) {
       return;
+    }
+
+    // フォーカスを即座に解除
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
+    // セルのフォーカスも解除
+    const cell = (arg.jsEvent.target as Element).closest('.fc-day');
+    if (cell instanceof HTMLElement) {
+      cell.blur();
     }
 
     if (selectedAvailability) return;
@@ -104,9 +119,9 @@ export function CalendarView({
 
     if (now - lastTapRef.current > DELAY) {
       lastTapRef.current = now;
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         onDateSelect(arg.date);
-      }, 100);
+      });
     }
   };
 
@@ -474,8 +489,8 @@ export function CalendarView({
         dayMaxEvents={4}
         firstDay={0}
         fixedWeekCount={false}
-        selectMirror={true}
-        unselectAuto={false}
+        selectMirror={false}
+        unselectAuto={true}
         eventDisplay='block'
         displayEventTime={false}
         nowIndicator={true}
@@ -484,6 +499,19 @@ export function CalendarView({
         dayHeaderClassNames='!cursor-default hover:!bg-transparent'
         dayCellContent={dayCellContent}
         datesSet={handleDatesSet}
+        unselectCancel='.availability-count'
+        unselect={(arg) => {
+          // フォーカスを解除
+          if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+          }
+          // 選択状態も解除
+          calendarRef.current?.getApi().unselect();
+        }}
+        // カレンダーセルのクリック時の挙動を制御
+        dayCellDidMount={(arg) => {
+          arg.el.setAttribute('tabindex', '-1'); // フォーカス可能にしない
+        }}
       />
       {selectedAvailability && (
         <AvailableUsers
