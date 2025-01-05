@@ -51,6 +51,10 @@ import { cn } from '../../../../../lib/utils';
 import { client } from '../../../../../lib/api';
 import { useQueryClient } from '@tanstack/react-query';
 import { dateUtils } from '../../../../../lib/dateUtils';
+import {
+  ParticipantWithRelations,
+  ServerUserWithRelations,
+} from '../../../../../apis/@types';
 
 type Reaction = 'OK' | 'NG' | 'PENDING' | 'NONE';
 
@@ -148,6 +152,51 @@ export const EventDetail: FC<Props> = ({
                 ? 'NONE'
                 : reaction;
 
+          const optimisticParticipant: ParticipantWithRelations = {
+            id: -1,
+            serverUserId: -1,
+            publicScheduleId: Number(event.id),
+            reaction: reactionToSubmit,
+            createdAt: dayjs.utc().tz('Asia/Tokyo').toISOString(),
+            updatedAt: dayjs.utc().tz('Asia/Tokyo').toISOString(),
+            serverUser: {
+              userId: currentUser?.id || '',
+              serverId: '',
+              user: {
+                id: currentUser?.id || '',
+                name: currentUser?.name || '',
+                avatar: currentUser?.avatar || null,
+                createdAt: dayjs.utc().tz('Asia/Tokyo').toISOString(),
+                updatedAt: dayjs.utc().tz('Asia/Tokyo').toISOString(),
+                lastLoggedInAt: dayjs.utc().tz('Asia/Tokyo').toISOString(),
+              },
+              isFavorite: false,
+              isJoined: true,
+              createdAt: dayjs.utc().tz('Asia/Tokyo').toISOString(),
+              updatedAt: dayjs.utc().tz('Asia/Tokyo').toISOString(),
+            } as ServerUserWithRelations,
+          };
+
+          const optimisticEvent = {
+            ...event,
+            participants: event.participants.some(
+              (p) => p.serverUser.userId === currentUser?.id
+            )
+              ? event.participants.map((participant) => {
+                  if (participant.serverUser.userId === currentUser?.id) {
+                    return {
+                      ...participant,
+                      reaction: reactionToSubmit,
+                      updatedAt: dayjs.utc().tz('Asia/Tokyo').toISOString(),
+                    };
+                  }
+                  return participant;
+                })
+              : [...event.participants, optimisticParticipant],
+          };
+
+          setEvent(optimisticEvent);
+
           const updatedEvent = await client.schedules
             ._id(event.id)
             .public.reaction.$patch({
@@ -156,22 +205,6 @@ export const EventDetail: FC<Props> = ({
                 reaction: reactionToSubmit,
               },
             });
-
-          const optimisticEvent = {
-            ...event,
-            participants: event.participants.map((participant) => {
-              if (participant.serverUser.userId === currentUser?.id) {
-                return {
-                  ...participant,
-                  reaction: reactionToSubmit,
-                  updatedAt: dayjs.utc().tz('Asia/Tokyo').toISOString(),
-                };
-              }
-              return participant;
-            }),
-          };
-
-          setEvent(optimisticEvent);
 
           if (updatedEvent.participants) {
             const newEvent = {
@@ -195,6 +228,7 @@ export const EventDetail: FC<Props> = ({
               }
             );
           }
+
           toast({
             title: 'リアクションを更新しました',
             description: 'リアクションを更新しました',
@@ -211,7 +245,7 @@ export const EventDetail: FC<Props> = ({
         });
       }
     },
-    [event, calendarId, onSuccess, queryClient, currentUser?.id, initialEvent]
+    [event, calendarId, onSuccess, queryClient, currentUser, initialEvent]
   );
 
   return (
