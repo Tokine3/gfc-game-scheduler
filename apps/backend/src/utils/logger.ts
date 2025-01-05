@@ -11,9 +11,21 @@ export const logger = {
       console.log(...args);
     }
   },
+  info: (...args: any[]) => {
+    if (isDevelopment) {
+      console.info('[INFO]', ...args);
+    }
+  },
   error: (...args: any[]) => {
     if (isDevelopment) {
       console.error(...args);
+    }
+    // 本番環境では必要に応じてエラー監視サービスに送信するなど
+  },
+
+  warn: (...args: any[]) => {
+    if (isDevelopment) {
+      console.warn(...args);
     }
   },
 };

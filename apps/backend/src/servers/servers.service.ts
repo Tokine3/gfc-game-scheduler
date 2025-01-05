@@ -16,7 +16,7 @@ export class ServersService {
   async join(req: RequestWithUser, joinServerDto: JoinServerDto) {
     logger.log('joinServerDto', joinServerDto);
     const { serverId, serverName, serverIcon } = joinServerDto;
-    console.log('req', req.user);
+    logger.log('req', req.user);
     // サーバーが既に存在するか確認
     const server = await this.prisma.server.findUnique({
       where: {
@@ -73,7 +73,6 @@ export class ServersService {
     addFavServerDto: AddFavServerDto,
     req: RequestWithUser
   ) {
-    console.log('addFavorite', serverId, addFavServerDto);
     const { isFavorite, serversList } = addFavServerDto;
     const server = await this.prisma.server.findUnique({
       where: {

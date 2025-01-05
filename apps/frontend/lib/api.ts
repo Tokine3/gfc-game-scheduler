@@ -2,6 +2,7 @@ import aspida from '@aspida/axios';
 import axios from 'axios';
 import api from '../apis/$api';
 import { dateUtils } from './dateUtils';
+import { logger } from './logger';
 
 const axiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -15,9 +16,9 @@ axiosInstance.interceptors.request.use((config) => {
   if (discordId && discordToken && config.headers) {
     config.headers['X-Discord-Id'] = discordId;
     config.headers['X-Discord-Token'] = discordToken;
-    console.log('Adding Discord auth headers:', { discordId });
+    logger.log('Adding Discord auth headers:', { discordId });
   } else {
-    console.warn('Missing Discord credentials');
+    logger.error('Missing Discord credentials');
     if (
       typeof window !== 'undefined' &&
       window.location.pathname !== '/login'
@@ -32,7 +33,7 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      console.error('Authentication error:', error.response?.data);
+      logger.error('Authentication error:', error.response?.data);
       if (typeof window !== 'undefined') {
         window.location.href = '/login';
       }

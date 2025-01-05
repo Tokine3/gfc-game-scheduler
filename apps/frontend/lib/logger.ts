@@ -17,4 +17,10 @@ export const logger = {
     }
     // 本番環境では必要に応じてエラー監視サービスに送信するなど
   },
+
+  warn: (...args: any[]) => {
+    if (isDevelopment) {
+      console.warn(...args);
+    }
+  },
 };

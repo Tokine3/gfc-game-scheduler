@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import { logger } from './utils/logger';
 
 // UTCプラグインを追加
 dayjs.extend(utc);
@@ -40,6 +41,6 @@ async function bootstrap() {
   // Railwayが提供するPORTを使用
   const port = process.env.PORT || 8000;
   await app.listen(port);
-  console.log(`Application is running on: ${port}`);
+  logger.log(`Application is running on: ${port}`);
 }
 bootstrap();

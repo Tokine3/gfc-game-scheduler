@@ -39,8 +39,8 @@ export class CalendarsService {
     fromDate?: string,
     toDate?: string
   ) {
-    console.log('fromDate', fromDate);
-    console.log('toDate', toDate);
+    logger.log('fromDate', fromDate);
+    logger.log('toDate', toDate);
 
     // イベントの取得範囲を指定する
     const startDate = dayjs
@@ -54,8 +54,8 @@ export class CalendarsService {
       .add(1, 'week')
       .toDate();
 
-    console.log('startDate', startDate);
-    console.log('endDate', endDate);
+    logger.log('startDate', startDate);
+    logger.log('endDate', endDate);
     const data = await this.prisma.calendar.findUnique({
       where: { id },
       include: {
@@ -132,8 +132,6 @@ export class CalendarsService {
         },
       },
     });
-
-    console.log('data', data);
 
     if (!data) {
       throw new NotFoundException('カレンダーが見つかりません');

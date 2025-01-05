@@ -29,7 +29,7 @@ export const ServerList: FC<Props> = ({ servers }) => {
   const [isJoining, setIsJoining] = useState(false);
   const [isCreatingCalendar, setIsCreatingCalendar] = useState(false);
 
-  console.log('servers', servers);
+  logger.log('servers', servers);
 
   const filteredServers = useMemo(() => {
     return activeTab === 'joined'
@@ -144,7 +144,7 @@ export const ServerList: FC<Props> = ({ servers }) => {
           activeTab={activeTab}
           onTabChange={setActiveTab}
         />
-        
+
         {activeTab === 'joined' && filteredServers.length === 0 ? (
           <EmptyState onShowAll={() => setActiveTab('all')} />
         ) : (

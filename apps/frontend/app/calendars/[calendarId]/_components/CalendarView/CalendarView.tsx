@@ -28,6 +28,7 @@ import {
   ParticipantWithRelations,
 } from '../../../../../apis/@types';
 import { dateUtils } from '../../../../../lib/dateUtils';
+import { logger } from '../../../../../lib/logger';
 
 interface CalendarViewProps {
   date: Date | undefined;
@@ -74,7 +75,7 @@ export function CalendarView({
   onMonthChange,
   userId,
 }: CalendarViewProps) {
-  console.log('CalendarViewが受け取ったイベント', events);
+  logger.log('CalendarViewが受け取ったイベント', events);
   const calendarRef = useRef<any>(null);
   const lastTapRef = useRef<number>(0);
   const [selectedAvailability, setSelectedAvailability] =
@@ -126,14 +127,6 @@ export function CalendarView({
   };
 
   const renderEventContent = (eventContent: EventContentArg) => {
-    console.log('renderEventContent', {
-      event: eventContent.event,
-      timeText: eventContent.timeText,
-      isStart: eventContent.isStart,
-      isEnd: eventContent.isEnd,
-      extendedProps: eventContent.event.extendedProps,
-    });
-
     const { isPersonal, participants, quota, originalEvent } =
       eventContent.event.extendedProps;
     const isFull =

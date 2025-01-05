@@ -88,7 +88,7 @@ export const EventDetail: FC<Props> = ({
   const handleDelete = useCallback(async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
-    console.log('EventDetail: 削除処理開始');
+    logger.log('EventDetail: 削除処理開始');
 
     try {
       if (isPublicSchedule(event)) {
@@ -100,21 +100,21 @@ export const EventDetail: FC<Props> = ({
           body: { calendarId },
         });
       }
-      console.log('EventDetail: API削除完了');
+      logger.log('EventDetail: API削除完了');
 
       if (onDelete) {
         await onDelete();
       }
-      console.log('EventDetail: 親コンポーネントコールバック完了');
+      logger.log('EventDetail: 親コンポーネントコールバック完了');
 
       setShowDeleteDialog(false);
 
       setTimeout(() => {
         onClose();
-        console.log('EventDetail: モーダル閉じる完了');
+        logger.log('EventDetail: モーダル閉じる完了');
       }, 100);
     } catch (error) {
-      console.error('EventDetail: エラー発生', error);
+      logger.error('EventDetail: エラー発生', error);
       toast({
         title: 'エラーが発生しました',
         description: 'イベントの削除に失敗しました',
@@ -122,13 +122,13 @@ export const EventDetail: FC<Props> = ({
       });
     } finally {
       setIsSubmitting(false);
-      console.log('EventDetail: 処理完了');
+      logger.log('EventDetail: 処理完了');
     }
   }, [event, calendarId, onClose, onDelete, isSubmitting]);
 
   const handleDialogOpenChange = useCallback(
     (open: boolean) => {
-      console.log('handleDialogOpenChange', {
+      logger.log('handleDialogOpenChange', {
         open,
         showDeleteDialog,
         isSubmitting,

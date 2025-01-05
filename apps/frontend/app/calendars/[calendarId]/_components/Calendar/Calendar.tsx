@@ -23,6 +23,7 @@ import { toast } from '../../../../components/ui/use-toast';
 import { useAuth } from '../../../../hooks/useAuth';
 import { useQueryClient } from '@tanstack/react-query';
 import { client } from '../../../../../lib/api';
+import { logger } from '../../../../../lib/logger';
 
 // サブコンポーネントをメモ化
 const MemoizedCalendarView = memo(CalendarView);
@@ -191,22 +192,17 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
 
   // CalendarViewに渡すイベントデータを変換
   const calendarEvents = useMemo(() => {
-    console.log('全イベント', events);
+    logger.log('全イベント', events);
     const filteredEvents = events.filter((event) => {
       // 共有イベントは常に表示（削除済みは除く）
       if (isPublicSchedule(event)) {
-        console.log('共有イベント', event);
-        console.log('表示するか', !event.isDeleted);
         return !event.isDeleted;
       }
       // 個人予定はタイトルがある場合のみ表示
       return !!event.title && event.isPersonal;
     });
 
-    console.log('フィルター後', filteredEvents);
-
     const mappedEvents = filteredEvents.map((event) => {
-      console.log('event.date', event.date);
       const calendarEvent = {
         id: String(event.id),
         start: dateUtils.toCalendarDate(event.date),
@@ -221,7 +217,7 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
           originalEvent: event,
         },
       };
-      console.log('変換後のイベント', calendarEvent);
+      logger.log('変換後のイベント', calendarEvent);
       return calendarEvent;
     });
 
@@ -237,17 +233,13 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
   // イベント削除ハンドラーを修正
   const handleEventDelete = useCallback(async () => {
     try {
-      console.log('Calendar: handleEventDelete start');
+      logger.log('Calendar: handleEventDelete start');
 
       // データを更新
       await refresh(date);
-      console.log('Calendar: データ更新完了');
-
-      // モーダルを閉じる処理は EventDetail 側で行うため削除
-      // setShowEventDetail(false);
-      // setSelectedEvent(null);
+      logger.log('Calendar: データ更新完了');
     } catch (error) {
-      console.error('Calendar: エラー発生', error);
+      logger.error('Calendar: エラー発生', error);
     }
   }, [refresh, date]);
 

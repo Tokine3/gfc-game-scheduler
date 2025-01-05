@@ -2,13 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { FindAllUserDto } from './dto/findAll-user.dto';
+import { logger } from 'src/utils/logger';
 
 @Injectable()
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
   async login(id: string) {
-    console.log('id', id);
+    logger.log('id', id);
     if (!id) {
       throw new NotFoundException('Discord ID not found');
     }

@@ -95,8 +95,8 @@ export class SchedulesService {
       .reduce((max, curr) => (curr.isAfter(max) ? curr : max))
       .endOf('month');
 
-    console.log('minDate', minDate);
-    console.log('maxDate', maxDate);
+    logger.log('minDate', minDate);
+    logger.log('maxDate', maxDate);
 
     try {
       // サーバーユーザーと既存のスケジュールを並行で取得
@@ -257,7 +257,7 @@ export class SchedulesService {
       include: { serverUser: { include: { user: true } } },
     });
 
-    console.log('personalSchedules', personalSchedules);
+    logger.log('personalSchedules', personalSchedules);
 
     return personalSchedules;
   }
@@ -299,9 +299,6 @@ export class SchedulesService {
       }),
     ]);
 
-    console.log('personalSchedules', personalSchedules);
-    console.log('publicSchedules', publicSchedules);
-
     return { personalSchedules, publicSchedules };
   }
 
@@ -337,7 +334,7 @@ export class SchedulesService {
     const { calendarId, reaction } = body;
     const { id: userId } = req.user;
 
-    console.log('reaction', reaction);
+    logger.log('reaction', reaction);
 
     // 既存の参加者を確認
     const existingParticipant = await this.prisma.participant.findFirst({

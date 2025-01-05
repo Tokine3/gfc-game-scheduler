@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuthController } from './auth.controller';
 import { admin } from '../utils/firebase';
 import { DiscordAuthGuard } from './discord-auth.guard';
+import { logger } from 'src/utils/logger';
 
 @Module({
   imports: [
@@ -44,7 +45,7 @@ export class AuthModule implements OnModuleInit {
         const projectId = this.configService.get('FIREBASE_PROJECT_ID');
         const clientEmail = this.configService.get('FIREBASE_CLIENT_EMAIL');
 
-        console.log('Firebase Admin Config:', {
+        logger.log('Firebase Admin Config:', {
           projectId,
           clientEmail,
           privateKeyLength: privateKey.length,
@@ -63,7 +64,7 @@ export class AuthModule implements OnModuleInit {
         const testToken = await admin.auth().createCustomToken('test-user', {
           role: 'test',
         });
-        console.log('Firebase Admin initialized:', {
+        logger.log('Firebase Admin initialized:', {
           hasToken: !!testToken,
           projectId: admin.app().options.projectId,
         });
