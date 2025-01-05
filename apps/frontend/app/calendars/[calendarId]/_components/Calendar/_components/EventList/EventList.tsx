@@ -18,12 +18,19 @@ type Props = {
   onEventClick: (event: CalendarEvent) => void;
   type: 'upcoming' | 'past';
   userId: string | undefined;
+  currentDate: Date;
 };
 
 export const EventList: FC<Props> = memo(
-  ({ events, onEventClick, type, userId }) => {
+  ({ events, onEventClick, type, userId, currentDate }) => {
     const filteredEvents = events
       .filter((event) => {
+        const isCurrentMonth = dayjs(event.date).isSame(
+          dayjs(currentDate),
+          'month'
+        );
+        if (!isCurrentMonth) return false;
+
         if (!isPublicSchedule(event) && !event.title) {
           return false;
         }

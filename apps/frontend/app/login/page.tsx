@@ -198,7 +198,7 @@ export default function LoginPage() {
                   }}
                 >
                   <div
-                    className={`p-2.5 rounded-lg bg-${feature.color}-500/10 text-${feature.color}-400 group-hover:scale-110 transition-transform`}
+                    className={`p-2.5 rounded-lg bg-${feature.color}-500/20 text-${feature.color}-400 group-hover:scale-110 transition-transform`}
                   >
                     {feature.icon}
                   </div>

@@ -116,6 +116,12 @@ export class CalendarsService {
                   },
                 ],
               },
+              {
+                date: {
+                  gte: startDate,
+                  lte: endDate,
+                },
+              },
             ],
           },
           include: {
@@ -128,6 +134,11 @@ export class CalendarsService {
         },
       },
     });
+
+    if (!data) {
+      throw new NotFoundException('カレンダーが見つかりません');
+    }
+
     return data;
   }
 

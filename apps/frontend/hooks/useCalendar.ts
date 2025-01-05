@@ -38,7 +38,7 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
 
   // カレンダーデータのフェッチを最適化
   const { data: calendar, error } = useQuery({
-    queryKey: ['calendar', calendarId],
+    queryKey: ['calendar', calendarId, dateUtils.toUTCString(date)],
     queryFn: async () => {
       try {
         return await client.calendars._id(calendarId).$get({
@@ -92,9 +92,12 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
   const handleMonthChange = useCallback(
     async (newDate: Date) => {
       setDate(newDate);
-      return await refreshCalendarData(newDate);
+      // 新しい月のデータを取得
+      await queryClient.invalidateQueries({
+        queryKey: ['calendar', calendarId],
+      });
     },
-    [refreshCalendarData]
+    [calendarId, queryClient]
   );
 
   const getPersonalScheduleKey = useCallback(
@@ -121,7 +124,7 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
     personalSchedules: calendar?.personalSchedules ?? [],
     isLoading: !error && !calendar,
     isError: error,
-    refresh: refreshCalendarData, // refreshCalendarDataを直接使用
+    refresh: refreshCalendarData,
     setDate: handleMonthChange,
     getPersonalScheduleKey,
   };

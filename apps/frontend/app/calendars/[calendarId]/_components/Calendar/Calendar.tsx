@@ -278,10 +278,11 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
 
             <div className='p-4'>
               <EventList
-                events={events.filter(isVisibleEvent)}
+                events={events}
                 onEventClick={handleEventClick}
                 type='upcoming'
                 userId={user?.id}
+                currentDate={date}
               />
             </div>
 
@@ -294,10 +295,11 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
 
             <div className='p-4'>
               <EventList
-                events={events.filter(isVisibleEvent)}
+                events={events}
                 onEventClick={handleEventClick}
                 type='past'
                 userId={user?.id}
+                currentDate={date}
               />
             </div>
           </div>
