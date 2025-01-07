@@ -61,7 +61,7 @@ export const TimeSelect = React.forwardRef<HTMLDivElement, TimeSelectProps>(
                 'animate-in fade-in-0 zoom-in-95',
                 'bg-gray-900 border border-gray-800 rounded-md shadow-xl',
                 'relative',
-                'w-[80px]'
+                'w-[80px] touch-pan-y'
               )}
             >
               <ScrollArea
@@ -70,10 +70,13 @@ export const TimeSelect = React.forwardRef<HTMLDivElement, TimeSelectProps>(
                 scrollHideDelay={100}
               >
                 <Select.Viewport
-                  className='p-1'
-                  onTouchStart={(e) => e.stopPropagation()}
-                  onWheel={(e) => e.stopPropagation()}
-                  style={{ touchAction: 'pan-y' }}
+                  className='p-1 overflow-y-auto'
+                  onTouchMove={(e) => e.stopPropagation()}
+                  style={{
+                    touchAction: 'pan-y',
+                    WebkitOverflowScrolling: 'touch',
+                    overscrollBehavior: 'contain',
+                  }}
                 >
                   {hours.map((hour) => (
                     <Select.Item
@@ -130,7 +133,7 @@ export const TimeSelect = React.forwardRef<HTMLDivElement, TimeSelectProps>(
                 'animate-in fade-in-0 zoom-in-95',
                 'bg-gray-900 border border-gray-800 rounded-md shadow-xl',
                 'relative',
-                'w-[80px]'
+                'w-[80px] touch-pan-y'
               )}
             >
               <ScrollArea
@@ -139,10 +142,13 @@ export const TimeSelect = React.forwardRef<HTMLDivElement, TimeSelectProps>(
                 scrollHideDelay={100}
               >
                 <Select.Viewport
-                  className='p-1'
-                  onTouchStart={(e) => e.stopPropagation()}
-                  onWheel={(e) => e.stopPropagation()}
-                  style={{ touchAction: 'pan-y' }}
+                  className='p-1 overflow-y-auto'
+                  onTouchMove={(e) => e.stopPropagation()}
+                  style={{
+                    touchAction: 'pan-y',
+                    WebkitOverflowScrolling: 'touch',
+                    overscrollBehavior: 'contain',
+                  }}
                 >
                   {minutes.map((minute) => (
                     <Select.Item
