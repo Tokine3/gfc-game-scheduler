@@ -71,6 +71,8 @@ export const TimeSelect = React.forwardRef<HTMLDivElement, TimeSelectProps>(
               >
                 <Select.Viewport
                   className='p-1 overflow-y-auto'
+                  onTouchStart={(e) => e.stopPropagation()}
+                  onWheel={(e) => e.stopPropagation()}
                   onTouchMove={(e) => e.stopPropagation()}
                   style={{
                     touchAction: 'pan-y',
@@ -143,6 +145,7 @@ export const TimeSelect = React.forwardRef<HTMLDivElement, TimeSelectProps>(
               >
                 <Select.Viewport
                   className='p-1 overflow-y-auto'
+                  onWheel={(e) => e.stopPropagation()}
                   onTouchMove={(e) => e.stopPropagation()}
                   style={{
                     touchAction: 'pan-y',
