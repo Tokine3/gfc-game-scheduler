@@ -73,6 +73,7 @@ export const TimeSelect = React.forwardRef<HTMLDivElement, TimeSelectProps>(
                   className='p-1'
                   onTouchStart={(e) => e.stopPropagation()}
                   onWheel={(e) => e.stopPropagation()}
+                  style={{ touchAction: 'pan-y' }}
                 >
                   {hours.map((hour) => (
                     <Select.Item
@@ -141,6 +142,7 @@ export const TimeSelect = React.forwardRef<HTMLDivElement, TimeSelectProps>(
                   className='p-1'
                   onTouchStart={(e) => e.stopPropagation()}
                   onWheel={(e) => e.stopPropagation()}
+                  style={{ touchAction: 'pan-y' }}
                 >
                   {minutes.map((minute) => (
                     <Select.Item

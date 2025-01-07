@@ -20,6 +20,9 @@ export class AuthService {
 
   async validateUser(discordUser: AuthUserDto) {
     const { id, name, avatar, accessToken } = discordUser;
+
+    logger.log('user', discordUser);
+
     let user = await this.prisma.user.findUnique({
       where: { id },
     });
