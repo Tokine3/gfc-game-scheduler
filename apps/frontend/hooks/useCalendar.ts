@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { client } from '../lib/api';
 import { logger } from '../lib/logger';
@@ -19,9 +19,6 @@ type UseCalendarReturn = {
   isError: Error | null;
   refresh: (date: Date) => Promise<void>;
   setDate: (date: Date) => Promise<void>;
-  getPersonalScheduleKey: (
-    targetDate: Date
-  ) => readonly [string, { fromDate: string; toDate: string }] | null;
 };
 
 // カスタムエラークラスを追加
@@ -33,20 +30,40 @@ export class UnauthorizedError extends Error {
 }
 
 export function useCalendar(calendarId: string): UseCalendarReturn {
-  const [date, setDate] = useState(() => new Date());
-  const queryClient = useQueryClient();
+  // 初期値の設定を改善
+  const initialDate = useMemo(() => {
+    return dayjs().startOf('month').toDate();
+  }, []);
 
-  // カレンダーデータのフェッチを最適化
+  const [date, setDate] = useState(initialDate);
+  const queryClient = useQueryClient();
+  const isInitialMount = useRef(true);
+
+  console.log('date', date);
+
+  // カレンダーデータのフェッチを修正
   const { data: calendar, error } = useQuery({
-    queryKey: ['calendar', calendarId, dateUtils.toUTCString(date)],
+    queryKey: [
+      'calendar',
+      calendarId,
+      dateUtils.formatToDisplay(dateUtils.toUTCString(date), 'YYYY-MM'),
+    ],
     queryFn: async () => {
       try {
+        // 月初と月末の日付を確実に含むように調整
+        const startOfMonth = dayjs(date).startOf('month').toDate();
+        const endOfMonth = dayjs(date).endOf('month').toDate();
+
+        // 初期マウント時のみログを出力
+        if (isInitialMount.current) {
+          console.log('Initial fetch', startOfMonth);
+          isInitialMount.current = false;
+        }
+
         return await client.calendars._id(calendarId).$get({
           query: {
-            fromDate: dateUtils.toUTCString(
-              dayjs(date).startOf('month').toDate()
-            ),
-            toDate: dateUtils.toUTCString(dayjs(date).endOf('month').toDate()),
+            fromDate: dateUtils.toUTCString(startOfMonth),
+            toDate: dateUtils.toUTCString(endOfMonth),
           },
         });
       } catch (error) {
@@ -55,19 +72,26 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
       }
     },
     staleTime: 0,
+    gcTime: 0,
   });
 
   // データ更新処理を最適化
   const refreshCalendarData = useCallback(
     async (targetDate: Date): Promise<void> => {
+      console.log('refreshCalendarData', targetDate);
       try {
+        const currentMonth = dateUtils.formatToDisplay(
+          dateUtils.toUTCString(targetDate),
+          'YYYY-MM'
+        );
+
         await queryClient.invalidateQueries({
-          queryKey: ['calendar', calendarId],
+          queryKey: ['calendar', calendarId, currentMonth],
           refetchType: 'all',
         });
 
         await queryClient.fetchQuery({
-          queryKey: ['calendar', calendarId, dateUtils.toUTCString(targetDate)],
+          queryKey: ['calendar', calendarId, currentMonth],
           queryFn: () =>
             client.calendars._id(calendarId).$get({
               query: {
@@ -88,34 +112,39 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
     [calendarId, queryClient]
   );
 
-  // 月変更時のデータ取得を最適化
+  // 月変更時のデータ取得を修正
   const handleMonthChange = useCallback(
     async (newDate: Date) => {
-      setDate(newDate);
-      // 新しい月のデータを取得
+      console.log('handleMonthChange', newDate);
+      // 必ず月初に設定
+      const firstDayOfMonth = dayjs(newDate).startOf('month').toDate();
+      const currentMonth = dateUtils.formatToDisplay(
+        dateUtils.toUTCString(firstDayOfMonth),
+        'YYYY-MM'
+      );
+
+      setDate(firstDayOfMonth);
+
+      // 特定の月のクエリのみを無効化して再取得
       await queryClient.invalidateQueries({
-        queryKey: ['calendar', calendarId],
+        queryKey: ['calendar', calendarId, currentMonth],
+        exact: true,
+      });
+
+      await queryClient.fetchQuery({
+        queryKey: ['calendar', calendarId, currentMonth],
+        queryFn: () =>
+          client.calendars._id(calendarId).$get({
+            query: {
+              fromDate: dateUtils.toUTCString(firstDayOfMonth),
+              toDate: dateUtils.toUTCString(
+                dayjs(firstDayOfMonth).endOf('month').toDate()
+              ),
+            },
+          }),
       });
     },
     [calendarId, queryClient]
-  );
-
-  const getPersonalScheduleKey = useCallback(
-    (targetDate: Date) => {
-      if (!calendarId) return null;
-      return [
-        'personalSchedules',
-        {
-          fromDate: dateUtils.toUTCString(
-            dayjs(targetDate).startOf('month').toDate()
-          ),
-          toDate: dateUtils.toUTCString(
-            dayjs(targetDate).endOf('month').toDate()
-          ),
-        },
-      ] as const;
-    },
-    [calendarId]
   );
 
   return {
@@ -126,6 +155,5 @@ export function useCalendar(calendarId: string): UseCalendarReturn {
     isError: error,
     refresh: refreshCalendarData,
     setDate: handleMonthChange,
-    getPersonalScheduleKey,
   };
 }

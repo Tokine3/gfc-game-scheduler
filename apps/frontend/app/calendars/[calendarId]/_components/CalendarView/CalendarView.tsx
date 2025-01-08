@@ -299,7 +299,6 @@ export function CalendarView({
     });
 
     const count = availability?.count || 0;
-    const users = availability?.users || [];
 
     const colorClass =
       count === 0
@@ -389,42 +388,13 @@ export function CalendarView({
     });
   }, [events]);
 
-  // 前回の日付を保持するref
-  const previousDateRef = useRef<string>();
-
-  const handleMonthChange = useCallback(
-    (date: Date) => {
-      const debouncedUpdate = debounce((targetDate: Date) => {
-        const firstDayOfMonth = dateUtils
-          .fromUTC(dateUtils.toUTCString(targetDate))
-          .startOf('month')
-          .toDate();
-
-        const currentMonthKey = dateUtils.formatToDisplay(
-          dateUtils.toUTCString(firstDayOfMonth),
-          'YYYY-MM'
-        );
-
-        if (previousDateRef.current === currentMonthKey) {
-          return;
-        }
-
-        previousDateRef.current = currentMonthKey;
-        onMonthChange(firstDayOfMonth);
-      }, 100);
-
-      debouncedUpdate(date);
-    },
-    [onMonthChange]
-  );
-
   // datesSetイベントハンドラを最適化
   const handleDatesSet = useCallback(
     (dateInfo: { view: { currentStart: Date } }) => {
-      const targetDate = dayjs.utc(dateInfo.view.currentStart).toDate();
-      handleMonthChange(targetDate);
+      const targetDate = dateUtils.toUTCString(dateInfo.view.currentStart);
+      onMonthChange(dateUtils.fromUTC(targetDate).toDate());
     },
-    [handleMonthChange]
+    [onMonthChange]
   );
 
   return (

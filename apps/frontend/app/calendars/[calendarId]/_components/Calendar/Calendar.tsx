@@ -67,29 +67,9 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
       ) {
         setDate(newDate);
         setCalendarDate(newDate);
-
-        // 次の月のデータをプリフェッチ
-        const nextMonth = dateUtils
-          .fromUTC(dateUtils.toUTCString(newDate))
-          .add(1, 'month');
-
-        queryClient.prefetchQuery({
-          queryKey: ['schedules', props.id, nextMonth.format('YYYY-MM')],
-          queryFn: () =>
-            client.schedules._calendarId(props.id).public.$get({
-              query: {
-                fromDate: dateUtils.toUTCString(
-                  nextMonth.startOf('month').toDate()
-                ),
-                toDate: dateUtils.toUTCString(
-                  nextMonth.endOf('month').toDate()
-                ),
-              },
-            }),
-        });
       }
     },
-    [date, setCalendarDate, queryClient, props.id]
+    [date, setCalendarDate]
   );
 
   // events の計算を最適化
@@ -203,8 +183,9 @@ export const Calendar = memo<CalendarWithRelations>(function Calendar(props) {
     });
 
     const mappedEvents = filteredEvents.map((event) => {
+      const idPrifex = isPublicSchedule(event) ? 'public' : 'personal';
       const calendarEvent = {
-        id: String(event.id),
+        id: `${idPrifex}-${event.id}`,
         start: dateUtils.toCalendarDate(event.date),
         end: dateUtils.toCalendarDate(event.date),
         title: event.title,
